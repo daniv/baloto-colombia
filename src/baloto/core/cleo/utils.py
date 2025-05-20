@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import math
 
 from dataclasses import dataclass
@@ -73,3 +74,22 @@ def find_similar_names(name: str, names: list[str]) -> list[str]:
     }
     # Display results with shortest distance first
     return sorted(distance_by_name, key=lambda key: distance_by_name[key])
+
+def escape(text: str) -> str:
+    """
+    Escapes "<" special char in given text.
+    """
+    text = re.sub(r"([^\\]?)<", "\\1\\<", text)
+
+    return escape_trailing_backslash(text)
+
+
+def escape_trailing_backslash(text: str) -> str:
+    """
+    Escapes trailing "\\" in given text.
+    """
+    if text.endswith("\\"):
+        length = len(text)
+        text = text.rstrip("\\").replace("\0", "").ljust(length, "\0")
+
+    return text

@@ -97,7 +97,7 @@ class Input(ABC):
     def validate(self) -> None:
         ...
 
-    def argument(self, name: str) -> Argument:
+    def argument(self, name: str) -> Any:
         ...
 
     def set_argument(self, name: str, value: Any) -> None:
@@ -106,7 +106,7 @@ class Input(ABC):
     def has_argument(self, name: str) -> bool:
         ...
 
-    def option(self, name: str) -> Option:
+    def option(self, name: str) -> Any:
         ...
 
     def set_option(self, name: str, value: Any) -> None:

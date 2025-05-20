@@ -32,9 +32,17 @@ class IO:
     def output(self) -> Output:
         return self._output
 
+    @output.setter
+    def output(self, output: Output) -> None:
+        self._output = output
+
     @property
     def error_output(self) -> Output:
         return self._error_output
+
+    @error_output.setter
+    def error_output(self, error_output: Output) -> None:
+        self._error_output = error_output
 
     @property
     def interactive(self) -> bool:

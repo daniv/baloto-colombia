@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 
 from contextlib import suppress
 from importlib import import_module
@@ -18,15 +19,15 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoCommandNotFoundError
 from cleo.exceptions import CleoError
 
-# from cleo.formatters.style import Style
 from cleo.io.inputs.argv_input import ArgvInput
 
-from core.__version__ import __version__
-from core.loaders.command_loader import CommandLoader
-from core.loaders.command_loader import load_command
-from core.utils.helpers import directory
-from core.utils.helpers import ensure_path
-from core.commands.command import Command
+from baloto.core.__version__ import __version__
+from baloto.core.loaders.command_loader import CommandLoader
+from baloto.core.commands.command import Command as CoreCommand
+from baloto.core.exceptions import BalotoRuntimeError
+from baloto.core.utils.helpers import directory
+from baloto.core.utils.helpers import ensure_path
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from cleo.io.inputs.input import Input
     from cleo.io.outputs.output import Output
     from cleo.io.io import IO
+    from baloto.core.poetry import Poetry
 
 COMMAND_NOT_FOUND_PREFIX_MESSAGE = (
     "Looks like you're trying to use a {application_name} command that is not available."
@@ -59,11 +61,278 @@ class Application(CleoApplication):
         super().__init__(name, version)
 
         self._io: IO | None = None
+        self._poetry: Poetry | None = None
         self._working_directory = Path.cwd()
         self._project_directory: Path | None = None
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, register_command_loggers)
         self.event_dispatcher = dispatcher
+
+    @property
+    def project_directory(self) -> Path:
+        return self._project_directory or self._working_directory
+
+    @property
+    def _default_definition(self) -> Definition:
+        from cleo.io.inputs.option import Option
+
+        definition = super()._default_definition
+
+        definition.add_option(
+            Option(
+                "--project",
+                "-P",
+                flag=False,
+                description=(
+                    "Specify another path as the project root."
+                    " All command-line arguments will be resolved relative to the current working directory."
+                ),
+            )
+        )
+
+        definition.add_option(
+            Option(
+                "--directory",
+                "-C",
+                flag=False,
+                description=(
+                    "The working directory for the Poetry command (defaults to the"
+                    " current working directory). All command-line arguments will be"
+                    " resolved relative to the given directory."
+                ),
+            )
+        )
+
+        return definition
+
+    @property
+    def poetry(self) -> Poetry:
+        from baloto.core.poetry import Poetry
+
+        if self._poetry is not None:
+            return self._poetry
+
+        self._poetry = Poetry(cwd=self.project_directory, io=self._io)
+
+        return self._poetry
+
+    def create_io(
+        self,
+        input: Input | None = None,
+        output: Output | None = None,
+        error_output: Output | None = None,
+    ) -> IO:
+        io = super().create_io(input, output, error_output)
+
+        from rich.theme import Theme
+        from rich.style import Style
+        from rich.console import Console
+
+        miloto_theme = Theme(
+            {
+                "error": Style(color="red", bold=True),
+                "warning": Style(color="dark_goldenrod", bold=True),
+                "info": Style(color="blue", bold=False),
+                "debug": Style(bold=False, dim=True),
+
+                "switch": Style(color="green", bold=True),
+                "option": Style(color="bright_cyan", bold=True),
+                "debug.option": Style(color="bright_cyan", bold=True, italic=True),
+                "debug.argument": Style(color="bright_magenta", bold=True, italic=True),
+                "argument": Style(color="bright_magenta", bold=True),
+                "command": Style(color="magenta", bold=True),
+                "prog": Style(color="medium_orchid3", bold=True),
+                "metavar": Style(color="yellow", bold=True),
+                "money": Style(color="green3", bold=True),
+                "report": Style(bold=True, italic=True),
+                "date": Style(color="green", italic=True),
+
+                "help.var": Style(color="gray58", italic=True),
+                "cmd.class": Style(italic=True, color="bright_cyan"),
+                "cmd.def": Style(italic=True, color="bright_cyan"),
+                "cmd.callable": Style(italic=True, color="bright_cyan"),
+                "cmd.var": Style(italic=True, color="bright_cyan"),
+                "debug.hex": Style(italic=True, color="green_yellow"),
+            }
+        )
+
+        console = Console(theme=miloto_theme, file=sys.stdout, force_interactive=True, highlight=True)
+        error_console = Console(theme=miloto_theme, stderr=True)
+
+        from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
+        io.output = ConsoleOutput(console)
+        io.error_output = ConsoleOutput(error_console)
+
+        return self._io
+
+    def _run(self, io: IO) -> int:
+        self._configure_global_options(io)
+
+        with directory(self._working_directory):
+            exit_code: int = 1
+
+            try:
+                exit_code = super()._run(io)
+            except BalotoRuntimeError as e:
+                io.write_error_line("")
+                e.write(io)
+                io.write_error_line("")
+            except CleoCommandNotFoundError as e:
+                command = self._get_command_name(io)
+
+                if command is not None and (
+                        message := COMMAND_NOT_FOUND_MESSAGES.get(command)
+                ):
+                    io.write_error_line("")
+                    io.write_error_line(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
+                    io.write_error_line(message)
+                    return 1
+
+                if command is not None and command in self.get_namespaces():
+                    sub_commands = []
+
+                    for key in self._commands:
+                        if key.startswith(f"{command} "):
+                            sub_commands.append(key)
+
+                    io.write_error_line(
+                        f"The requested command does not exist in the <c1>{command}</> namespace."
+                    )
+                    suggested_names = find_similar_names(command, sub_commands)
+                    self._error_write_command_suggestions(
+                        io, suggested_names, f"#{command}"
+                    )
+                    return 1
+
+                if command is not None:
+                    suggested_names = find_similar_names(
+                        command, list(self._commands.keys())
+                    )
+                    io.write_error_line(
+                        f"The requested command <c1>{command}</> does not exist."
+                    )
+                    self._error_write_command_suggestions(io, suggested_names)
+                    return 1
+
+                raise e
+
+        return exit_code
+
+    def _error_write_command_suggestions(
+            self, io: IO, suggested_names: list[str], doc_tag: str | None = None
+    ) -> None:
+        if suggested_names:
+            suggestion_lines = [
+                f"<c1>{name.replace(' ', '</> <b>', 1)}</>: {self._commands[name].description}"
+                for name in suggested_names
+            ]
+            suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
+            io.write_error_line(
+                f"\n<error>Did you mean one of these perhaps?</>{suggestions}"
+            )
+
+        io.write_error_line(
+            "\n<b>Documentation: </>"
+            f"<info>https://python-poetry.org/docs/cli/{doc_tag or ''}</>"
+        )
+
+    def _configure_global_options(self, io: IO) -> None:
+        """
+        Configures global options for the application by setting up the relevant
+        directories, disabling plugins or cache, and managing the working and
+        project directories. This method ensures that all directories are valid
+        paths and handles the resolution of the project directory relative to the
+        working directory if necessary.
+
+        :param io: The IO instance whose input and options are being read.
+        :return: Nothing.
+        """
+        self._disable_plugins = io.input.option("no-plugins")
+        self._disable_cache = io.input.option("no-cache")
+
+        # we use ensure_path for the directories to make sure these are valid paths
+        # this will raise an exception if the path is invalid
+        self._working_directory = ensure_path(
+            io.input.option("directory") or Path.cwd(), is_directory=True
+        )
+
+        self._project_directory = io.input.option("project")
+        if self._project_directory is not None:
+            self._project_directory = Path(self._project_directory)
+            self._project_directory = ensure_path(
+                self._project_directory
+                if self._project_directory.is_absolute()
+                else self._working_directory.joinpath(self._project_directory).resolve(
+                    strict=False
+                ),
+                is_directory=True,
+            )
+
+    def _sort_global_options(self, io: IO) -> None:
+        """
+        Sorts global options of the provided IO instance according to the
+        definition of the available options, reordering and parsing arguments
+        to ensure consistency in input handling.
+
+        The function interprets the options and their corresponding values
+        using an argument parser, constructs a sorted list of tokens, and
+        recreates the input with the rearranged sequence while maintaining
+        compatibility with the initially provided input stream.
+
+        If using in conjunction with `_configure_run_command`, it is recommended that
+        it be called first in order to correctly handling cases like
+        `poetry run -V python -V`.
+
+        :param io: The IO instance whose input and options are being processed
+                   and reordered.
+        :return: Nothing.
+        """
+        original_input = cast("ArgvInput", io.input)
+        # noinspection PyProtectedMember
+        tokens: list[str] = original_input._tokens
+
+        parser = argparse.ArgumentParser(add_help=False)
+
+        for option in self.definition.options:
+            parser.add_argument(
+                f"--{option.name}",
+                *([f"-{option.shortcut}"] if option.shortcut else []),
+                action="store_true" if option.is_flag() else "store",
+            )
+
+        args, remaining_args = parser.parse_known_args(tokens)
+
+        tokens = []
+        for option in self.definition.options:
+            key = option.name.replace("-", "_")
+            value = getattr(args, key, None)
+
+            if value is not None:
+                if value:  # is truthy
+                    tokens.append(f"--{option.name}")
+
+                if option.accepts_value():
+                    tokens.append(str(value))
+
+        sorted_input = ArgvInput([self._name or "", *tokens, *remaining_args])
+
+        # this is required to ensure stdin is transferred
+        sorted_input.stream = original_input.stream
+
+        # this is required as cleo internally checks for `io.input._interactive`
+        # when configuring io, and cleo's test applications overrides this attribute
+        # explicitly causing test setups to fail
+        sorted_input.interactive = io.input.interactive
+
+        with suppress(CleoError):
+            sorted_input.bind(self.definition)
+
+        io.input = sorted_input
+
+
+    def _configure_io(self, io: IO) -> None:
+        self._sort_global_options(io)
+        super()._configure_io(io)
 
 
 def register_command_loggers(event: Event, event_name: str, _: EventDispatcher) -> None: ...

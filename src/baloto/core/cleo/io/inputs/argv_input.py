@@ -25,15 +25,6 @@ class ArgvInput(Input):
     def __init__(
         self, argv: list[str] | None = None, definition: Definition | None = None
     ) -> None:
-
-        logging.debug("debug")
-        logger.debug("debug")
-        logging.info("info")
-        logger.info("info")
-        logging.warning("warning")
-        logger.warning("warning")
-        logging.error("error")
-        logger.error("error")
         if argv is None:
             argv = sys.argv
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -27,41 +28,28 @@ class Type(Enum):
     PLAIN = 4
 
 
-class Output:
+class Output(ABC):
     def __init__(
         self,
-        verbosity: Verbosity = Verbosity.NORMAL,
-        decorated: bool = False,
-        formatter: Formatter | None = None,
+        verbosity: Verbosity = Verbosity.NORMAL
     ) -> None:
         self._verbosity: Verbosity = verbosity
-        self._formatter = formatter or Formatter()
-        self._formatter.decorated(decorated)
-
         self._section_outputs: list[SectionOutput] = []
-
-    @property
-    def formatter(self) -> Formatter:
-        return self._formatter
 
     @property
     def verbosity(self) -> Verbosity:
         return self._verbosity
 
-    def set_formatter(self, formatter: Formatter) -> None:
-        self._formatter = formatter
+    @verbosity.setter
+    def verbosity(self, verbosity: Verbosity) -> None:
+        self._verbosity = verbosity
 
-    def is_decorated(self) -> bool:
-        return self._formatter.is_decorated()
-
-    def decorated(self, decorated: bool = True) -> None:
-        self._formatter.decorated(decorated)
-
+    @property
+    @abstractmethod
     def supports_utf8(self) -> bool:
         """
         Returns whether the stream supports the UTF-8 encoding.
         """
-        return True
 
     def set_verbosity(self, verbosity: Verbosity) -> None:
         self._verbosity = verbosity
@@ -113,8 +101,10 @@ class Output:
     def remove_format(self, text: str) -> str:
         return self.formatter.remove_format(text)
 
+    @abstractmethod
     def section(self) -> SectionOutput:
         raise NotImplementedError
 
+    @abstractmethod
     def _write(self, message: str, new_line: bool = False) -> None:
         raise NotImplementedError
