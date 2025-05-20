@@ -15,6 +15,9 @@ dependencies = [
     "rapidfuzz (>=3.13.0,<4.0.0)"
 ]
 
+[project.urls]
+Repository = "https://github.com/daniv/baloto-colombia.git"
+
 [tool.poetry]
 requires-poetry = ">=2.1"
 packages = [{include = "baloto", from = "src"}]
@@ -34,6 +37,7 @@ classifiers = [
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
+allure-pytest = "^2.14.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -48,5 +52,7 @@ python_functions = ["*_test"]
 norecursedirs = ["src", ".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 addopts = [
-    "-p no:logging"
+    "-p no:logging",
+    "--alluredir", "allure-results",
+    "--clean-alluredir"
 ]
