@@ -1,0 +1,52 @@
+[project]
+name = "baloto"
+version = "2.1.1"
+description = "Applicacion para calcular datos estadisticos en los juegos Miloto y Baloto"
+authors = [
+    {name = "Dani Vainstein",email = "solmarkn@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+keywords = ["cli", "commands", "miloto", "baloto"]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "pendulum (>=3.1.0,<4.0.0)",
+    "rich (>=14.0.0,<15.0.0)",
+    "rapidfuzz (>=3.13.0,<4.0.0)"
+]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{include = "baloto", from = "src"}]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+]
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+minversion = "8.3"
+testpaths = ["tests"]
+python_files = ["tests_*.py"]
+python_functions = ["*_test"]
+norecursedirs = ["src", ".idea", ".pytest_cache"]
+enable_assertion_pass_hook = true
+addopts = [
+    "-p no:logging"
+]
