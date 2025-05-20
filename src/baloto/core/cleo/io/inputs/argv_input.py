@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import sys
 import itertools
 import logging
-from timeit import repeat
-
-from typing import TYPE_CHECKING
+import sys
 from typing import Any
+from typing import TYPE_CHECKING
 
 from baloto.core.cleo.exceptions import CleoNoSuchOptionError
 from baloto.core.cleo.exceptions import CleoRuntimeError
 from baloto.core.cleo.io.inputs.input import Input
-
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.definition import Definition
@@ -25,6 +22,10 @@ class ArgvInput(Input):
     def __init__(
         self, argv: list[str] | None = None, definition: Definition | None = None
     ) -> None:
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7b57a141afe8f99f7baeb1f96d0ea8f96a2b0fe5
         if argv is None:
             argv = sys.argv
 

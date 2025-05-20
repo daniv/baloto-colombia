@@ -8,14 +8,9 @@ if TYPE_CHECKING:
 
 
 class Poetry:
-    def __init__(self, cwd: Path, io: IO):
-        poetry_file = self._locate_pyproject(cwd)
-        self._pyproject = self._read_toml_file(poetry_file)
-        self._io = io
-
-    @property
-    def pyproject(self) -> dict[str, Any]:
-        return self._pyproject
+    def __init__(self):
+        poetry_file = self._locate_pyproject()
+        self.pyroject = self._read_toml_file(poetry_file)
 
     @staticmethod
     def _locate_pyproject(cwd: Path | None = None) -> Path:

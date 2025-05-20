@@ -34,6 +34,7 @@ from baloto.core.cleo.io.outputs.null_output import NullOutput
 from baloto.core.cleo.io.outputs.output import Verbosity
 from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
 
+
 # from core.cleo.terminal import Terminal
 # from core.cleo.ui.ui import UI
 
@@ -45,7 +46,6 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.loaders.command_loader import CommandLoader
     from rich.console import ModuleType
-
 
 class Application:
     """

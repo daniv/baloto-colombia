@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from baloto.core.cleo._utils import strip_tags
-from baloto.core.cleo.formatters.formatter import Formatter
+from baloto.core.cleo.utils import strip_tags
+# from baloto.core.cleo.formatters.formatter import Formatter
 
 
 if TYPE_CHECKING:
@@ -31,18 +31,46 @@ class Type(Enum):
 class Output(ABC):
     def __init__(
         self,
+<<<<<<< HEAD
         verbosity: Verbosity = Verbosity.NORMAL
     ) -> None:
         self._verbosity: Verbosity = verbosity
         self._section_outputs: list[SectionOutput] = []
 
+=======
+        verbosity: Verbosity = Verbosity.NORMAL,
+        decorated: bool = False,
+        # formatter: Formatter | None = None,
+    ) -> None:
+        self._verbosity: Verbosity = verbosity
+        # self._formatter = formatter or Formatter()
+        self._formatter.decorated(decorated)
+
+        self._section_outputs: list[SectionOutput] = []
+
+    # @property
+    # def formatter(self) -> Formatter:
+    #     return self._formatter
+
+>>>>>>> 7b57a141afe8f99f7baeb1f96d0ea8f96a2b0fe5
     @property
     def verbosity(self) -> Verbosity:
         return self._verbosity
 
+<<<<<<< HEAD
     @verbosity.setter
     def verbosity(self, verbosity: Verbosity) -> None:
         self._verbosity = verbosity
+=======
+    # def set_formatter(self, formatter: Formatter) -> None:
+    #     self._formatter = formatter
+
+    # def is_decorated(self) -> bool:
+    #     return self._formatter.is_decorated()
+    #
+    # def decorated(self, decorated: bool = True) -> None:
+    #     self._formatter.decorated(decorated)
+>>>>>>> 7b57a141afe8f99f7baeb1f96d0ea8f96a2b0fe5
 
     @property
     @abstractmethod
