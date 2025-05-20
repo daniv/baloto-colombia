@@ -3,8 +3,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from baloto.core.cleo._utils import strip_tags
-from baloto.core.cleo.formatters.formatter import Formatter
+from baloto.core.cleo.utils import strip_tags
+# from baloto.core.cleo.formatters.formatter import Formatter
 
 
 if TYPE_CHECKING:
@@ -32,30 +32,30 @@ class Output:
         self,
         verbosity: Verbosity = Verbosity.NORMAL,
         decorated: bool = False,
-        formatter: Formatter | None = None,
+        # formatter: Formatter | None = None,
     ) -> None:
         self._verbosity: Verbosity = verbosity
-        self._formatter = formatter or Formatter()
+        # self._formatter = formatter or Formatter()
         self._formatter.decorated(decorated)
 
         self._section_outputs: list[SectionOutput] = []
 
-    @property
-    def formatter(self) -> Formatter:
-        return self._formatter
+    # @property
+    # def formatter(self) -> Formatter:
+    #     return self._formatter
 
     @property
     def verbosity(self) -> Verbosity:
         return self._verbosity
 
-    def set_formatter(self, formatter: Formatter) -> None:
-        self._formatter = formatter
+    # def set_formatter(self, formatter: Formatter) -> None:
+    #     self._formatter = formatter
 
-    def is_decorated(self) -> bool:
-        return self._formatter.is_decorated()
-
-    def decorated(self, decorated: bool = True) -> None:
-        self._formatter.decorated(decorated)
+    # def is_decorated(self) -> bool:
+    #     return self._formatter.is_decorated()
+    #
+    # def decorated(self, decorated: bool = True) -> None:
+    #     self._formatter.decorated(decorated)
 
     def supports_utf8(self) -> bool:
         """

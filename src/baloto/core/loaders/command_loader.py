@@ -9,7 +9,7 @@ from baloto.core.cleo.loaders.factory_command_loader import FactoryCommandLoader
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from core.commands.command import Command
+    from baloto.core.commands.command import Command
 
 
 def load_command(package: str, name: str) -> Callable[[], Command]:

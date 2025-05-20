@@ -54,8 +54,9 @@ python_files = ["tests_*.py"]
 python_functions = ["*_test"]
 norecursedirs = ["src", ".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
+console_output_style = "count"
 addopts = [
     "-p no:logging",
-    "--alluredir", "allure-results",
+    "--alluredir", "tests/allure-results",
     "--clean-alluredir"
 ]

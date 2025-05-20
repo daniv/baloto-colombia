@@ -19,17 +19,17 @@ from baloto.core.cleo.events.console_events import ERROR
 from baloto.core.cleo.events.console_events import TERMINATE
 from baloto.core.cleo.events.console_terminate_event import ConsoleTerminateEvent
 from baloto.core.cleo.exceptions import CleoCommandNotFoundError
-from core.cleo.exceptions import CleoError
-from core.cleo.exceptions import CleoLogicError
-from core.cleo.exceptions import CleoNamespaceNotFoundError
-from core.cleo.exceptions import CleoUserError
-from core.cleo.io.inputs.argument import Argument
-from core.cleo.io.inputs.argv_input import ArgvInput
-from core.cleo.io.inputs.definition import Definition
-from core.cleo.io.inputs.option import Option
-from core.cleo.io.io import IO
-from core.cleo.io.outputs.output import Verbosity
-from core.cleo.io.outputs.stream_output import StreamOutput
+from baloto.core.cleo.exceptions import CleoError
+from baloto.core.cleo.exceptions import CleoLogicError
+from baloto.core.cleo.exceptions import CleoNamespaceNotFoundError
+from baloto.core.cleo.exceptions import CleoUserError
+from baloto.core.cleo.io.inputs.argument import Argument
+from baloto.core.cleo.io.inputs.argv_input import ArgvInput
+from baloto.core.cleo.io.inputs.definition import Definition
+from baloto.core.cleo.io.inputs.option import Option
+from baloto.core.cleo.io.io import IO
+from baloto.core.cleo.io.outputs.output import Verbosity
+from baloto.core.cleo.io.outputs.stream_output import StreamOutput
 
 # from core.cleo.terminal import Terminal
 # from core.cleo.ui.ui import UI
@@ -37,10 +37,10 @@ from core.cleo.io.outputs.stream_output import StreamOutput
 
 if TYPE_CHECKING:
     from baloto.core.cleo.commands.command import Command
-    from core.cleo.events.event_dispatcher import EventDispatcher
-    from core.cleo.io.inputs.input import Input
-    from core.cleo.io.outputs.output import Output
-    from core.cleo.loaders.command_loader import CommandLoader
+    from baloto.core.cleo.events.event_dispatcher import EventDispatcher
+    from baloto.core.cleo.io.inputs.input import Input
+    from baloto.core.cleo.io.outputs.output import Output
+    from baloto.core.cleo.loaders.command_loader import CommandLoader
 
 
 class Application:
@@ -163,7 +163,51 @@ class Application:
         return self._single_command
 
     @property
-    def _default_definition(self) -> Definition: ...
+    def _default_definition(self) -> Definition:
+        return Definition(
+            [
+                Argument(
+                    "command",
+                    required=True,
+                    description="The command to execute.",
+                ),
+                Option(
+                    "--help",
+                    "-h",
+                    flag=True,
+                    description=(
+                        "Display help for the given command. "
+                        "When no command is given display help for "
+                        f"the <info>{self._default_command}</info> command."
+                    ),
+                ),
+                Option(
+                    "--quiet", "-q", flag=True, description="Do not output any message."
+                ),
+                Option(
+                    "--verbose",
+                    "-v|vv|vvv",
+                    flag=True,
+                    description=(
+                        "Increase the verbosity of messages: "
+                        "1 for normal output, 2 for more verbose "
+                        "output and 3 for debug."
+                    ),
+                ),
+                Option(
+                    "--version",
+                    "-V",
+                    flag=True,
+                    description="Display this application version.",
+                ),
+                Option(
+                    "--no-interaction",
+                    "-n",
+                    flag=True,
+                    description="Do not ask any interactive question.",
+                ),
+            ]
+        )
 
     def set_command_loader(self, command_loader: CommandLoader) -> None:
         self._command_loader = command_loader
