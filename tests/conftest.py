@@ -8,18 +8,18 @@ import pytest
 from _pytest import annotations
 import allure_commons
 
-from tests import AllureStepLogger
+# from tests import AllureStepLogger
 
 
-def pytest_addoption(parser: pytest.Parser):
-    """Add a cmdline option --allure-step-log-level."""
-    parser.getgroup("logging").addoption(
-        "--allure-step-log-level",
-        dest="allure_step_log_level",
-        default="debug",
-        metavar="ALLURE_STEP_LEVEL",
-        help="Level of allure.step log messages. 'DEBUG' by default."
-    )
+# def pytest_addoption(parser: pytest.Parser):
+#     """Add a cmdline option --allure-step-log-level."""
+#     parser.getgroup("logging").addoption(
+#         "--allure-step-log-level",
+#         dest="allure_step_log_level",
+#         default="debug",
+#         metavar="ALLURE_STEP_LEVEL",
+#         help="Level of allure.step log messages. 'DEBUG' by default."
+#     )
 
 from rich.console import Console
 
@@ -62,12 +62,14 @@ class IOFormatter(logging.Formatter):
         if not record.exc_info:
             level = record.levelname.lower()
             msg = record.msg
+            func = record.funcName
+            lineno = record.lineno
 
             if record.name in FORMATTERS:
                 msg = FORMATTERS[record.name].format(msg)
             # elif level in self._colors:
             else:
-                msg = f"[{level}]{msg}[/]"
+                msg = f" | {func}.{lineno} | [{level}]{msg}[/]"
 
             record.msg = msg
 
@@ -76,15 +78,16 @@ class IOFormatter(logging.Formatter):
         if not POETRY_FILTER.filter(record):
             # prefix all lines from third-party packages for easier debugging
             formatted = textwrap.indent(
-                formatted, f"[{_log_prefix(record)}] ", lambda line: True
+                formatted, f"[dim bold]\\[{_log_prefix(record)}][/]", lambda line: True
             )
 
         return formatted
 
 
 class ConsoleHandler(logging.Handler):
-    def __init__(self, console: Console) -> None:
+    def __init__(self, console: Console, err_console: Console) -> None:
         self._console = console
+        self._error_console = err_console
 
         super().__init__()
 
@@ -94,10 +97,9 @@ class ConsoleHandler(logging.Handler):
             level = record.levelname.lower()
             err = level in ("warning", "error", "exception", "critical")
             if err:
-                self._io.write_error_line(msg)
+                self._error_console.print(msg)
             else:
                 self._console.print(msg)
-                self._console.print(f"\[mama.papap\] {msg}", highlight=True)
         except Exception:
             self.handleError(record)
 
@@ -132,23 +134,24 @@ miloto_theme = Theme(
         }
     )
 
-@pytest.hookimpl
-def pytest_configure(config: pytest.Config):
-    import sys
-    console = Console(theme=miloto_theme, log_time=False, file=sys.stdout, force_interactive=True)
-    handler = ConsoleHandler(console)
-    handler.setFormatter(IOFormatter())
-
-    # log_format = '%(asctime)s  %(user)-8s %(message)s'
-    logging.basicConfig(level=logging.DEBUG, handlers=[handler])
-    # handler.addFilter(POETRY_FILTER)
-    logger = logging.getLogger(__name__)
-    logger.info("eiririirir")
-
-
-    """Register `allure_step_logger` plugin if `allure_pytest` plugin is registered."""
-    if config.pluginmanager.getplugin('allure_pytest'):
-        allure_commons.plugin_manager.register(AllureStepLogger(config), "allure_step_logger")
+# @pytest.hookimpl
+# def pytest_configure(config: pytest.Config):
+#     import sys
+#     console = Console(theme=miloto_theme, file=sys.stdout, force_interactive=True)
+#     error_console = Console(theme=miloto_theme, stderr=True)
+#     handler = ConsoleHandler(console, error_console)
+#     handler.setFormatter(IOFormatter())
+#
+#     # log_format = '%(asctime)s %(message)s'
+#     logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+#     # handler.addFilter(POETRY_FILTER)
+#     logger = logging.getLogger(__name__)
+#     logger.info("eiririirir")
+#
+#
+#     """Register `allure_step_logger` plugin if `allure_pytest` plugin is registered."""
+#     if config.pluginmanager.getplugin('allure_pytest'):
+#         allure_commons.plugin_manager.register(AllureStepLogger(config), "allure_step_logger")
 
 
 

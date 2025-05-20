@@ -77,22 +77,30 @@ class Input(ABC):
         """
         Reads a line from the input stream.
         """
+        ...
 
     def close(self) -> None:
         """
         Closes the input.
         """
+        ...
 
     def is_closed(self) -> bool:
         """
         Returns whether the input is closed.
         """
+        ...
 
     def bind(self, definition: Definition) -> None:
         """
         Binds the current Input instance with
         the given definition's arguments and options.
         """
+        self._arguments = {}
+        self._options = {}
+        self._definition = definition
+
+        self._parse()
 
     def validate(self) -> None:
         ...

@@ -15,13 +15,13 @@ from typing import cast
 from baloto.core.cleo import helpers
 from baloto.core.cleo._compat import shell_quote
 from baloto.core.cleo.commands.command import Command
-from core.cleo.commands.completions.templates import TEMPLATES
-from core.cleo.exceptions import CleoRuntimeError
+from baloto.core.cleo.commands.completions.templates import TEMPLATES
+from baloto.core.cleo.exceptions import CleoRuntimeError
 
 
 if TYPE_CHECKING:
-    from core.cleo.io.inputs.argument import Argument
-    from core.cleo.io.inputs.option import Option
+    from baloto.core.cleo.io.inputs.argument import Argument
+    from baloto.core.cleo.io.inputs.option import Option
 
 
 class CompletionsCommand(Command):
