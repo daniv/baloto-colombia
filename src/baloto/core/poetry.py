@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
 from pathlib import Path
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from baloto.core.cleo.io.io import IO
 
 
 class Poetry:

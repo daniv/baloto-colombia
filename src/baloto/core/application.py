@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 
 from contextlib import suppress
 from importlib import import_module
@@ -36,7 +37,6 @@ if TYPE_CHECKING:
     from cleo.io.inputs.input import Input
     from cleo.io.outputs.output import Output
     from cleo.io.io import IO
-    from baloto.core.poetry import Poetry
 
 COMMAND_NOT_FOUND_PREFIX_MESSAGE = (
     "Looks like you're trying to use a {application_name} command that is not available."
@@ -65,39 +65,6 @@ class Application(CleoApplication):
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, register_command_loggers)
         self.event_dispatcher = dispatcher
-
-    @property
-    def _default_definition(self) -> Definition:
-        from baloto.core.cleo.io.inputs.option import Option
-
-        definition = super()._default_definition
-
-        definition.add_option(
-            Option(
-                "--project",
-                "-P",
-                flag=False,
-                description=(
-                    "Specify another path as the project root."
-                    " All command-line arguments will be resolved relative to the current working directory."
-                ),
-            )
-        )
-
-        definition.add_option(
-            Option(
-                "--directory",
-                "-C",
-                flag=False,
-                description=(
-                    "The working directory for the Poetry command (defaults to the"
-                    " current working directory). All command-line arguments will be"
-                    " resolved relative to the given directory."
-                ),
-            )
-        )
-
-        return definition
 
 
 def register_command_loggers(event: Event, event_name: str, _: EventDispatcher) -> None: ...

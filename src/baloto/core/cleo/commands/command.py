@@ -10,6 +10,7 @@ from typing import cast
 
 from baloto.core.cleo.exceptions import CleoError
 
+# from baloto_com.core.cleo.formatters.style import Style
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.io.inputs.string_input import StringInput
 from baloto.core.cleo.io.null_io import NullIO
@@ -21,12 +22,13 @@ from baloto.core.cleo.io.outputs.output import Verbosity
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from typing import Literal
+
     from baloto.core.cleo.application import Application
     from baloto.core.cleo.io.inputs.argument import Argument
     from baloto.core.cleo.io.inputs.option import Option
     from baloto.core.cleo.io.io import IO
-
     from rich.text import Text
+    from baloto.core.poetry import Poetry
 
     # from baloto_com.core.cleo.ui.progress_bar import ProgressBar
     # from baloto_com.core.cleo.ui.progress_indicator import ProgressIndicator
@@ -36,22 +38,21 @@ if TYPE_CHECKING:
 
 
 class Command(ABC):
-    arguments: ClassVar[list[Argument]] = []
-    options: ClassVar[list[Option]] = []
-    aliases: ClassVar[list[str]] = []
-    usages: ClassVar[list[str]] = []
-    commands: ClassVar[list[Command]] = []
     name: str | None = None
-
     description = ""
-
     help = ""
-
     enabled = True
     hidden = False
 
+    aliases: ClassVar[list[str]] = []
+    arguments: ClassVar[list[Argument]] = []
+    options: ClassVar[list[Option]] = []
+    usages: ClassVar[list[str]] = []
+    commands: ClassVar[list[Command]] = []
+
     def __init__(self) -> None:
         self._io: IO | None = None
+        self._poetry: Poetry | None = None
         self._definition = Definition()
         self._full_definition: Definition | None = None
         self._application: Application | None = None
@@ -81,7 +82,7 @@ class Command(ABC):
         if not self.help:
             help_text = self.description
 
-        is_single_command = self._application and self._application.is_single_command
+        is_single_command = self._application and self._application.single_command
 
         if self._application:
             current_script = self._application.name
@@ -114,13 +115,6 @@ class Command(ABC):
     def ignore_validation_errors(self, ignore: bool) -> None:
         self._ignore_validation_errors = ignore
 
-    def configure(self) -> None:
-        for argument in self.arguments:
-            self._definition.add_argument(argument)
-
-        for option in self.options:
-            self._definition.add_option(option)
-
     def merge_application_definition(self, merge_args: bool = True) -> None:
         if self._application is None:
             return
@@ -147,12 +141,18 @@ class Command(ABC):
         """
         return self._io.input.option(name)
 
-    @abstractmethod
     def interact(self, io: IO) -> None:
         """
         Interacts with the user.
         """
-        raise NotImplementedError
+        pass
+
+    def configure(self) -> None:
+        for argument in self.arguments:
+            self._definition.add_argument(argument)
+
+        for option in self.options:
+            self._definition.add_option(option)
 
     @abstractmethod
     def handle(self) -> int:
@@ -160,6 +160,9 @@ class Command(ABC):
         Execute the command.
         """
         raise NotImplementedError
+
+    def initialize(self, io: IO) -> None:
+        pass
 
     def setup(self) -> int:
         pass
@@ -234,6 +237,3 @@ class Command(ABC):
             )
 
         return self._synopsis[key]
-
-
-

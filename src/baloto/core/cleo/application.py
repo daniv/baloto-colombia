@@ -4,10 +4,12 @@ import os
 import re
 import sys
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 from typing import final
 from typing import cast
+from typing import Iterable
+
+from rich import Console
 
 from baloto.core.cleo.commands.completions_command import CompletionsCommand
 from baloto.core.cleo.commands.help_command import HelpCommand
@@ -28,8 +30,10 @@ from baloto.core.cleo.io.inputs.argv_input import ArgvInput
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.io.inputs.option import Option
 from baloto.core.cleo.io.io import IO
+from baloto.core.cleo.io.outputs.null_output import NullOutput
 from baloto.core.cleo.io.outputs.output import Verbosity
-from baloto.core.cleo.io.outputs.stream_output import StreamOutput
+from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
+
 
 # from core.cleo.terminal import Terminal
 # from core.cleo.ui.ui import UI
@@ -41,7 +45,7 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.input import Input
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.loaders.command_loader import CommandLoader
-
+    from rich.console import ModuleType
 
 class Application:
     """
@@ -242,9 +246,48 @@ class Application:
         input: Input | None = None,
         output: Output | None = None,
         error_output: Output | None = None,
-    ) -> IO: ...
+    ) -> IO:
+        if input is None:
+            input = ArgvInput()
+            input.strem = sys.stdin
 
-    def render_error(self, error: Exception, io: IO) -> None: ...
+        if output is None:
+            output = NullOutput(sys.stdout)
+
+        if error_output is None:
+            error_output = NullOutput(sys.stderr)
+
+        return IO(input, output, error_output)
+
+    @staticmethod
+    def render_error(
+            *,
+            io: IO,
+            error: Exception,
+            width: int | None = 100,
+            theme: str | None = None,
+            word_wrap: bool = False,
+            suppress: Iterable[str | ModuleType] = (),
+    ) -> None:
+        simple = not io.is_verbose() or isinstance(error, CleoUserError)
+        assert isinstance(io.error_output, ConsoleOutput)
+        if hasattr(io.error_output, "console"):
+            console: Console = io.error_output.console
+
+            if simple:
+                console.print_exception(
+                    width=width, theme=theme, word_wrap=word_wrap, suppress=suppress
+                )
+            else:
+                console: Console = io.error_output.console
+                console.print_exception(
+                    width=width,
+                    word_wrap=word_wrap,
+                    extra_lines=4,
+                    show_locals=True,
+                    theme=theme,
+                    suppress=suppress,
+                )
 
     def _configure_io(self, io: IO) -> None: ...
 
