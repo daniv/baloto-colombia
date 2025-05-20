@@ -34,6 +34,9 @@ classifiers = [
     "Topic :: Software Development",
 ]
 
+[tool.poetry.scripts]
+miloto = 'baloto.miloto.__main__:main'
+baloto = 'baloto.baloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
