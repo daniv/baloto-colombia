@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import sys
+from baloto.baloto.application import Application
+
+
+def main() -> int:
+    exit_code: int = Application().run()
+    return exit_code
 
 
 if __name__ == "__main__":
-    from baloto.application import main
-
     sys.exit(main())

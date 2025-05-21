@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.input import Input
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
+    from rich.console import Console
 
 
 class IO:
@@ -19,6 +20,18 @@ class IO:
         self._input = input
         self._output = output
         self._error_output = error_output
+
+    @property
+    def console(self) -> Console | None:
+        if hasattr(self._output, "console"):
+            return self._output.console
+        return None
+
+    @property
+    def error_console(self) -> Console | None:
+        if hasattr(self._error_output, "console"):
+            return self._error_output.console
+        return None
 
     @property
     def input(self) -> Input:
@@ -46,24 +59,15 @@ class IO:
 
     @property
     def interactive(self) -> bool:
-        return self._input.is_interactive()
+        return self._input.interactive
 
     @interactive.setter
     def interactive(self, interactive: bool = True) -> None:
-        self._input.interactive(interactive)
-
-    @property
-    def decorated(self) -> bool:
-        return self._output.is_decorated()
-
-    @decorated.setter
-    def decorated(self, decorated: bool = True) -> None:
-        self._output.decorated(decorated)
-        self._error_output.decorated(decorated)
+        self._input.interactive = interactive
 
     @property
     def supports_utf8(self) -> bool:
-        return self._output.supports_utf8()
+        return self._output.supports_utf8
 
     def read(self, length: int, default: str = "") -> str:
         """
@@ -75,35 +79,35 @@ class IO:
         Reads a line from the input stream.
         """
 
-    def write_line(
-        self,
-        messages: str | Iterable[str],
-        verbosity: Verbosity = Verbosity.NORMAL,
-        type: OutputType = OutputType.NORMAL,
-    ) -> None: ...
-
-    def write(
-        self,
-        messages: str | Iterable[str],
-        new_line: bool = False,
-        verbosity: Verbosity = Verbosity.NORMAL,
-        type: OutputType = OutputType.NORMAL,
-    ) -> None: ...
-
-    def write_error_line(
-        self,
-        messages: str | Iterable[str],
-        verbosity: Verbosity = Verbosity.NORMAL,
-        type: OutputType = OutputType.NORMAL,
-    ) -> None: ...
-
-    def write_error(
-        self,
-        messages: str | Iterable[str],
-        new_line: bool = False,
-        verbosity: Verbosity = Verbosity.NORMAL,
-        type: OutputType = OutputType.NORMAL,
-    ) -> None: ...
+    # def write_line(
+    #     self,
+    #     messages: str | Iterable[str],
+    #     verbosity: Verbosity = Verbosity.NORMAL,
+    #     type: OutputType = OutputType.NORMAL,
+    # ) -> None: ...
+    #
+    # def write(
+    #     self,
+    #     messages: str | Iterable[str],
+    #     new_line: bool = False,
+    #     verbosity: Verbosity = Verbosity.NORMAL,
+    #     type: OutputType = OutputType.NORMAL,
+    # ) -> None: ...
+    #
+    # def write_error_line(
+    #     self,
+    #     messages: str | Iterable[str],
+    #     verbosity: Verbosity = Verbosity.NORMAL,
+    #     type: OutputType = OutputType.NORMAL,
+    # ) -> None: ...
+    #
+    # def write_error(
+    #     self,
+    #     messages: str | Iterable[str],
+    #     new_line: bool = False,
+    #     verbosity: Verbosity = Verbosity.NORMAL,
+    #     type: OutputType = OutputType.NORMAL,
+    # ) -> None: ...
 
     def overwrite(self, messages: str | Iterable[str]) -> None: ...
 

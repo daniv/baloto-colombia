@@ -11,8 +11,8 @@ keywords = ["cli", "commands", "miloto", "baloto"]
 requires-python = ">=3.12,<4.0"
 dependencies = [
     "pendulum (>=3.1.0,<4.0.0)",
+    "rapidfuzz (>=3.13.0,<4.0.0)",
     "rich (>=14.0.0,<15.0.0)",
-    "rapidfuzz (>=3.13.0,<4.0.0)"
 ]
 
 [project.urls]
@@ -42,6 +42,10 @@ baloto = 'baloto.baloto.__main__:main'
 pytest = "^8.3.5"
 allure-pytest = "^2.14.2"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -60,3 +64,31 @@ addopts = [
     "--alluredir", "tests/allure-results",
     "--clean-alluredir"
 ]
+
+[tool.black]
+line-length = 100
+verbose = true
+
+[tool.baloto]
+description = """
+Baloto es un juego novedoso de tipo loto en línea de suerte y azar,
+donde el jugador por $5.700 apuesta por un gran acumulado multimillonario inicial de $4.000 millones de pesos,
+que se irá acumulando en cada sorteo si no se tiene un ganador.
+
+Jugar Baloto y Revancha es muy fácil:
+- Elige 5 numeros del 1 al 43
+- y una SUPERBALOTA con numeros de 1 a 16
+"""
+min_number = 1
+max_number = 43
+min_balota = 1
+max_balota = 16
+
+[tool.miloto]
+description = """
+MiLoto es una mecánica creada por Baloto para aquellos que se la juegan por cumplir sus sueños,
+donde por solo $4.000 podrán ganar un acumulado desde $120 millones
+Elige tus 5 números de la suerte del 1 al 39
+"""
+min_number = 1
+max_number = 39

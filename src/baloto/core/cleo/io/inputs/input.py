@@ -103,25 +103,52 @@ class Input(ABC):
         self._parse()
 
     def validate(self) -> None:
-        ...
+        missing_arguments = [
+            argument.name
+            for argument in self._definition.arguments
+            if argument.name not in self._arguments and argument.is_required()
+        ]
+
+        if missing_arguments:
+            raise CleoMissingArgumentsError(
+                f'Not enough arguments (missing: "{", ".join(missing_arguments)}")'
+            )
 
     def argument(self, name: str) -> Any:
-        ...
+        if not self._definition.has_argument(name):
+            raise CleoValueError(f'The argument "{name}" does not exist')
+
+        if name in self._arguments:
+            return self._arguments[name]
+
+        return self._definition.argument(name).default
 
     def set_argument(self, name: str, value: Any) -> None:
-        ...
+        if not self._definition.has_argument(name):
+            raise CleoValueError(f'The argument "{name}" does not exist')
+
+        self._arguments[name] = value
 
     def has_argument(self, name: str) -> bool:
-        ...
+        return self._definition.has_argument(name)
 
     def option(self, name: str) -> Any:
-        ...
+        if not self._definition.has_option(name):
+            raise CleoValueError(f'The option "--{name}" does not exist')
+
+        if name in self._options:
+            return self._options[name]
+
+        return self._definition.option(name).default
 
     def set_option(self, name: str, value: Any) -> None:
-        ...
+        if not self._definition.has_option(name):
+            raise CleoValueError(f'The option "--{name}" does not exist')
+
+        self._options[name] = value
 
     def has_option(self, name: str) -> bool:
-        ...
+        return self._definition.has_option(name)
 
     def escape_token(self, token: str) -> str:
         ...

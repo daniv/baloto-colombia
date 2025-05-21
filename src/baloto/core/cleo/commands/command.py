@@ -43,6 +43,7 @@ class Command(ABC):
     help = ""
     enabled = True
     hidden = False
+    style = "command"
 
     aliases: ClassVar[list[str]] = []
     arguments: ClassVar[list[Argument]] = []
