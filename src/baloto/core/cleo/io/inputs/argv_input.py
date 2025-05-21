@@ -22,10 +22,6 @@ class ArgvInput(Input):
     def __init__(
         self, argv: list[str] | None = None, definition: Definition | None = None
     ) -> None:
-<<<<<<< HEAD
-=======
-
->>>>>>> 7b57a141afe8f99f7baeb1f96d0ea8f96a2b0fe5
         if argv is None:
             argv = sys.argv
 
@@ -45,7 +41,7 @@ class ArgvInput(Input):
     @property
     def first_argument(self) -> str | None:
         is_option = False
-        for i, token in zip(itertools.count(start=1, step=1), self._tokens):
+        for i, token in zip(itertools.count(start=0, step=1), self._tokens):
             eq_tokens = list(itertools.takewhile(lambda t: token.startswith("-"), self._tokens))
             if eq_tokens:
                 if "=" in token or len(self._tokens) == (i + 1):

@@ -7,7 +7,7 @@ from dataclasses import InitVar
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-from cleo.exceptions import CleoError
+from baloto.core.cleo.exceptions import CleoError
 
 from baloto.core.utils.compat import decode
 
@@ -47,7 +47,7 @@ class ConsoleMessage:
 
     def wrap(self, tag: str) -> ConsoleMessage:
         if self.text:
-            self.text = f"<{tag}>{self.text}</>"
+            self.text = f"[{tag}]{self.text}[/]"
         return self
 
     def indent(self, indent: str) -> ConsoleMessage:
@@ -65,7 +65,7 @@ class ConsoleMessage:
             return self
 
         if self.text:
-            section = [f"<b>{title}:</>"] if title else []
+            section = [f"[b]{title}:[/]"] if title else []
             section.extend(self.text.splitlines())
             self.text = f"\n{indent}".join(section).strip()
 
@@ -111,12 +111,10 @@ class PrettyCalledProcessError:
             "Errors", indent
         )
         self.command = (
-            shlex.join(exception.cmd)
-            if isinstance(exception.cmd, list)
-            else exception.cmd
+            shlex.join(exception.cmd) if isinstance(exception.cmd, list) else exception.cmd
         )
         self.command_message = ConsoleMessage(
-            f"You can test the failed command by executing:\n\n    <c1>{self.command}</c1>",
+            f"You can test the failed command by executing:\n\n    [command]{self.command}[/]",
             debug=False,
         )
 
@@ -143,11 +141,10 @@ class BalotoRuntimeError(BalotoConsoleError):
         to write.
         """
         if text := self.get_text(debug=io.is_verbose(), strip=False):
-            io.write_error_line(text)
+            text = f"[error]{text}[/error]"
+            io.error_console.print(text)
 
-    def get_text(
-        self, debug: bool = False, indent: str = "", strip: bool = False
-    ) -> str:
+    def get_text(self, debug: bool = False, indent: str = "", strip: bool = False) -> str:
         """
         Convert the error messages to a formatted string. All empty messages
         are ignored along with debug level messages if `debug` is `False`.
@@ -170,8 +167,10 @@ class BalotoRuntimeError(BalotoConsoleError):
             text += f"{indent}{message_text}\n{indent}\n"
 
         if has_skipped_debug:
+            verbosity = "[switch]-v|-vv|-vvv[/]"
             message = ConsoleMessage(
-                f"{indent}You can also run your <c1>poetry</> command with <c1>-v</> to see more information.\n{indent}\n"
+                f"{indent}You can also run your [c1]poetry[/] command with {verbosity}, "
+                f"to see more information.\n{indent}\n"
             )
             text += message.stripped if strip else message.text
 
@@ -204,7 +203,10 @@ class BalotoRuntimeError(BalotoConsoleError):
             ConsoleMessage(
                 "\n".join(info or []),
                 debug=False,
-            ).wrap("info"),
+            ).
+            make_section(f"Exception message")
+            .indent("    - ")
+            .wrap("error"),
         ]
 
         if isinstance(exception, CalledProcessError):
