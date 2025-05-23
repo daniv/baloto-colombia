@@ -241,3 +241,5 @@ fabric.properties
 # allure
 tests/allure-results/
 tests/allure-report/
+
+resources/

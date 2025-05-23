@@ -15,13 +15,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class ArgvInput(Input):
     """
     Represents an input coming from the command line.
     """
-    def __init__(
-        self, argv: list[str] | None = None, definition: Definition | None = None
-    ) -> None:
+
+    def __init__(self, argv: list[str] | None = None, definition: Definition | None = None) -> None:
         if argv is None:
             argv = sys.argv
 
@@ -69,13 +69,13 @@ class ArgvInput(Input):
 
     def has_parameter_option(self, values: str | list[str], only_params: bool = False) -> bool:
         """
-         Returns true if the raw parameters (not parsed) contain a value.
-         """
+        Returns true if the raw parameters (not parsed) contain a value.
+        """
         if not isinstance(values, list):
             values = [values]
 
         for token in self._tokens:
-            rr = list(itertools.filterfalse(lambda t : only_params and t == "--", self._tokens))
+            rr = list(itertools.filterfalse(lambda t: only_params and t == "--", self._tokens))
             if only_params and token == "--":
                 return False
 
@@ -87,7 +87,9 @@ class ArgvInput(Input):
 
         return False
 
-    def parameter_option(self, values: str | list[str], default: Any = False, only_params: bool = False) -> Any:
+    def parameter_option(
+        self, values: str | list[str], default: Any = False, only_params: bool = False
+    ) -> Any:
         if not isinstance(values, list):
             values = [values]
 
@@ -149,8 +151,8 @@ class ArgvInput(Input):
         if len(name) > 1:
             shortcut = name[0]
             if (
-                    self._definition.has_shortcut(shortcut)
-                    and self._definition.option_for_shortcut(shortcut).accepts_value()
+                self._definition.has_shortcut(shortcut)
+                and self._definition.option_for_shortcut(shortcut).accepts_value()
             ):
                 # An option with a value and no space
                 self._add_short_option(shortcut, name[1:])
@@ -168,9 +170,7 @@ class ArgvInput(Input):
 
             option = self._definition.option_for_shortcut(shortcut)
             if option.accepts_value():
-                self._add_long_option(
-                    option.name, name[i + 1:] if i < length - 1 else None
-                )
+                self._add_long_option(option.name, name[i + 1 :] if i < length - 1 else None)
 
                 break
 
@@ -181,7 +181,7 @@ class ArgvInput(Input):
 
         pos = name.find("=")
         if pos != -1:
-            value = name[pos + 1:]
+            value = name[pos + 1 :]
             if not value:
                 self._parsed.insert(0, value)
 
@@ -199,8 +199,8 @@ class ArgvInput(Input):
             self._arguments[argument.name] = [token] if argument.is_list() else token
         # If the last argument is a list, append the token to it
         elif (
-                self._definition.has_argument(last_argument)
-                and self._definition.argument(last_argument).is_list()
+            self._definition.has_argument(last_argument)
+            and self._definition.argument(last_argument).is_list()
         ):
             argument = self._definition.argument(last_argument)
             self._arguments[argument.name].append(token)
@@ -223,9 +223,7 @@ class ArgvInput(Input):
                 else:
                     message = f"Too many arguments, expected arguments {all_names}"
             elif command_name:
-                message = (
-                    f'No arguments expected for "{command_name}" command, got "{token}"'
-                )
+                message = f'No arguments expected for "{command_name}" command, got "{token}"'
             else:
                 message = f'No arguments expected, got "{token}"'
 
@@ -235,9 +233,7 @@ class ArgvInput(Input):
         if not self._definition.has_shortcut(shortcut):
             raise CleoNoSuchOptionError(f'The option "-{shortcut}" does not exist')
 
-        self._add_long_option(
-            self._definition.option_for_shortcut(shortcut).name, value
-        )
+        self._add_long_option(self._definition.option_for_shortcut(shortcut).name, value)
 
     def _add_long_option(self, name: str, value: Any) -> None:
         if not self._definition.has_option(name):
@@ -271,5 +267,3 @@ class ArgvInput(Input):
             self._options[name].append(value)
         else:
             self._options[name] = value
-
-

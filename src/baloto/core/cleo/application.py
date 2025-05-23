@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from rich.console import ModuleType
     from rich.console import Console
 
+
 class Application:
     """
     An Application is the container for a collection of commands.
@@ -77,6 +78,11 @@ class Application:
         self._initialized = False
         self._event_dispatcher: EventDispatcher | None = None
         self._command_loader: CommandLoader | None = None
+
+    @staticmethod
+    def is_pydevd_mode() -> bool:
+        pydevd = sys.modules.get("pydevd")
+        return pydevd is not None
 
     @property
     def name(self) -> str:
@@ -196,9 +202,7 @@ class Application:
                         f"the [info]{self._default_command}[/info] command."
                     ),
                 ),
-                Option(
-                    "--quiet", "-q", flag=True, description="Do not output any message."
-                ),
+                Option("--quiet", "-q", flag=True, description="Do not output any message."),
                 Option(
                     "--verbose",
                     "-v|vv|vvv",
@@ -285,9 +289,7 @@ class Application:
         if not self._command_loader:
             return False
 
-        return bool(
-            self._command_loader.has(name) and self.add(self._command_loader.get(name))
-        )
+        return bool(self._command_loader.has(name) and self.add(self._command_loader.get(name)))
 
     def get_namespaces(self) -> list[str]: ...
 
@@ -306,9 +308,7 @@ class Application:
         if self._command_loader:
             all_commands += self._command_loader.names
 
-        all_commands += [
-            name for name, command in self._commands.items() if not command.hidden
-        ]
+        all_commands += [name for name, command in self._commands.items() if not command.hidden]
 
         raise CleoCommandNotFoundError(name, all_commands)
 
@@ -335,9 +335,9 @@ class Application:
         if self._command_loader:
             for name in self._command_loader.names:
                 if (
-                        name not in commands
-                        and namespace == self.extract_namespace(name, name.count(" ") + 1)
-                        and self.has(name)
+                    name not in commands
+                    and namespace == self.extract_namespace(name, name.count(" ") + 1)
+                    and self.has(name)
                 ):
                     commands[name] = self.get(name)
 
@@ -453,7 +453,7 @@ class Application:
                     break
 
             if index is not None:
-                del argv[index + 1: index + 1 + name.count(" ")]
+                del argv[index + 1 : index + 1 + name.count(" ")]
 
             stream = io.input.stream
             interactive = io.input.interactive
@@ -527,13 +527,13 @@ class Application:
 
     @staticmethod
     def render_error(
-            *,
-            io: IO,
-            error: Exception,
-            width: int | None = 100,
-            theme: str | None = None,
-            word_wrap: bool = False,
-            suppress: Iterable[str | ModuleType] = (),
+        *,
+        io: IO,
+        error: Exception,
+        width: int | None = 100,
+        theme: str | None = None,
+        word_wrap: bool = False,
+        suppress: Iterable[str | ModuleType] = (),
     ) -> None:
         simple = not io.is_verbose() or isinstance(error, CleoUserError)
         assert isinstance(io.error_output, ConsoleOutput)
@@ -557,9 +557,7 @@ class Application:
 
     def _configure_io(self, io: IO) -> None:
         if io.input.has_parameter_option(["--no-interaction", "-n"], True) or (
-                io.input.interactive is None
-                and io.input.stream
-                and not io.input.stream.isatty()
+            io.input.interactive is None and io.input.stream and not io.input.stream.isatty()
         ):
             io.interactive = False
 
@@ -574,9 +572,9 @@ class Application:
             elif io.input.has_parameter_option("-vv", True):
                 io.set_verbosity(Verbosity.VERY_VERBOSE)
                 shell_verbosity = 2
-            elif io.input.has_parameter_option(
-                    "-v", True
-            ) or io.input.has_parameter_option("--verbose", only_params=True):
+            elif io.input.has_parameter_option("-v", True) or io.input.has_parameter_option(
+                "--verbose", only_params=True
+            ):
                 io.set_verbosity(Verbosity.VERBOSE)
                 shell_verbosity = 1
 

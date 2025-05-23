@@ -11,7 +11,7 @@ from baloto.core.cleo.io.io import IO
 
 if TYPE_CHECKING:
     from baloto.core.application import Application
-    from baloto.core.poetry import Poetry
+    from baloto.core.poetry.poetry import Poetry
 
 
 class Command(CleoCommand, ABC):
@@ -21,7 +21,7 @@ class Command(CleoCommand, ABC):
     @property
     def poetry(self) -> Poetry:
         if self._poetry is None:
-            return self.application.poetry
+            return self.get_application().poetry
 
         return self._poetry
 
@@ -47,5 +47,3 @@ class Command(CleoCommand, ABC):
             return super().option(name)
         except CleoValueError:
             return default
-
-

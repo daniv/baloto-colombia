@@ -31,4 +31,3 @@ class ListCommand(CleoCommand):
         TextDescriptor().describe(self._io, self.application, namespace=self.argument("namespace"))
 
         return 0
-

@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from rich.console import RenderableType
 
 
-
 class TextDescriptor(Descriptor):
 
     def _describe_argument(self, argument: Argument, **options: Any) -> list[RenderableType]:
@@ -164,7 +163,9 @@ class TextDescriptor(Descriptor):
         described_namespace = options.get("namespace")
         description = ApplicationDescription(application, namespace=described_namespace)
 
-        self._console.print("[dark_orange]Usage:[/] command \\[options] \\[arguments]", justify="left")
+        self._console.print(
+            "[dark_orange]Usage:[/] command \\[options] \\[arguments]", justify="left"
+        )
         self._console.line(1)
         self._describe_definition(Definition(application.definition.options), **options)
 
@@ -200,9 +201,7 @@ class TextDescriptor(Descriptor):
             table = Table(highlight=True, box=None, show_header=False)
             for name in namespace["commands"]:
                 command = commands[name]
-                command_aliases = (
-                    _get_command_aliases_text(command) if command.name == name else ""
-                )
+                command_aliases = _get_command_aliases_text(command) if command.name == name else ""
                 table.add_row(Text(name, style="command"), command_aliases, command.description)
 
             panel = Panel(table, border_style="dim", title=title, title_align="left")
@@ -245,6 +244,7 @@ def _calculate_total_width_for_options(options: list[Option]) -> int:
         total_width = max(total_width, name_length)
 
     return total_width
+
 
 def _get_command_aliases_text(command: Command) -> str:
     aliases = command.aliases

@@ -79,17 +79,14 @@ class Poetry(BasePoetry):
         return self._locker
 
     @classmethod
-    def create_poetry(
-        cls,
-        cwd: Path | None = None,
-        io: IO | None = None
-    ) -> Poetry:
+    def create_poetry(cls, cwd: Path | None = None, io: IO | None = None) -> Poetry:
         if io is None:
             io = NullIO()
 
         base_poetry = super().create_poetry(cwd=cwd)
         poetry_file = base_poetry.pyproject_path
         from baloto.core.poetry.locker import Locker
+
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)
 
         poetry = Poetry(poetry_file, locker, io)
@@ -111,17 +108,21 @@ class Poetry(BasePoetry):
                 "Error: [c1]poetry.lock[/] file not found. Run [command]poetry lock[/] to create it."
             )
             raise BalotoRuntimeError(
-                reason=f"not self.locker.is_locked() return False",
-                messages=[message],
-                exit_code=1
+                reason=f"not self.locker.is_locked() return False", messages=[message], exit_code=1
             )
 
         import shlex
+
         command_line = "poetry show --top-level --latest --no-ansi"
         args = shlex.split(command_line)
         try:
             result = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True, check=True
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                shell=True,
+                check=True,
             )
             out_list = list(filter(lambda x: x != "", result.stdout.split("\n")))
 
@@ -129,10 +130,12 @@ class Poetry(BasePoetry):
                 filtered = list(filter(lambda da: da != "", x.split(" ")))
                 return filtered[0], filtered[2]
 
-            names_and_latest = list(map( lambda x: name_latest(x), out_list))
+            names_and_latest = list(map(lambda x: name_latest(x), out_list))
             names = list(map(lambda x: x[0], names_and_latest))
 
-            packages = list(filter(lambda x: x.get("name") in names, self.locker.lock_data.get("package")))
+            packages = list(
+                filter(lambda x: x.get("name") in names, self.locker.lock_data.get("package"))
+            )
             for name, latest in names_and_latest:
                 pack = next(filter(lambda x: x.get("name") == name, packages), {})
                 if pack:
@@ -145,8 +148,9 @@ class Poetry(BasePoetry):
             raise BalotoRuntimeError.create(
                 reason=f"Failed to execute subprocess: [command]{command_line}[/]",
                 exception=e,
-                info=[str(e), e.stderr]
+                info=[str(e), e.stderr],
             )
+
 
 # class cPoetry:
 #     def __init__(self, cwd: Path, io: IO):

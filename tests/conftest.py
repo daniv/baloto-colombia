@@ -5,21 +5,8 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from _pytest import annotations
-import allure_commons
 
 # from tests import AllureStepLogger
-
-
-# def pytest_addoption(parser: pytest.Parser):
-#     """Add a cmdline option --allure-step-log-level."""
-#     parser.getgroup("logging").addoption(
-#         "--allure-step-log-level",
-#         dest="allure_step_log_level",
-#         default="debug",
-#         metavar="ALLURE_STEP_LEVEL",
-#         help="Level of allure.step log messages. 'DEBUG' by default."
-#     )
 
 from rich.console import Console
 
@@ -32,6 +19,7 @@ from rich.style import Style
 class Formatter(ABC):
     @abstractmethod
     def format(self, msg: str) -> str: ...
+
 
 class BuilderLogFormatter(Formatter):
     def format(self, msg: str) -> str:
@@ -50,6 +38,7 @@ class BuilderLogFormatter(Formatter):
 
         return msg
 
+
 FORMATTERS = {
     "poetry.core.masonry.builders.builder": BuilderLogFormatter(),
     "poetry.core.masonry.builders.sdist": BuilderLogFormatter(),
@@ -57,6 +46,8 @@ FORMATTERS = {
 }
 
 POETRY_FILTER = logging.Filter(name="poetry")
+
+
 class IOFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         if not record.exc_info:
@@ -103,36 +94,34 @@ class ConsoleHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+
 from rich.theme import Theme
 
 miloto_theme = Theme(
-        {
-            "error": Style(color="red", bold=True),
-            "warning": Style(color="dark_goldenrod", bold=True),
-            "info": Style(color="blue", bold=False),
-            "debug": Style(bold=False, dim=True),
-
-
-            "switch": Style(color="green", bold=True),
-            "option": Style(color="bright_cyan", bold=True),
-            "debug.option": Style(color="bright_cyan", bold=True, italic=True),
-            "debug.argument": Style(color="bright_magenta", bold=True, italic=True),
-            "argument": Style(color="bright_magenta", bold=True),
-            "command": Style(color="magenta", bold=True),
-            "prog": Style(color="medium_orchid3", bold=True),
-            "metavar": Style(color="yellow", bold=True),
-            "money": Style(color="green3", bold=True),
-            "report": Style(bold=True, italic=True),
-            "date": Style(color="green", italic=True),
-
-            "help.var": Style(color="gray58", italic=True),
-            "cmd.class": Style(italic=True, color="bright_cyan"),
-            "cmd.def": Style(italic=True, color="bright_cyan"),
-            "cmd.callable": Style(italic=True, color="bright_cyan"),
-            "cmd.var": Style(italic=True, color="bright_cyan"),
-            "debug.hex": Style(italic=True, color="green_yellow"),
-        }
-    )
+    {
+        "error": Style(color="red", bold=True),
+        "warning": Style(color="dark_goldenrod", bold=True),
+        "info": Style(color="blue", bold=False),
+        "debug": Style(bold=False, dim=True),
+        "switch": Style(color="green", bold=True),
+        "option": Style(color="bright_cyan", bold=True),
+        "debug.option": Style(color="bright_cyan", bold=True, italic=True),
+        "debug.argument": Style(color="bright_magenta", bold=True, italic=True),
+        "argument": Style(color="bright_magenta", bold=True),
+        "command": Style(color="magenta", bold=True),
+        "prog": Style(color="medium_orchid3", bold=True),
+        "metavar": Style(color="yellow", bold=True),
+        "money": Style(color="green3", bold=True),
+        "report": Style(bold=True, italic=True),
+        "date": Style(color="green", italic=True),
+        "help.var": Style(color="gray58", italic=True),
+        "cmd.class": Style(italic=True, color="bright_cyan"),
+        "cmd.def": Style(italic=True, color="bright_cyan"),
+        "cmd.callable": Style(italic=True, color="bright_cyan"),
+        "cmd.var": Style(italic=True, color="bright_cyan"),
+        "debug.hex": Style(italic=True, color="green_yellow"),
+    }
+)
 
 # @pytest.hookimpl
 # def pytest_configure(config: pytest.Config):
@@ -154,7 +143,6 @@ miloto_theme = Theme(
 #         allure_commons.plugin_manager.register(AllureStepLogger(config), "allure_step_logger")
 
 
-
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     from _pytest.outcomes import Skipped
@@ -174,7 +162,6 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     return None
 
 
-
 def _log_prefix(record: logging.LogRecord) -> str:
     prefix = _path_to_package(Path(record.pathname)) or record.module
     if record.name != "root":
@@ -189,9 +176,9 @@ def _path_to_package(path: Path) -> str | None:
     # We have to search the entire sys.path because a subsequent path might be
     # a sub path of the first match and thereby a better match.
     for syspath in sys.path:
-        if (
-            prefix and prefix in (p := Path(syspath)).parents and p in path.parents
-        ) or (not prefix and (p := Path(syspath)) in path.parents):
+        if (prefix and prefix in (p := Path(syspath)).parents and p in path.parents) or (
+            not prefix and (p := Path(syspath)) in path.parents
+        ):
             prefix = p
     if not prefix:
         # this is unexpected, but let's play it safe

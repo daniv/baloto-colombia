@@ -7,8 +7,8 @@ from baloto.core.loaders.command_loader import load_command
 from baloto.core.__version__ import __version__
 
 
-COMMANDS = [
-]
+COMMANDS = []
+
 
 class Application(CoreApplication):
     def __init__(self):
@@ -29,7 +29,6 @@ class Application(CoreApplication):
         command_loader = self._command_loader
         assert isinstance(command_loader, CommandLoader)
         return command_loader
-
 
 
 def main() -> int:

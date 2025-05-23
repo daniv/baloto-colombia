@@ -7,7 +7,9 @@ import os
 import sys
 
 from typing import TYPE_CHECKING
-from typing import TextIO, IO
+from typing import TextIO
+from typing import IO
+from typing import Any
 from typing import cast
 
 from baloto.core.cleo.io.outputs.output import Output
@@ -17,6 +19,9 @@ from baloto.core.cleo.io.outputs.output import Verbosity
 if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
     from rich.console import Console
+    from rich.style import Style
+    from rich.console import JustifyMethod
+    from rich.console import OverflowMethod
 
 
 class ConsoleOutput(Output):
@@ -64,5 +69,36 @@ class ConsoleOutput(Output):
     def section(self) -> SectionOutput:
         pass
 
-    def _write(self, message: str, new_line: bool = False) -> None:
-        pass
+    def _write(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+    ) -> None:
+        self._console.print(
+            *objects,
+            sep=sep,
+            end=end,
+            style=style,
+            justify=justify,
+            overflow=overflow,
+            no_wrap=no_wrap,
+            markup=markup,
+            highlight=highlight,
+            width=width,
+            height=height,
+            crop=crop,
+            soft_wrap=soft_wrap,
+            new_line_start=new_line_start,
+        )

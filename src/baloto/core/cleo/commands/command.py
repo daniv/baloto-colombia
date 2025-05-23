@@ -2,39 +2,27 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import cast
+from typing import TYPE_CHECKING
 
 from baloto.core.cleo.exceptions import CleoError
-
-# from baloto_com.core.cleo.formatters.style import Style
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.io.inputs.string_input import StringInput
-from baloto.core.cleo.io.null_io import NullIO
 from baloto.core.cleo.io.outputs.output import Verbosity
 
-# from baloto_com.core.cleo.ui.table_separator import TableSeparator
-
-
 if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
-    from typing import Literal
-
     from baloto.core.cleo.application import Application
     from baloto.core.cleo.io.inputs.argument import Argument
     from baloto.core.cleo.io.inputs.option import Option
     from baloto.core.cleo.io.io import IO
     from rich.text import Text
-    from baloto.core.poetry import Poetry
-
-    # from baloto_com.core.cleo.ui.progress_bar import ProgressBar
-    # from baloto_com.core.cleo.ui.progress_indicator import ProgressIndicator
-    # from baloto_com.core.cleo.ui.question import Question
-    # from baloto_com.core.cleo.ui.table import Rows
-    # from baloto_com.core.cleo.ui.table import Table
+    from rich.text import TextType
+    from rich.style import Style
+    from rich.console import JustifyMethod
+    from rich.console import OverflowMethod
+    from rich.align import AlignMethod
+    from baloto.core.poetry.poetry import Poetry
 
 
 class Command(ABC):
@@ -238,3 +226,126 @@ class Command(ABC):
             )
 
         return self._synopsis[key]
+
+    def write(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+    ) -> None:
+        self._io.write(
+            *objects,
+            sep=sep,
+            end=end,
+            justify=justify,
+            overflow=overflow,
+            style=style,
+            no_wrap=no_wrap,
+            markup=markup,
+            highlight=highlight,
+            width=width,
+            height=height,
+            crop=crop,
+            soft_wrap=soft_wrap,
+            new_line_start=new_line_start,
+            verbosity=verbosity,
+        )
+
+    def write_error(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+    ) -> None:
+        self._io.write_error(
+            *objects,
+            sep=sep,
+            end=end,
+            justify=justify,
+            overflow=overflow,
+            style=style,
+            no_wrap=no_wrap,
+            markup=markup,
+            highlight=highlight,
+            width=width,
+            height=height,
+            crop=crop,
+            soft_wrap=soft_wrap,
+            new_line_start=new_line_start,
+            verbosity=verbosity,
+        )
+
+    def lines(self, count: int = 1) -> None:
+        if hasattr(self._io.output, "console"):
+            self._io.output.console.lines(count)
+
+    def rule(
+        self,
+        title: TextType = "",
+        *,
+        characters: str = "─",
+        style: str | Style = "rule.line",
+        align: AlignMethod = "center",
+    ) -> None:
+        if hasattr(self._io.output, "console"):
+            self._io.output.console.rule(title, characters=characters, style=style, align=align)
+
+    def info(self, text: str) -> None:
+        """
+        Write a string as information output.
+
+        :param text: The line to write
+        :type text: str
+        """
+        self.write(text, style="info")
+
+    def comment(self, text: str) -> None:
+        """
+        Write a string as comment output.
+
+        :param text: The line to write
+        :type text: str
+        """
+        self.write(text, "comment")
+
+    def question(self, text: str) -> None:
+        """
+        Write a string as question output.
+
+        :param text: The line to write
+        :type text: str
+        """
+        self.write(text, "question")
+
+    def overwrite(self, text: str) -> None:
+        """
+        Overwrites the current line.
+
+        It will not add a new line so use line('')
+        if necessary.
+        """
+        ...
