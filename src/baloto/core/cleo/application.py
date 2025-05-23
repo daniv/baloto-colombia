@@ -79,6 +79,11 @@ class Application:
         self._event_dispatcher: EventDispatcher | None = None
         self._command_loader: CommandLoader | None = None
 
+    @staticmethod
+    def is_pydevd_mode() -> bool:
+        pydevd = sys.modules.get("pydevd")
+        return pydevd is not None
+
     @property
     def name(self) -> str:
         return self._name
