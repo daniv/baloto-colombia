@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import re
 import shlex
 
 from dataclasses import InitVar
@@ -41,9 +42,9 @@ class ConsoleMessage:
 
     @property
     def stripped(self) -> str:
-        from baloto.core.cleo.utils import strip_tags
+        from baloto.core.cleo.formatters.formatter import Formatter
 
-        return strip_tags(self.text)
+        return Formatter.strip_styles(self.text)
 
     def wrap(self, tag: str) -> ConsoleMessage:
         if self.text:
@@ -203,8 +204,8 @@ class BalotoRuntimeError(BalotoConsoleError):
             ConsoleMessage(
                 "\n".join(info or []),
                 debug=False,
-            ).
-            make_section(f"Exception message")
+            )
+            .make_section(f"Exception message")
             .indent("    - ")
             .wrap("error"),
         ]

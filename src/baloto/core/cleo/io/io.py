@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from baloto.core.cleo.io.outputs.output import Type as OutputType
 from baloto.core.cleo.io.outputs.output import Verbosity
@@ -13,6 +14,9 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
     from rich.console import Console
+    from rich.style import Style
+    from rich.console import JustifyMethod
+    from rich.console import OverflowMethod
 
 
 class IO:
@@ -73,11 +77,89 @@ class IO:
         """
         Reads the given amount of characters from the input stream.
         """
+        ...
 
     def read_line(self, length: int = -1, default: str = "") -> str:
         """
         Reads a line from the input stream.
         """
+        ...
+
+    def write_error(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+        type: OutputType = OutputType.NORMAL,
+    ) -> None:
+        self._error_output.write(
+            *objects,
+            sep=sep,
+            end=end,
+            justify=justify,
+            overflow=overflow,
+            style=style,
+            no_wrap=no_wrap,
+            markup=markup,
+            highlight=highlight,
+            width=width,
+            height=height,
+            crop=crop,
+            soft_wrap=soft_wrap,
+            new_line_start=new_line_start,
+            verbosity=verbosity,
+            type=type,
+        )
+
+    def write(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+        type: OutputType = OutputType.NORMAL,
+    ) -> None:
+        self._output.write(
+            *objects,
+            sep=sep,
+            end=end,
+            justify=justify,
+            overflow=overflow,
+            style=style,
+            no_wrap=no_wrap,
+            markup=markup,
+            highlight=highlight,
+            width=width,
+            height=height,
+            crop=crop,
+            soft_wrap=soft_wrap,
+            new_line_start=new_line_start,
+            verbosity=verbosity,
+            type=type,
+        )
 
     # def write_line(
     #     self,

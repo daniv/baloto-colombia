@@ -7,13 +7,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
-from pygments.console import dark_colors
-
 from baloto.core.cleo.application import Application as CleoApplication
 from baloto.core.cleo.events.console_events import COMMAND
 from baloto.core.cleo.events.event_dispatcher import EventDispatcher
 from baloto.core.cleo.exceptions import CleoCommandNotFoundError
 from baloto.core.cleo.exceptions import CleoError
+from baloto.core.cleo.formatters.formatter import Formatter
 from baloto.core.cleo.io.inputs.argv_input import ArgvInput
 from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
 from baloto.core.cleo.utils import find_similar_names
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.input import Input
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.io.io import IO
-    from baloto.core.poetry import Poetry
+    from baloto.core.poetry.poetry import Poetry
     from rich.console import Console
 
 COMMAND_NOT_FOUND_PREFIX_MESSAGE = (
@@ -134,9 +133,22 @@ class Application(CleoApplication):
     ) -> IO:
         io = super().create_io(input, output, error_output)
 
-        from rich.theme import Theme
         from rich.style import Style
         from rich.console import Console
+
+        formatter = Formatter()
+        formatter.set_style("switch", Style(color="green", italic=True))
+        formatter.set_style("command", Style(color="magenta", bold=True))
+        formatter.set_style("prog", Style(color="medium_orchid3", bold=True))
+        formatter.set_style("dark_warning", Style(color="dark_goldenrod", bold=True))
+        core_theme = formatter.create_theme()
+
+        console = Console(theme=core_theme, file=sys.stdout, force_interactive=True)
+        err_console = Console(theme=core_theme, stderr=True, style="bold red")
+        io.output = ConsoleOutput(console)
+        io.error_output = ConsoleOutput(err_console)
+
+        self._io = io
 
         """
 
@@ -158,22 +170,7 @@ class Application(CleoApplication):
 light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brightblue",
                 "brightmagenta", "brightcyan", "white"]
         """
-        miloto_theme = Theme(
-            {
-                "error": Style(color="red", bold=True),
-                "info": Style(color="blue"),
-                "warning": Style(color="yellow"),
-                "debug": Style(color="default", dim=True),
-                "success": Style(color="green", bold=True),
-                "comment": Style(color="green", italic=True),
-                "c1": Style(color="cyan", italic=True),
-                # experimental
-                "dark_warning": Style(color="dark_goldenrod", bold=True),
-                "command": Style(color="magenta", bold=True),
-                "switch": Style(color="green", bold=True),
-                "prog": Style(color="medium_orchid3", bold=True),
-            }
-        )
+        return io
         #
         # miloto_theme = Theme(
         #     {
@@ -189,7 +186,6 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
         #         "argument": Style(color="bright_magenta", bold=True),
         #         "command": Style(color="magenta", bold=True),
         #         "prog": Style(color="medium_orchid3", bold=True),
-        #         "metavar": Style(color="yellow", bold=True),
         #         "money": Style(color="green3", bold=True),
         #         "report": Style(bold=True, italic=True),
         #         "date": Style(color="green", italic=True),
@@ -202,14 +198,6 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
         #         "debug.hex": Style(italic=True, color="green_yellow"),
         #     }
         # )
-
-        console = Console(theme=miloto_theme, file=sys.stdout, force_interactive=True)
-        err_console = Console(theme=miloto_theme, stderr=True)
-        io.output = ConsoleOutput(console)
-        io.error_output = ConsoleOutput(err_console)
-
-        self._io = io
-        return io
 
     def _run(self, io: IO) -> int:
         # we do this here and not inside the _configure_io implementation in order
@@ -272,9 +260,9 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                 for name in suggested_names
             ]
             suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
-            io.write_error_line(f"\n[error]Did you mean one of these perhaps?[/]{suggestions}")
+            io.error_console.print(f"\n[error]Did you mean one of these perhaps?[/]{suggestions}")
 
-        io.write_error_line(
+        io.error_console.print(
             "\n<b>Documentation: </>" f"<info>https://python-poetry.org/docs/cli/{doc_tag or ''}</>"
         )
 
@@ -375,4 +363,3 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
 
 
 def register_command_loggers(event: Event, event_name: str, _: EventDispatcher) -> None: ...
-

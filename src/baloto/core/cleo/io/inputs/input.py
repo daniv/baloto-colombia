@@ -150,8 +150,7 @@ class Input(ABC):
     def has_option(self, name: str) -> bool:
         return self._definition.has_option(name)
 
-    def escape_token(self, token: str) -> str:
-        ...
+    def escape_token(self, token: str) -> str: ...
 
     @abstractmethod
     def has_parameter_option(self, values: str | list[str], only_params: bool = False) -> bool:
@@ -161,10 +160,10 @@ class Input(ABC):
 
     @abstractmethod
     def parameter_option(
-            self,
-            values: str | list[str],
-            default: Any = False,
-            only_params: bool = False,
+        self,
+        values: str | list[str],
+        default: Any = False,
+        only_params: bool = False,
     ) -> Any:
         """
         Returns the value of a raw option (not parsed).
@@ -172,7 +171,3 @@ class Input(ABC):
 
     @abstractmethod
     def _parse(self) -> None: ...
-
-
-
-

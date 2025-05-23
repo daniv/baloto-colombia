@@ -40,7 +40,6 @@ baloto = 'baloto.baloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
-allure-pytest = "^2.14.2"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -60,9 +59,7 @@ norecursedirs = ["src", ".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
 addopts = [
-    "-p no:logging",
-    "--alluredir", "tests/allure-results",
-    "--clean-alluredir"
+    "-p no:logging"
 ]
 
 [tool.black]
