@@ -1,20 +1,12 @@
 from __future__ import annotations
 
-import codecs
-import io
-import locale
-import os
-import sys
-
+from typing import Any
+from typing import IO
 from typing import TYPE_CHECKING
 from typing import TextIO
-from typing import IO
-from typing import Any
-from typing import cast
 
 from baloto.core.cleo.io.outputs.output import Output
 from baloto.core.cleo.io.outputs.output import Verbosity
-
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
@@ -28,8 +20,21 @@ class ConsoleOutput(Output):
     def __init__(self, console: Console, verbosity: Verbosity = Verbosity.NORMAL) -> None:
         super().__init__(verbosity)
 
+        self._stream = console.file
         self._console = console
-        self._supports_utf8 = self._get_utf8_support_info()
+        # self._supports_utf8 = self._get_utf8_support_info()
+
+    @property
+    def stream(self) -> TextIO | IO[str]:
+        return self._stream
+
+    def flush(self) -> None:
+        self.console.file.flush()
+
+    def section(self) -> SectionOutput:
+        from baloto.core.cleo.io.outputs.section_output import SectionOutput
+
+        return SectionOutput(self._console, self._section_outputs, verbosity=self.verbosity)
 
     @property
     def console(self) -> Console:
@@ -50,24 +55,6 @@ class ConsoleOutput(Output):
     @property
     def height(self) -> int:
         return self._console.height
-
-    @property
-    def supports_utf8(self) -> bool:
-        return self._supports_utf8
-
-    def _get_utf8_support_info(self) -> bool:
-        """
-        :return: whether the stream supports the UTF-8 encoding.
-        """
-        encoding = self._console.encoding
-
-        try:
-            return codecs.lookup(encoding).name == "utf-8"
-        except LookupError:
-            return True
-
-    def section(self) -> SectionOutput:
-        pass
 
     def _write(
         self,

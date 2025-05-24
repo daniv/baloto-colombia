@@ -23,8 +23,8 @@ class NullOutput(Output):
     def verbosity(self, verbosity: Verbosity) -> None:
         pass
 
-    def supports_utf8(self) -> bool:
-        return True
+    # def supports_utf8(self) -> bool:
+    #     return True
 
     def is_quiet(self) -> bool:
         return True

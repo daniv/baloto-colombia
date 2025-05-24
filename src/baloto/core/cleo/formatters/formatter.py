@@ -19,12 +19,15 @@ class Formatter:
         self._styles: dict[str, Style] = {}
 
         self.set_style("error", Style(color="red", bold=True))
-        self.set_style("warning", Style(color="yellow"))
-        self.set_style("info", Style(color="deep_sky_blue1"))
+        self.set_style("warning", Style(color="orange3", bold=True))
+        self.set_style("info", Style(color="blue"))
         self.set_style("debug", Style(color="default", dim=True))
         self.set_style("success", Style(color="green", bold=True))
         self.set_style("comment", Style(color="green", italic=True))
         self.set_style("c1", Style(color="cyan", italic=True))
+        self.set_style("c2", Style(color="default", bold=True))
+        self.set_style("command", Style(color="magenta", bold=True))
+        self.set_style("note", Style(color="violet", bold=True))
 
         for name, style in (styles or {}).items():
             self.set_style(name, style)
@@ -49,6 +52,10 @@ class Formatter:
         from click._compat import strip_ansi
 
         return strip_ansi(value)
+
+    @staticmethod
+    def remove_format(text: str) -> str:
+        return re.sub(r"\033\[[^m]*m", "", text)
 
     @staticmethod
     def strip_styles(text: str) -> str:

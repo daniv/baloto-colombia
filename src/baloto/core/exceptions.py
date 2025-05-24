@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import re
 import shlex
 
 from dataclasses import InitVar
@@ -11,6 +10,7 @@ from typing import TYPE_CHECKING
 from baloto.core.cleo.exceptions import CleoError
 
 from baloto.core.utils.compat import decode
+from baloto.core.utils.console_message import ConsoleMessage
 
 
 if TYPE_CHECKING:
@@ -23,54 +23,6 @@ class BalotoConsoleError(CleoError):
 
 class GroupNotFoundError(BalotoConsoleError):
     pass
-
-
-@dataclasses.dataclass
-class ConsoleMessage:
-    """
-    Representation of a console message, providing utilities for formatting text
-    with tags, indentation, and sections.
-
-    The ConsoleMessage class is designed to represent text messages that might be
-    displayed in a console or terminal output. It provides features for managing
-    formatted text, such as stripping tags, wrapping text with specific tags,
-    indenting, and creating structured message sections.
-    """
-
-    text: str
-    debug: bool = False
-
-    @property
-    def stripped(self) -> str:
-        from baloto.core.cleo.formatters.formatter import Formatter
-
-        return Formatter.strip_styles(self.text)
-
-    def wrap(self, tag: str) -> ConsoleMessage:
-        if self.text:
-            self.text = f"[{tag}]{self.text}[/]"
-        return self
-
-    def indent(self, indent: str) -> ConsoleMessage:
-        if self.text:
-            self.text = f"\n{indent}".join(self.text.splitlines()).strip()
-            self.text = f"{indent}{self.text}"
-        return self
-
-    def make_section(
-        self,
-        title: str,
-        indent: str = "",
-    ) -> ConsoleMessage:
-        if not self.text:
-            return self
-
-        if self.text:
-            section = [f"[b]{title}:[/]"] if title else []
-            section.extend(self.text.splitlines())
-            self.text = f"\n{indent}".join(section).strip()
-
-        return self
 
 
 @dataclasses.dataclass
@@ -138,12 +90,10 @@ class BalotoRuntimeError(BalotoConsoleError):
 
     def write(self, io: IO) -> None:
         """
-        Write the error text to the provided IO iff there is any text
-        to write.
+        Write the error text to the provided IO iff there is any text to write.
         """
         if text := self.get_text(debug=io.is_verbose(), strip=False):
-            text = f"[error]{text}[/error]"
-            io.error_console.print(text)
+            io.error_output.write(text)
 
     def get_text(self, debug: bool = False, indent: str = "", strip: bool = False) -> str:
         """
@@ -170,7 +120,7 @@ class BalotoRuntimeError(BalotoConsoleError):
         if has_skipped_debug:
             verbosity = "[switch]-v|-vv|-vvv[/]"
             message = ConsoleMessage(
-                f"{indent}You can also run your [c1]poetry[/] command with {verbosity}, "
+                f"{indent}You can also run your [c1]baloto[/] command with {verbosity} "
                 f"to see more information.\n{indent}\n"
             )
             text += message.stripped if strip else message.text
@@ -204,10 +154,7 @@ class BalotoRuntimeError(BalotoConsoleError):
             ConsoleMessage(
                 "\n".join(info or []),
                 debug=False,
-            )
-            .make_section(f"Exception message")
-            .indent("    - ")
-            .wrap("error"),
+            ).wrap("info"),
         ]
 
         if isinstance(exception, CalledProcessError):
@@ -219,6 +166,7 @@ class BalotoRuntimeError(BalotoConsoleError):
                 *messages,
                 error.command_message,
             ]
+
         elif exception is not None and isinstance(exception, Exception):
             messages.insert(
                 0,

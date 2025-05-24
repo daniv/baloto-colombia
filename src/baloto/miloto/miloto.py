@@ -1,4 +1,4 @@
 from __future__ import annotations
 
-class Miloto:
-    ...
+
+class Miloto: ...

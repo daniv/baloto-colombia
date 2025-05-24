@@ -175,13 +175,13 @@ class Application:
     def single_command(self) -> bool:
         return self._single_command
 
-    @property
-    @abstractmethod
-    def console(self) -> Console: ...
-
-    @property
-    @abstractmethod
-    def error_console(self) -> Console: ...
+    # @property
+    # @abstractmethod
+    # def console(self) -> Console: ...
+    #
+    # @property
+    # @abstractmethod
+    # def error_console(self) -> Console: ...
 
     @property
     def _default_definition(self) -> Definition:
@@ -291,7 +291,30 @@ class Application:
 
         return bool(self._command_loader.has(name) and self.add(self._command_loader.get(name)))
 
-    def get_namespaces(self) -> list[str]: ...
+    def get_namespaces(self) -> list[str]:
+        namespaces = []
+        seen = set()
+
+        for command in self.all().values():
+            if command.hidden or not command.name:
+                continue
+
+            for namespace in self._extract_all_namespaces(command.name):
+                if namespace in seen:
+                    continue
+
+                namespaces.append(namespace)
+                seen.add(namespace)
+
+            for alias in command.aliases:
+                for namespace in self._extract_all_namespaces(alias):
+                    if namespace in seen:
+                        continue
+
+                    namespaces.append(namespace)
+                    seen.add(namespace)
+
+        return namespaces
 
     def find_namespace(self, namespace: str) -> str:
         if namespace not in (all_namespaces := self.get_namespaces()):
@@ -515,7 +538,7 @@ class Application:
     ) -> IO:
         if input is None:
             input = ArgvInput()
-            input.strem = sys.stdin
+            input.stream = sys.stdin
 
         if output is None:
             output = NullOutput(sys.stdout)
@@ -605,7 +628,7 @@ class Application:
         return " ".join(parts[:limit])
 
     @staticmethod
-    def _extract_all_namespaces(self, name: str) -> list[str]:
+    def _extract_all_namespaces(name: str) -> list[str]:
         parts = name.split(" ")[:-1]
         namespaces: list[str] = []
 

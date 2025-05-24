@@ -76,17 +76,17 @@ class Application(CleoApplication):
 
         return self._poetry
 
-    @property
-    def console(self) -> Console:
-        if self._console is None:
-            self._console = getattr(self._io.output, "console")
-        return self._console
-
-    @property
-    def error_console(self) -> Console:
-        if self._error_console is None:
-            self._error_console = getattr(self._io.error_output, "console")
-        return self._error_console
+    # @property
+    # def console(self) -> Console:
+    #     if self._console is None:
+    #         self._console = getattr(self._io.output, "console")
+    #     return self._console
+    #
+    # @property
+    # def error_console(self) -> Console:
+    #     if self._error_console is None:
+    #         self._error_console = getattr(self._io.error_output, "console")
+    #     return self._error_console
 
     @property
     def _default_definition(self) -> Definition:
@@ -138,13 +138,12 @@ class Application(CleoApplication):
 
         formatter = Formatter()
         formatter.set_style("switch", Style(color="green", italic=True))
-        formatter.set_style("command", Style(color="magenta", bold=True))
         formatter.set_style("prog", Style(color="medium_orchid3", bold=True))
         formatter.set_style("dark_warning", Style(color="dark_goldenrod", bold=True))
         core_theme = formatter.create_theme()
 
-        console = Console(theme=core_theme, file=sys.stdout, force_interactive=True)
-        err_console = Console(theme=core_theme, stderr=True, style="bold red")
+        console = Console(theme=core_theme, file=sys.stdout, force_interactive=True, soft_wrap=True)
+        err_console = Console(theme=core_theme, stderr=True, style="error", soft_wrap=True)
         io.output = ConsoleOutput(console)
         io.error_output = ConsoleOutput(err_console)
 
@@ -213,16 +212,16 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
             try:
                 exit_code = super()._run(io)
             except BalotoRuntimeError as e:
-                io.error_console.line()
+                io.write_error("")
                 e.write(io)
-                io.error_console.line()
+                io.write_error("")
             except CleoCommandNotFoundError as e:
                 command = self._get_command_name(io)
 
                 if command is not None and (message := COMMAND_NOT_FOUND_MESSAGES.get(command)):
-                    io.error_console.line()
-                    io.error_console.print(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
-                    io.error_console.print(message)
+                    io.write_error("")
+                    io.write_error(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
+                    io.write_error(message)
                     return 1
 
                 if command is not None and command in self.get_namespaces():
@@ -232,7 +231,7 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                         if key.startswith(f"{command} "):
                             sub_commands.append(key)
 
-                    io.error_console.print(
+                    io.write_error(
                         f"The requested command does not exist in the [command]{command}[/] namespace."
                     )
                     suggested_names = find_similar_names(command, sub_commands)
@@ -241,8 +240,8 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
 
                 if command is not None:
                     suggested_names = find_similar_names(command, list(self._commands.keys()))
-                    io.error_console.print(
-                        f"The requested command [command]{command}[/] does not exist."
+                    io.write_error(
+                        f"[c2]The requested command [command]{command}[/] does not exist.[/]"
                     )
                     self._error_write_command_suggestions(io, suggested_names)
                     return 1
@@ -260,10 +259,10 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                 for name in suggested_names
             ]
             suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
-            io.error_console.print(f"\n[error]Did you mean one of these perhaps?[/]{suggestions}")
+            io.write_error(f"\nDid you mean one of these perhaps?{suggestions}")
 
-        io.error_console.print(
-            "\n<b>Documentation: </>" f"<info>https://python-poetry.org/docs/cli/{doc_tag or ''}</>"
+        io.write_error(
+            "\n[b]Documentation: [/]" f"[info]https://python-poetry.org/docs/cli/{doc_tag or ''}[/]"
         )
 
     def _configure_global_options(self, io: IO) -> None:

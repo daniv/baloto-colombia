@@ -46,7 +46,7 @@ sql_statements = [
             accumulated INT NOT NULL
         );""",
     """CREATE UNIQUE INDEX IF NOT EXISTS l_id ON sessions(lottery_id);""",
-    """CREATE UNIQUE INDEX IF NOT EXISTS l_id_date ON sessions(lottery_id, lottery_date);""",
+    """CREATE UNIQUE INDEX IF NOT EXISTS l_date ON sessions(lottery_date);""",
 ]
 
 

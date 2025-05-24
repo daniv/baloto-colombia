@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Any
 
+from baloto.core.cleo.formatters.formatter import Formatter
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
@@ -36,12 +37,12 @@ class Output(ABC):
     def verbosity(self) -> Verbosity:
         return self._verbosity
 
-    @property
-    @abstractmethod
-    def supports_utf8(self) -> bool:
-        """
-        Returns whether the stream supports the UTF-8 encoding.
-        """
+    # @property
+    # @abstractmethod
+    # def supports_utf8(self) -> bool:
+    #     """
+    #     Returns whether the stream supports the UTF-8 encoding.
+    #     """
 
     def set_verbosity(self, verbosity: Verbosity) -> None:
         self._verbosity = verbosity
@@ -103,11 +104,16 @@ class Output(ABC):
     def flush(self) -> None:
         pass
 
+    @staticmethod
+    def remove_format(text: str) -> str:
+        from baloto.core.cleo.formatters.formatter import Formatter
+
+        return Formatter.remove_format(text)
+
     @abstractmethod
     def section(self) -> SectionOutput:
         raise NotImplementedError
 
-    @abstractmethod
     def _write(
         self,
         *objects: Any,
