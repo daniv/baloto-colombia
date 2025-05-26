@@ -27,6 +27,7 @@ You can also display the commands for a specific namespace:
     def handle(self) -> int:
         from baloto.core.cleo.descriptors.text_descriptor import TextDescriptor
 
-        TextDescriptor().describe(self._io, self.application, namespace=self.argument("namespace"))
+        # TextDescriptor().describe(self._io, self.application, namespace=self.argument("namespace"))
+        TextDescriptor().describe(self._io, self.application, namespace=self.argument("chuchu"))
 
         return 0

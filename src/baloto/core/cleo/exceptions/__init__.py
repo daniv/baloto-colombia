@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from baloto.core.cleo.utils import find_similar_names
 
+from rich.panel import Panel
+
 
 class CleoError(Exception):
     """
@@ -92,3 +94,52 @@ class CleoNamespaceNotFoundError(CleoUserError):
             if suggestions:
                 message += "\n\n" + suggestions
         super().__init__(message)
+
+
+class CleoCommandError(Exception):
+    def __init__(self, msg: str, title: str = "", command_name: str = "") -> None:
+        super().__init__(msg)
+        self.msg = msg
+        self.title = title
+        self.command_name = command_name
+
+
+def pretty_print_error(error: CleoCommandError) -> None:
+    from rich import print as rich_print
+
+    rich_print(pretty_error_message(error))
+
+
+def pretty_error_message(error: CleoCommandError) -> Panel:
+    from rich.columns import Columns
+
+    error_col = Columns(
+        [str(error), error.command_name],
+        column_first=True
+    )
+
+    return Panel.fit(
+        error_col,
+        title=error.title if error.title else "Baloto encountered an error.",
+        title_align="left",
+        border_style="red",
+    )
+
+
+def pretty_print_warning(title: str, message: str) -> None:
+    from rich import print as rich_print
+
+
+    # Columns(
+    #     [message, ],
+    #     column_first=
+    # )
+
+    rich_print(
+        Panel.fit(
+            message,
+            title=title,
+            title_align="left",
+            border_style="green",
+        )
+    )
