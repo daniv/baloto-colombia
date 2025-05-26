@@ -143,7 +143,7 @@ class BalotoRuntimeError(BalotoConsoleError):
         """
         if text := self.get_text(debug=io.is_verbose(), strip=False):
             text = f"[error]{text}[/error]"
-            io.error_console.print(text)
+            io.write_error(text)
 
     def get_text(self, debug: bool = False, indent: str = "", strip: bool = False) -> str:
         """

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Any
 
+from baloto.core.cleo.formatters.formatter import Formatter
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
@@ -29,12 +31,8 @@ class Type(Enum):
 
 class Output(ABC):
     def __init__(self, verbosity: Verbosity = Verbosity.NORMAL) -> None:
-        self._verbosity: Verbosity = verbosity
+        self.verbosity: Verbosity = verbosity
         self._section_outputs: list[SectionOutput] = []
-
-    @property
-    def verbosity(self) -> Verbosity:
-        return self._verbosity
 
     @property
     @abstractmethod
@@ -42,21 +40,33 @@ class Output(ABC):
         """
         Returns whether the stream supports the UTF-8 encoding.
         """
-
-    def set_verbosity(self, verbosity: Verbosity) -> None:
-        self._verbosity = verbosity
+        raise NotImplementedError("[c1]supports_utf8[/] is an abstract method")
 
     def is_quiet(self) -> bool:
-        return self._verbosity is Verbosity.QUIET
+        return self.verbosity is Verbosity.QUIET
 
     def is_verbose(self) -> bool:
-        return self._verbosity.value >= Verbosity.VERBOSE.value
+        return self.verbosity.value >= Verbosity.VERBOSE.value
 
     def is_very_verbose(self) -> bool:
-        return self._verbosity.value >= Verbosity.VERY_VERBOSE.value
+        return self.verbosity.value >= Verbosity.VERY_VERBOSE.value
 
     def is_debug(self) -> bool:
-        return self._verbosity is Verbosity.DEBUG
+        return self.verbosity is Verbosity.DEBUG
+
+    def out(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        verbosity: Verbosity = Verbosity.NORMAL
+    ) -> None:
+        if verbosity.value > self.verbosity.value:
+            return
+
+        self._out(
+
+        )
 
     def write(
         self,
@@ -74,15 +84,11 @@ class Output(ABC):
         crop: bool = True,
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
-        verbosity: Verbosity = Verbosity.NORMAL,
-        type: Type = Type.NORMAL,
+        verbosity: Verbosity = Verbosity.NORMAL
     ) -> None:
         if verbosity.value > self.verbosity.value:
             return
 
-        # for message in objects:
-        #     if type is Type.PLAIN:
-        #         message = strip_tags(message)
         self._write(
             *objects,
             sep=sep,
@@ -100,12 +106,21 @@ class Output(ABC):
             new_line_start=new_line_start,
         )
 
-    def flush(self) -> None:
-        pass
-
     @abstractmethod
     def section(self) -> SectionOutput:
-        raise NotImplementedError
+        raise NotImplementedError("[c1]section[/] is an abstract method")
+
+    @staticmethod
+    def strip_ansi(value: str) -> str:
+        from click._compat import strip_ansi
+
+        return strip_ansi(value)
+
+    @staticmethod
+    def remove_format(text: str) -> str:
+        # TODO: test against formatter remove style
+        text = re.sub(r"\033\[[^m]*m", "", text)
+        return text
 
     @abstractmethod
     def _write(
@@ -125,4 +140,20 @@ class Output(ABC):
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
     ) -> None:
-        raise NotImplementedError
+        raise NotImplementedError("[c1]_write[/] is an abstract method")
+
+    @abstractmethod
+    def _clear(self) -> None:
+        raise NotImplementedError("[c1]_clear[/] is an abstract method")
+
+    @abstractmethod
+    def _out(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n"
+    ) -> None:
+        raise NotImplementedError("[c1]_out[/] is an abstract method")
+
+    def clear(self) -> None:
+        self._clear()

@@ -5,12 +5,10 @@ import os
 import re
 import shutil
 import sys
-from abc import abstractmethod
-
-from typing import TYPE_CHECKING
-from typing import final
-from typing import cast
+from types import ModuleType
 from typing import Iterable
+from typing import TYPE_CHECKING
+from typing import cast
 
 from baloto.core.cleo.commands.help_command import HelpCommand
 from baloto.core.cleo.commands.list_command import ListCommand
@@ -30,14 +28,9 @@ from baloto.core.cleo.io.inputs.argv_input import ArgvInput
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.io.inputs.option import Option
 from baloto.core.cleo.io.io import IO
+from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
 from baloto.core.cleo.io.outputs.null_output import NullOutput
 from baloto.core.cleo.io.outputs.output import Verbosity
-from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
-
-
-# from core.cleo.terminal import Terminal
-# from core.cleo.ui.ui import UI
-
 
 if TYPE_CHECKING:
     from baloto.core.cleo.commands.command import Command
@@ -45,7 +38,6 @@ if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.input import Input
     from baloto.core.cleo.io.outputs.output import Output
     from baloto.core.cleo.loaders.command_loader import CommandLoader
-    from rich.console import ModuleType
     from rich.console import Console
 
 
@@ -62,40 +54,40 @@ class Application:
     """
 
     def __init__(self, name: str = "console", version: str = "") -> None:
-        self._name = name
-        self._version = version
+        self.name = name
+        self.description: str = ""
+        self.version = version
+        self.event_dispatcher: EventDispatcher | None = None
+        self.auto_exit = True
+        self.catch_exceptions = True
+        self.single_command = False
+
         self._display_name: str | None = None
-        self._description: str = ""
+
         self._default_command = "list"
-        self._single_command = False
+
         self._commands: dict[str, Command] = {}
         self._running_command: Command | None = None
         self._want_helps = False
         self._definition: Definition | None = None
-        self._catch_exceptions = True
-        self._terminal_size = shutil.get_terminal_size()
-        self._auto_exit = True
-        self._initialized = False
-        self._event_dispatcher: EventDispatcher | None = None
         self._command_loader: CommandLoader | None = None
+
+        self._terminal_size = shutil.get_terminal_size()
+
+        self._initialized = False
 
     @staticmethod
     def is_pydevd_mode() -> bool:
         pydevd = sys.modules.get("pydevd")
         return pydevd is not None
 
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
+    def set_command_loader(self, command_loader: CommandLoader) -> None:
+        self._command_loader = command_loader
 
     @property
     def display_name(self) -> str:
         if self._display_name is None:
-            return re.sub(r"[\s\-_]+", " ", self._name).title()
+            return re.sub(r"[\s\-_]+", " ", self.name).title()
 
         return self._display_name
 
@@ -104,22 +96,10 @@ class Application:
         self._display_name = display_name
 
     @property
-    def description(self) -> str:
-        return self._description
-
-    @property
-    def version(self) -> str:
-        return self._version
-
-    @version.setter
-    def version(self, version: str) -> None:
-        self._version = version
-
-    @property
     def long_version(self) -> str:
-        if self._name:
-            if self._version:
-                return f"[b]{self.display_name}[/] (version [repr.number]{self._version}[/])"
+        if self.name:
+            if self.version:
+                return f"[b]{self.display_name}[/] (version [repr.number]{self.version}[/])"
 
             return f"[b]{self.display_name}[/]"
 
@@ -130,7 +110,7 @@ class Application:
         if self._definition is None:
             self._definition = self._default_definition
 
-        if self._single_command:
+        if self.single_command:
             definition = self._definition
             definition.set_arguments([])
 
@@ -146,42 +126,6 @@ class Application:
     @property
     def help(self) -> str:
         return self.long_version
-
-    @property
-    def event_dispatcher(self) -> EventDispatcher | None:
-        return self._event_dispatcher
-
-    @event_dispatcher.setter
-    def event_dispatcher(self, event_dispatcher: EventDispatcher) -> None:
-        self._event_dispatcher = event_dispatcher
-
-    @property
-    def auto_exits(self) -> bool:
-        return self._auto_exit
-
-    @auto_exits.setter
-    def auto_exits(self, auto_exits: bool = True) -> None:
-        self._auto_exit = auto_exits
-
-    @property
-    def catch_exceptions(self) -> bool:
-        return self._catch_exceptions
-
-    @catch_exceptions.setter
-    def catch_exceptions(self, catch_exceptions: bool = True) -> None:
-        self._catch_exceptions = catch_exceptions
-
-    @property
-    def single_command(self) -> bool:
-        return self._single_command
-
-    @property
-    @abstractmethod
-    def console(self) -> Console: ...
-
-    @property
-    @abstractmethod
-    def error_console(self) -> Console: ...
 
     @property
     def _default_definition(self) -> Definition:
@@ -219,12 +163,8 @@ class Application:
                     flag=True,
                     description="Display this application version.",
                 ),
-                Option(
-                    "--no-interaction",
-                    "-n",
-                    flag=True,
-                    description="Do not ask any interactive question.",
-                ),
+                Option("--no-ansi", flag=True, description="Disable [b]ANSI[/] output."),
+                Option("--ansi", flag=True, description="Force [b]ANSI[/] output."),
             ]
         )
 
@@ -232,9 +172,6 @@ class Application:
     def is_debug_mode() -> bool:
         get_trace = getattr(sys, "gettrace", None)
         return False if get_trace is None else True
-
-    def set_command_loader(self, command_loader: CommandLoader) -> None:
-        self._command_loader = command_loader
 
     def add(self, command: Command) -> Command | None:
         self._init()
@@ -291,7 +228,30 @@ class Application:
 
         return bool(self._command_loader.has(name) and self.add(self._command_loader.get(name)))
 
-    def get_namespaces(self) -> list[str]: ...
+    def get_namespaces(self) -> list[str]:
+        namespaces = []
+        seen = set()
+
+        for command in self.all().values():
+            if command.hidden or not command.name:
+                continue
+
+            for namespace in self._extract_all_namespaces(command.name):
+                if namespace in seen:
+                    continue
+
+                namespaces.append(namespace)
+                seen.add(namespace)
+
+            for alias in command.aliases:
+                for namespace in self._extract_all_namespaces(alias):
+                    if namespace in seen:
+                        continue
+
+                    namespaces.append(namespace)
+                    seen.add(namespace)
+
+        return namespaces
 
     def find_namespace(self, namespace: str) -> str:
         if namespace not in (all_namespaces := self.get_namespaces()):
@@ -365,7 +325,7 @@ class Application:
                 os.dup2(devnull, sys.stdout.fileno())
                 exit_code = 0
             except Exception as e:
-                if not self._catch_exceptions:
+                if not self.catch_exceptions:
                     raise
 
                 width = None if self.is_debug_mode() else self._terminal_size.columns
@@ -376,14 +336,14 @@ class Application:
         except KeyboardInterrupt:
             exit_code = 1
 
-        if self._auto_exit:
+        if self.auto_exit:
             sys.exit(exit_code)
 
         return exit_code
 
     def _run(self, io: IO) -> int:
         if io.input.has_parameter_option(["--version", "-V"], True):
-            self.console.print(self.long_version)
+            io.output.write(self.long_version)
             return 0
 
         definition = self.definition
@@ -455,11 +415,11 @@ class Application:
             if index is not None:
                 del argv[index + 1 : index + 1 + name.count(" ")]
 
-            stream = io.input.stream
-            interactive = io.input.interactive
+            # stream = io.input.stream
+            # interactive = io.input.interactive
             io.input = ArgvInput(argv)
-            io.input.stream = stream
-            io.input.interactive = interactive
+            # io.input.stream = stream
+            # io.input.interactive = interactive
 
         exit_code = self._run_command(command, io)
         self._running_command = None
@@ -467,7 +427,7 @@ class Application:
         return exit_code
 
     def _run_command(self, command: Command, io: IO) -> int:
-        if self._event_dispatcher is None:
+        if self.event_dispatcher is None:
             return command.run(io)
 
             # Bind before the console.command event,
@@ -484,7 +444,7 @@ class Application:
         error = None
 
         try:
-            self._event_dispatcher.dispatch(command_event, COMMAND)
+            self.event_dispatcher.dispatch(command_event, COMMAND)
 
             if command_event.command_should_run():
                 exit_code = command.run(io)
@@ -492,7 +452,7 @@ class Application:
                 exit_code = ConsoleCommandEvent.RETURN_CODE_DISABLED
         except Exception as e:
             error_event = ConsoleErrorEvent(command, io, e)
-            self._event_dispatcher.dispatch(error_event, ERROR)
+            self.event_dispatcher.dispatch(error_event, ERROR)
             error = error_event.error
             exit_code = error_event.exit_code
 
@@ -500,7 +460,7 @@ class Application:
                 error = None
 
         terminate_event = ConsoleTerminateEvent(command, io, exit_code)
-        self._event_dispatcher.dispatch(terminate_event, TERMINATE)
+        self.event_dispatcher.dispatch(terminate_event, TERMINATE)
 
         if error is not None:
             raise error
@@ -515,13 +475,13 @@ class Application:
     ) -> IO:
         if input is None:
             input = ArgvInput()
-            input.strem = sys.stdin
+            input.stream = sys.stdin
 
         if output is None:
-            output = NullOutput(sys.stdout)
+            output = NullOutput()
 
         if error_output is None:
-            error_output = NullOutput(sys.stderr)
+            error_output = NullOutput()
 
         return IO(input, output, error_output)
 
@@ -537,15 +497,14 @@ class Application:
     ) -> None:
         simple = not io.is_verbose() or isinstance(error, CleoUserError)
         assert isinstance(io.error_output, ConsoleOutput)
+        console: Console = io.error_output.console
         if hasattr(io.error_output, "console"):
-            console: Console = io.error_output.console
 
             if simple:
                 console.print_exception(
                     width=width, theme=theme, word_wrap=word_wrap, suppress=suppress
                 )
             else:
-                console: Console = io.error_output.console
                 console.print_exception(
                     width=width,
                     word_wrap=word_wrap,
@@ -556,11 +515,6 @@ class Application:
                 )
 
     def _configure_io(self, io: IO) -> None:
-        if io.input.has_parameter_option(["--no-interaction", "-n"], True) or (
-            io.input.interactive is None and io.input.stream and not io.input.stream.isatty()
-        ):
-            io.interactive = False
-
         shell_verbosity = int(os.getenv("SHELL_VERBOSITY", 0))
         if io.input.has_parameter_option(["--quiet", "-q"], True):
             io.set_verbosity(Verbosity.QUIET)
@@ -579,10 +533,10 @@ class Application:
                 shell_verbosity = 1
 
         if shell_verbosity == -1:
-            io.interactive = False
+            io.input.interactive = False
 
     def _get_command_name(self, io: IO) -> str | None:
-        if self._single_command:
+        if self.single_command:
             return self._default_command
 
         if "command" in io.input.arguments and io.input.argument("command"):
@@ -605,7 +559,7 @@ class Application:
         return " ".join(parts[:limit])
 
     @staticmethod
-    def _extract_all_namespaces(self, name: str) -> list[str]:
+    def _extract_all_namespaces(name: str) -> list[str]:
         parts = name.split(" ")[:-1]
         namespaces: list[str] = []
 

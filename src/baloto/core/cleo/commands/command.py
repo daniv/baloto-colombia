@@ -40,12 +40,14 @@ class Command(ABC):
     commands: ClassVar[list[Command]] = []
 
     def __init__(self) -> None:
+        self.ignore_validation_errors = False
+
         self._io: IO | None = None
         self._poetry: Poetry | None = None
         self._definition = Definition()
         self._full_definition: Definition | None = None
-        self._application: Application | None = None
-        self._ignore_validation_errors = False
+        self.application: Application | None = None
+
         self._synopsis: dict[str, str] = {}
 
         self.configure()
@@ -96,14 +98,6 @@ class Command(ABC):
 
         self._full_definition = None
 
-    @property
-    def ignore_validation_errors(self) -> bool:
-        return self._ignore_validation_errors
-
-    @ignore_validation_errors.setter
-    def ignore_validation_errors(self, ignore: bool) -> None:
-        self._ignore_validation_errors = ignore
-
     def merge_application_definition(self, merge_args: bool = True) -> None:
         if self._application is None:
             return
@@ -129,12 +123,6 @@ class Command(ABC):
         Get the value of a command option.
         """
         return self._io.input.option(name)
-
-    def interact(self, io: IO) -> None:
-        """
-        Interacts with the user.
-        """
-        pass
 
     def configure(self) -> None:
         for argument in self.arguments:
@@ -165,11 +153,8 @@ class Command(ABC):
         try:
             io.input.bind(self.definition)
         except CleoError:
-            if not self._ignore_validation_errors:
+            if not self.ignore_validation_errors:
                 raise
-
-        if io.input.interactive:
-            self.interact(io)
 
         if io.input.has_argument("command") and io.input.argument("command") is None:
             io.input.set_argument("command", self.name)
@@ -245,7 +230,7 @@ class Command(ABC):
         new_line_start: bool = False,
         verbosity: Verbosity = Verbosity.NORMAL,
     ) -> None:
-        self._io.write(
+        self._io.output.write(
             *objects,
             sep=sep,
             end=end,
@@ -281,7 +266,7 @@ class Command(ABC):
         new_line_start: bool = False,
         verbosity: Verbosity = Verbosity.NORMAL,
     ) -> None:
-        self._io.write_error(
+        self._io.error_output.write(
             *objects,
             sep=sep,
             end=end,
@@ -348,4 +333,4 @@ class Command(ABC):
         It will not add a new line so use line('')
         if necessary.
         """
-        ...
+        pass

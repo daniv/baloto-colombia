@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-import logging
 import sys
 from typing import Any
 from typing import TYPE_CHECKING
@@ -12,9 +11,6 @@ from baloto.core.cleo.io.inputs.input import Input
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.inputs.definition import Definition
-
-logger = logging.getLogger(__name__)
-
 
 class ArgvInput(Input):
     """
@@ -209,7 +205,7 @@ class ArgvInput(Input):
             all_arguments = self._definition.arguments.copy()
             command_name = None
             argument = all_arguments[0]
-            if argument and argument.name == "command":
+            if argument.name == "command":
                 command_name = self._arguments.get("command")
                 del all_arguments[0]
 

@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 
 
 class AboutCommand(BalotoCommand):
-    caller = "miloto"
-
     name = "about"
 
     description = "Shows information about [prog]Miloto[/] application."
@@ -41,9 +39,10 @@ class AboutCommand(BalotoCommand):
             self.io.error_console.line()
             return e.exit_code
 
+        app_name = self.get_application().name
         self.console.line()
-        self.console.print(f"¿QUE ES {self.caller.upper()}?", style="bold")
-        if self.caller == "miloto":
+        self.console.print(f"¿QUE ES {app_name.upper()}?", style="bold")
+        if self.get_application().name == "miloto":
             padding = Padding(self._get_what_is_miloto(), (0, 0, 0, 2))
         else:
             padding = Padding(self._get_what_is_baloto(), (0, 0, 0, 2))

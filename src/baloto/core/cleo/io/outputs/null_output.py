@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -15,16 +16,13 @@ if TYPE_CHECKING:
 
 class NullOutput(Output):
 
+    def __init__(self) -> None:
+        super().__init__(verbosity=Verbosity.QUIET)
+
     @property
-    def verbosity(self) -> Verbosity:
-        return Verbosity.QUIET
-
-    @verbosity.setter
-    def verbosity(self, verbosity: Verbosity) -> None:
-        pass
-
     def supports_utf8(self) -> bool:
         return True
+
 
     def is_quiet(self) -> bool:
         return True
@@ -38,7 +36,7 @@ class NullOutput(Output):
     def is_debug(self) -> bool:
         return False
 
-    def section(self) -> SectionOutput:
+    def section(self) -> SectionOutput: # type: ignore[empty-body]
         pass
 
     def _write(
@@ -59,3 +57,16 @@ class NullOutput(Output):
         new_line_start: bool = False,
     ) -> None:
         pass
+
+    def _out(
+            self,
+            *objects: Any,
+            sep: str = " ",
+            end: str = "\n",
+            verbosity: Verbosity = Verbosity.NORMAL
+    ) -> None:
+        pass
+
+    def _clear(self) -> None:
+        pass
+
