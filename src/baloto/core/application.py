@@ -113,25 +113,11 @@ class Application(CleoApplication):
     ) -> IO:
         io = super().create_io(input, output, error_output)
 
-        from rich.style import Style
-
-        formatter = Formatter()
-        formatter.set_style("switch", Style(color="green", italic=True))
-        formatter.set_style("command", Style(color="magenta", bold=True))
-        formatter.set_style("alias", Style(color="magenta", italic=True, bold=True))
-        formatter.set_style("prog", Style(color="medium_orchid3", bold=True))
-        formatter.set_style("dark_warning", Style(color="dark_goldenrod", bold=True))
-        formatter.set_style("option", Style(color="bright_cyan", bold=True))
-        core_theme = formatter.create_theme()
-
         console = self._director.console_builder(
-            markup=True, highlight=True, force_terminal=True, theme=core_theme
-        ).force_interactive(True).build()
+            markup=True, highlight=True, force_terminal=True).force_interactive(True).build()
 
         err_console = self._director.console_builder(
-            markup=True, highlight=True, force_terminal=True,  theme=core_theme
-        ).style("bold red").stderr(True).build()
-
+            markup=True, highlight=True, force_terminal=True).style("bold red").stderr(True).build()
 
         io.output = ConsoleOutput(console)
         io.error_output = ConsoleOutput(err_console)
