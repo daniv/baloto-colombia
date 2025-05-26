@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+
+## https://github.com/dabeaz/python-cookbook
+
 import contextlib
+import logging
 import os
 import re
 import shutil
@@ -314,6 +318,7 @@ class Application:
             io = self.create_io(input, output, error_output)
 
             self._configure_io(io)
+            self._configure_logging(io)
 
             try:
                 exit_code = self._run(io)
@@ -324,12 +329,13 @@ class Application:
                 devnull = os.open(os.devnull, os.O_WRONLY)
                 os.dup2(devnull, sys.stdout.fileno())
                 exit_code = 0
-            except Exception as e:
+            except Exception as error:
                 if not self.catch_exceptions:
                     raise
 
+                self.render_trace(error, io)
                 width = None if self.is_debug_mode() else self._terminal_size.columns
-                self.render_error(io=io, error=e, width=width)
+                self.render_error(io=io, error=error, width=width)
 
                 exit_code = 1
                 # TODO: Custom error exit codes
@@ -486,6 +492,14 @@ class Application:
         return IO(input, output, error_output)
 
     @staticmethod
+    def render_trace(error: Exception, io: IO) -> None:
+        from baloto.core.cleo.exceptions.exception_trace.component import ExceptionTrace
+
+        trace = ExceptionTrace(error)
+        simple = not io.is_verbose() or isinstance(error, CleoUserError)
+        trace.render(io.error_output, simple)
+
+    @staticmethod
     def render_error(
         *,
         io: IO,
@@ -505,16 +519,29 @@ class Application:
                     width=width, theme=theme, word_wrap=word_wrap, suppress=suppress
                 )
             else:
-                console.print_exception(
+                from baloto.core.cleo.exceptions.exception_trace.traceback import Traceback
+                traceback = Traceback(
                     width=width,
-                    word_wrap=word_wrap,
                     extra_lines=4,
-                    show_locals=True,
                     theme=theme,
+                    word_wrap=word_wrap,
+                    show_locals=True,
                     suppress=suppress,
+                    # max_frames=max_frames,
                 )
+                console.print(traceback)
 
-    def _configure_io(self, io: IO) -> None:
+                # console.print_exception(
+                #     width=width,
+                #     word_wrap=word_wrap,
+                #     extra_lines=4,
+                #     show_locals=True,
+                #     theme=theme,
+                #     suppress=suppress,
+                # )
+
+    @staticmethod
+    def _configure_io(io: IO) -> None:
         shell_verbosity = int(os.getenv("SHELL_VERBOSITY", 0))
         if io.input.has_parameter_option(["--quiet", "-q"], True):
             io.set_verbosity(Verbosity.QUIET)
@@ -534,6 +561,29 @@ class Application:
 
         if shell_verbosity == -1:
             io.input.interactive = False
+
+    @staticmethod
+    def _configure_logging(io: IO) -> None:
+        """
+        Configures the built-in logging package to write it's output via Cleo's output class.
+        """
+
+        level_mapping = {
+            Verbosity.QUIET: logging.CRITICAL,  # Nothing gets emitted to the output anyway
+            Verbosity.NORMAL: logging.WARNING,
+            Verbosity.VERBOSE: logging.INFO,
+            Verbosity.VERY_VERBOSE: logging.DEBUG,
+            Verbosity.DEBUG: logging.DEBUG,
+        }
+
+        root = logging.getLogger()
+        root.setLevel(level_mapping[io.output.verbosity])
+
+        from baloto.core.cleo.io.outputs.logging_output_handler import OutputHandler
+        handler = OutputHandler(io.output)
+        handler.setLevel(level_mapping[io.output.verbosity])
+        root.addHandler(handler)
+
 
     def _get_command_name(self, io: IO) -> str | None:
         if self.single_command:

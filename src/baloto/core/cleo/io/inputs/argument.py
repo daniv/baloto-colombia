@@ -18,6 +18,7 @@ class Argument:
         is_list: bool = False,
         description: str | None = None,
         default: Any | None = None,
+        choices: list[str] | None = None,
     ) -> None:
         name = name.strip()
         if not name:
@@ -29,6 +30,7 @@ class Argument:
         self._is_list = is_list
         self._description = description or ""
         self._default: str | list[str] | None = None
+        self._choices = choices
 
         self.set_default(default)
 
@@ -43,6 +45,14 @@ class Argument:
     @property
     def description(self) -> str:
         return self._description
+
+    @property
+    def choices(self) -> list[str] | None:
+        return self._choices
+
+    @property
+    def has_choices(self) -> bool:
+        return bool(self._choices)
 
     def is_required(self) -> bool:
         return self._required
@@ -68,7 +78,8 @@ class Argument:
             f"required={self._required}, "
             f"is_list={self._is_list}, "
             f"description={self._description!r}, "
-            f"default={self._default!r})"
+            f"default={self._default!r}), "
+            f"choices={self._choices!r})"
         )
 
 

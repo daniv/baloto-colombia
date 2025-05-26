@@ -27,10 +27,17 @@ class TextDescriptor(Descriptor):
         if argument.default is not None and (
             not isinstance(argument.default, list) or argument.default
         ):
-            formatted = self._format_default_value(argument.default)
-            default = f"(default = {formatted})"
+            formatted = _format_default_value(argument.default)
+            default = f"[comment](default = {formatted})[/]"
         else:
             default = ""
+
+        if argument.choices:
+            choices = (
+                f"[comment] {{{_format_choices(argument.choices)}}}[/]"
+            )
+        else:
+            choices = ""
 
         total_width = options.get("total_width", len(argument.name))
 
@@ -41,7 +48,7 @@ class TextDescriptor(Descriptor):
         )
 
         argument_name = Text(argument.name, style="argument")
-        return [argument_name, sub_argument_description, f"[inspect.attr]{default}[/]"]
+        return [argument_name, sub_argument_description, f"[inspect.attr]{default}[/]", choices]
 
     def _describe_option(self, option: Option, **options: Any) -> list[RenderableType]:
         if (
@@ -49,7 +56,7 @@ class TextDescriptor(Descriptor):
             and option.default is not None
             and (not isinstance(option.default, list) or option.default)
         ):
-            formatted = self._format_default_value(option.default)
+            formatted = _format_default_value(option.default)
             default = f"(default = {formatted})"
         else:
             default = ""
@@ -75,8 +82,14 @@ class TextDescriptor(Descriptor):
         are_multiple_values_allowed = (
             "[dim](multiple values allowed)[/]" if option.is_list() else ""
         )
+        are_choices_allowed = (
+            f"[comment] {{{', '.join(option.choices)}}}[/comment]"
+            if option.choices
+            else ""
+        )
         sub_option_description = (
-            f"{sub_option_description} " f"[inspect.attr]{default}[/] {are_multiple_values_allowed}"
+            f"{sub_option_description} "
+            f"[inspect.attr]{default}[/] {are_multiple_values_allowed} {are_choices_allowed}"
         )
 
         return [option_shortcut, synopsis, sub_option_description]
@@ -217,25 +230,27 @@ class TextDescriptor(Descriptor):
 
             self._io.output.write(panel)
 
-    @staticmethod
-    def _format_default_value(default: Any) -> str:
-        import json
-        from baloto.core.cleo.utils import escape
 
-        if isinstance(default, str):
-            default = escape(default)
-        elif isinstance(default, list):
-            default_str = [escape(value) for value in default if isinstance(value, str)]
-            default_int = [value for value in default if isinstance(value, int)]
-            default_float = [value for value in default if isinstance(value, float)]
-            default = default_str + default_int + default_float
-        elif isinstance(default, dict):
-            default = {
-                key: escape(value) for key, value in default.items() if isinstance(value, str)
-            }
+def _format_default_value(default: Any) -> str:
+    import json
+    from baloto.core.cleo.utils import escape
 
-        return json.dumps(default).replace("\\\\", "\\")
+    if isinstance(default, str):
+        default = escape(default)
+    elif isinstance(default, list):
+        default_str = [escape(value) for value in default if isinstance(value, str)]
+        default_int = [value for value in default if isinstance(value, int)]
+        default_float = [value for value in default if isinstance(value, float)]
+        default = default_str + default_int + default_float
+    elif isinstance(default, dict):
+        default = {
+            key: escape(value) for key, value in default.items() if isinstance(value, str)
+        }
 
+    return json.dumps(default).replace("\\\\", "\\")
+
+def _format_choices(choices: list[str]) -> str:
+    return ", ".join(choices)
 
 def _calculate_total_width_for_options(options: list[Option]) -> int:
     total_width = 0
