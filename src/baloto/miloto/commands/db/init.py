@@ -1,23 +1,22 @@
 from __future__ import annotations
 
 import sqlite3
+from typing import ClassVar
 from typing import TYPE_CHECKING
 
-from baloto.core.commands.command import Command as BalotoCommand
 from baloto.core.commands.database_command import DatabaseCommand
-from baloto.core.exceptions import BalotoRuntimeError
 
 if TYPE_CHECKING:
     from rich.console import Console
-    from baloto.core.poetry.poetry import Poetry
 
 
 class DbInitCommand(DatabaseCommand):
     name = "db init"
 
     description = "Initializes the databasa by adding tables to sqlite3."
+    aliases: ClassVar[list[str]] = ["ini"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.console: Console | None = None

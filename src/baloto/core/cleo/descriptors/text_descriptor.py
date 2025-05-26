@@ -4,14 +4,14 @@ import re
 from typing import Any
 from typing import TYPE_CHECKING
 
-from rich.console import Text
+from rich.text import Text
 
 from baloto.core.cleo.commands.command import Command
 from baloto.core.cleo.descriptors.descriptor import Descriptor
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.descriptors.application_descriptor import ApplicationDescription
 from rich.panel import Panel
-from rich.table import Table
+from rich.table import Table, Column
 
 if TYPE_CHECKING:
     from baloto.core.cleo.application import Application
@@ -54,16 +54,18 @@ class TextDescriptor(Descriptor):
         else:
             default = ""
 
-        metavar = ""
+        value = ""
         if option.accepts_value():
+            value = "=" + option.name.upper()
+
             if not option.requires_value():
-                metavar = "[" + metavar + "]"
+                value = "[" + value + "]"
 
         total_width = options.get("total_width", _calculate_total_width_for_options([option]))
         option_shortcut = (
             Text(f"-{option.shortcut}", style="switch") if option.shortcut else Text("")
         )
-        synopsis = Text(f"--{option.name} ", style="option").append(metavar, style="metavar")
+        synopsis = Text(f"--{option.name} ", style="switch").append(value, style="bold dim")
 
         sub_option_description = re.sub(
             r"\s*[\r\n]\s*",
@@ -82,7 +84,11 @@ class TextDescriptor(Descriptor):
     def _describe_definition(self, definition: Definition, **options: Any) -> None:
 
         def get_table() -> Table:
-            return Table(highlight=True, box=None, show_header=False)
+            return Table(
+                Column(header="switch", style="switch"),
+                Column(header="option", style="switch"),
+                highlight=True, box=None, show_header=False
+            )
 
         def get_panel(table: Table, title: str) -> Panel:
             if command:
@@ -99,7 +105,7 @@ class TextDescriptor(Descriptor):
                 arguments_table.add_row(*renderable)
 
             panel = get_panel(arguments_table, "Arguments")
-            self._console.print(panel)
+            self._io.output.write(panel)
 
         definition_options = definition.options
         if definition_options:
@@ -119,29 +125,29 @@ class TextDescriptor(Descriptor):
                 options_table.add_row(*renderable)
 
             panel = get_panel(options_table, "Options")
-            self._console.print(panel)
+            self._io.output.write(panel)
 
     def _describe_command(self, command: Command, **options: Any) -> None:
 
         description = command.description
         if description:
-            self._console.print(f"[dark_orange]Description:[/] {description}", end="\n\n")
+            self._io.output.write(f"[dark_orange]Description:[/] {description}", end="\n\n")
 
         command.merge_application_definition(False)
 
         for usage in [command.synopsis(True), *command.aliases, *command.usages]:
-            self._console.print("[dark_orange]Usage:[/]", end=" ", new_line_start=False)
-            self._console.print(usage, new_line_start=False)
+            self._io.output.write("[dark_orange]Usage:[/]", end=" ", new_line_start=False)
+            self._io.output.write(usage, new_line_start=False)
 
         if command.definition.options or command.definition.arguments:
-            self._console.line()
+            self._io.output.write("", end="\n")
             self._describe_definition(command.definition, **options, command=command)
 
         help_text = command.processed_help
         if help_text and help_text != description:
             help_text = help_text.replace("\n", "\n  ")
 
-            self._console.print(
+            self._io.output.write(
                 Panel(
                     help_text, highlight=True, border_style="dim", title="Help", title_align="left"
                 ),
@@ -150,23 +156,23 @@ class TextDescriptor(Descriptor):
 
     def _describe_application(self, application: Application, **options: Any) -> None:
 
-        self._console.print(
+        self._io.output.write(
             application.help,
             "\n\n",
             f"[dim]{application.description.upper()}[/]",
             justify="center",
         )
-        self._console.line(2)
+        self._io.output.write("", end="\n\n")
         if options.get("title", False):
             return
 
         described_namespace = options.get("namespace")
         description = ApplicationDescription(application, namespace=described_namespace)
 
-        self._console.print(
+        self._io.output.write(
             "[dark_orange]Usage:[/] command \\[options] \\[arguments]", justify="left"
         )
-        self._console.line(1)
+        self._io.output.write("", end="\n")
         self._describe_definition(Definition(application.definition.options), **options)
 
         commands = description.commands
@@ -196,17 +202,20 @@ class TextDescriptor(Descriptor):
                 described_namespace or namespace["id"] == ApplicationDescription.GLOBAL_NAMESPACE
             ):
                 title = f"[command]{namespace['id']}[/]"
-                # self._console.print(f" [b]{namespace['id']}[/]")
 
-            table = Table(highlight=True, box=None, show_header=False)
+            table = Table(
+                Column(header="cmd", style="command"),
+                Column(header="aliases", style="alias"),
+                highlight=True, box=None, show_header=False
+            )
             for name in namespace["commands"]:
                 command = commands[name]
                 command_aliases = _get_command_aliases_text(command) if command.name == name else ""
-                table.add_row(Text(name, style="command"), command_aliases, command.description)
+                table.add_row(name, command_aliases, command.description)
 
             panel = Panel(table, border_style="dim", title=title, title_align="left")
 
-            self._console.print(panel)
+            self._io.output.write(panel)
 
     @staticmethod
     def _format_default_value(default: Any) -> str:

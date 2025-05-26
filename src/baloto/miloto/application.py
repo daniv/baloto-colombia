@@ -11,7 +11,7 @@ COMMANDS = ["db init"]
 
 
 class Application(CoreApplication):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("miloto", __version__)
         from baloto.core.commands.about import AboutCommand
 
@@ -19,10 +19,13 @@ class Application(CoreApplication):
         about.caller = "miloto"
         self.add(about)
 
-        command_loader = CommandLoader(
-            {name: load_command("baloto.miloto.commands.", name) for name in COMMANDS}
+        self.set_command_loader(
+            CommandLoader(
+                {name: load_command("baloto.miloto.commands.", name) for name in COMMANDS}
+            )
         )
-        self.set_command_loader(command_loader)
+
+
 
     @property
     def command_loader(self) -> CommandLoader:

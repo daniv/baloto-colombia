@@ -12,14 +12,13 @@ class ListCommand(CleoCommand):
     description = "Lists commands."
 
     help = """\
-    The {script_name} [command]{command_name}[/command] command lists all commands:
+    
+The {script_name} [command]{command_name}[/command] command lists all commands:
+  >>> [command]{command_full_name}[/command]
 
-      [command]{command_full_name}[/command]
-
-    You can also display the commands for a specific namespace:
-
-      [command]{command_full_name} test[/command]
-    """
+You can also display the commands for a specific namespace:
+  >>> [command]{command_full_name} test[/command]
+"""
 
     arguments: ClassVar[list[Argument]] = [
         Argument("namespace", required=False, description="The namespace name")

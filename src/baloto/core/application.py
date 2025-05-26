@@ -19,6 +19,7 @@ from baloto.core.cleo.utils import find_similar_names
 from baloto.core.exceptions import BalotoRuntimeError
 from baloto.core.utils.helpers import directory
 from baloto.core.utils.helpers import ensure_path
+from baloto.core.rich.builders.director import RichDirector
 
 if TYPE_CHECKING:
     from baloto.core.cleo.events.event import Event
@@ -56,6 +57,9 @@ class Application(CleoApplication):
         self._project_directory: Path | None = None
         self._console: Console | None = None
         self._error_console: Console | None = None
+        self._no_ansi: bool | None = None
+        self._force_ansi: bool | None = None
+        self._director = RichDirector()
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, register_command_loggers)
         dispatcher.add_listener(COMMAND, self.flush_screen)
@@ -77,18 +81,6 @@ class Application(CleoApplication):
         return self._poetry
 
     @property
-    def console(self) -> Console:
-        if self._console is None:
-            self._console = getattr(self._io.output, "console")
-        return self._console
-
-    @property
-    def error_console(self) -> Console:
-        if self._error_console is None:
-            self._error_console = getattr(self._io.error_output, "console")
-        return self._error_console
-
-    @property
     def _default_definition(self) -> Definition:
         from baloto.core.cleo.io.inputs.option import Option
 
@@ -98,18 +90,6 @@ class Application(CleoApplication):
             Option("--dry-run", None, description="Perform all actions except updating files")
         )
 
-        # definition.add_option(
-        #     Option(
-        #         "--project",
-        #         "-P",
-        #         flag=False,
-        #         description=(
-        #             "Specify another path as the project root."
-        #             " All command-line arguments will be resolved relative to the current working directory."
-        #         ),
-        #     )
-        # )
-        #
         # definition.add_option(
         #     Option(
         #         "--directory",
@@ -134,17 +114,25 @@ class Application(CleoApplication):
         io = super().create_io(input, output, error_output)
 
         from rich.style import Style
-        from rich.console import Console
 
         formatter = Formatter()
         formatter.set_style("switch", Style(color="green", italic=True))
         formatter.set_style("command", Style(color="magenta", bold=True))
+        formatter.set_style("alias", Style(color="magenta", italic=True, bold=True))
         formatter.set_style("prog", Style(color="medium_orchid3", bold=True))
         formatter.set_style("dark_warning", Style(color="dark_goldenrod", bold=True))
+        formatter.set_style("option", Style(color="bright_cyan", bold=True))
         core_theme = formatter.create_theme()
 
-        console = Console(theme=core_theme, file=sys.stdout, force_interactive=True)
-        err_console = Console(theme=core_theme, stderr=True, style="bold red")
+        console = self._director.console_builder(
+            markup=True, highlight=True, force_terminal=True, theme=core_theme
+        ).force_interactive(True).build()
+
+        err_console = self._director.console_builder(
+            markup=True, highlight=True, force_terminal=True,  theme=core_theme
+        ).style("bold red").stderr(True).build()
+
+
         io.output = ConsoleOutput(console)
         io.error_output = ConsoleOutput(err_console)
 
@@ -204,8 +192,13 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
         # to ensure the users are not exposed to a stack trace for providing invalid values to
         # the options --directory or --project, configuring the options here allow cleo to trap and
         # display the error cleanly unless the user uses verbose or debug
+
         self._description = self.poetry.get_project().get("description", "")
         self._configure_global_options(io)
+
+
+        if self._force_ansi and self._no_ansi is None:
+            ...
 
         with directory(self._working_directory):
             exit_code: int = 1
@@ -213,16 +206,16 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
             try:
                 exit_code = super()._run(io)
             except BalotoRuntimeError as e:
-                io.error_console.line()
+                io.error_output.write("")
                 e.write(io)
-                io.error_console.line()
+                io.error_output.write("")
             except CleoCommandNotFoundError as e:
                 command = self._get_command_name(io)
 
                 if command is not None and (message := COMMAND_NOT_FOUND_MESSAGES.get(command)):
-                    io.error_console.line()
-                    io.error_console.print(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
-                    io.error_console.print(message)
+                    io.error_output.write("")
+                    io.error_output.write(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
+                    io.error_output.write("")
                     return 1
 
                 if command is not None and command in self.get_namespaces():
@@ -232,7 +225,7 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                         if key.startswith(f"{command} "):
                             sub_commands.append(key)
 
-                    io.error_console.print(
+                    io.error_output.write(
                         f"The requested command does not exist in the [command]{command}[/] namespace."
                     )
                     suggested_names = find_similar_names(command, sub_commands)
@@ -241,7 +234,7 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
 
                 if command is not None:
                     suggested_names = find_similar_names(command, list(self._commands.keys()))
-                    io.error_console.print(
+                    io.error_output.write(
                         f"The requested command [command]{command}[/] does not exist."
                     )
                     self._error_write_command_suggestions(io, suggested_names)
@@ -260,38 +253,16 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                 for name in suggested_names
             ]
             suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
-            io.error_console.print(f"\n[error]Did you mean one of these perhaps?[/]{suggestions}")
+            io.error_output.write(f"\n[error]Did you mean one of these perhaps?[/]{suggestions}")
 
-        io.error_console.print(
-            "\n<b>Documentation: </>" f"<info>https://python-poetry.org/docs/cli/{doc_tag or ''}</>"
+        io.error_output.write(
+            "\n[b]Documentation: [/]" f"[info]https://python-poetry.org/docs/cli/{doc_tag or ''}[/]"
         )
 
     def _configure_global_options(self, io: IO) -> None:
-        """
-        Configures global options for the application by setting up the relevant
-        directories, disabling plugins or cache, and managing the working and
-        project directories. This method ensures that all directories are valid
-        paths and handles the resolution of the project directory relative to the
-        working directory if necessary.
-
-        :param io: The IO instance whose input and options are being read.
-        :return: Nothing.
-        """
-        # we use ensure_path for the directories to make sure these are valid paths
-        # this will raise an exception if the path is invalid
         self._working_directory = ensure_path(Path.cwd(), is_directory=True)
-
-        # self._project_directory = io.input.option("project")
-        # if self._project_directory is not None:
-        #     self._project_directory = Path(self._project_directory)
-        #     self._project_directory = ensure_path(
-        #         self._project_directory
-        #         if self._project_directory.is_absolute()
-        #         else self._working_directory.joinpath(self._project_directory).resolve(
-        #             strict=False
-        #         ),
-        #         is_directory=True,
-        #     )
+        self._no_ansi = io.input.option("no-ansi")
+        self._force_ansi = io.input.option("ansi")
 
     def _sort_global_options(self, io: IO) -> None:
         """
@@ -339,15 +310,7 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
                 if option.accepts_value():
                     tokens.append(str(value))
 
-        sorted_input = ArgvInput([self._name or "", *tokens, *remaining_args])
-
-        # this is required to ensure stdin is transferred
-        sorted_input.stream = original_input.stream
-
-        # this is required as cleo internally checks for `io.input._interactive`
-        # when configuring io, and cleo's test applications overrides this attribute
-        # explicitly causing test setups to fail
-        sorted_input.interactive = io.input.interactive
+        sorted_input = ArgvInput([self.name or "", *tokens, *remaining_args])
 
         with suppress(CleoError):
             sorted_input.bind(self.definition)
@@ -359,7 +322,7 @@ light_colors = ["brightblack", "brightred", "brightgreen", "brightyellow", "brig
         super()._configure_io(io)
 
     def flush_screen(self, event: Event, event_name: str, _: EventDispatcher) -> None:
-        self._io.console.clear(home=True)
+        self._io.output.clear()
 
 
 def register_command_loggers(event: Event, event_name: str, _: EventDispatcher) -> None: ...

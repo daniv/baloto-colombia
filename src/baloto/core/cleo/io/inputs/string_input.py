@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from baloto.core.cleo.helpers import tokenize
+from baloto.core.cleo import helpers
 from baloto.core.cleo.io.inputs.argv_input import ArgvInput
 
 
@@ -11,5 +11,8 @@ class StringInput(ArgvInput):
 
     def __init__(self, input: str) -> None:
         super().__init__([])
+        self._set_tokens(self.tokenize(input))
 
-    def _tokenize(self, input: str) -> list[str]: ...
+    @staticmethod
+    def tokenize(input: str) -> list[str]:
+        return helpers.tokenize(input)

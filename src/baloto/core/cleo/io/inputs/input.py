@@ -2,19 +2,12 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-
-from typing import Any, TYPE_CHECKING
-from typing import TextIO
+from typing import Any
 
 from baloto.core.cleo._compat import shell_quote
 from baloto.core.cleo.exceptions import CleoMissingArgumentsError
 from baloto.core.cleo.exceptions import CleoValueError
 from baloto.core.cleo.io.inputs.definition import Definition
-
-
-if TYPE_CHECKING:
-    from baloto.core.cleo.io.inputs.option import Option
-    from baloto.core.cleo.io.inputs.argument import Argument
 
 
 class Input(ABC):
@@ -23,11 +16,11 @@ class Input(ABC):
     """
 
     def __init__(self, definition: Definition | None = None) -> None:
+        # self._stream: TextIO = None  # type: ignore[assignment]
+
         self._definition: Definition
-        self._stream: TextIO = None  # type: ignore[assignment]
         self._options: dict[str, Any] = {}
         self._arguments: dict[str, Any] = {}
-        self._interactive: bool | None = None
 
         if definition is None:
             self._definition = Definition()
@@ -44,52 +37,48 @@ class Input(ABC):
         return {**self._definition.option_defaults, **self._options}
 
     @property
-    def stream(self) -> TextIO:
-        return self._stream
-
-    @stream.setter
-    def stream(self, stream: TextIO) -> None:
-        self._stream = stream
+    @abstractmethod
+    def first_argument(self) -> str | None:
+        raise NotImplementedError("[c1]first_argument[/] is an abstract method")
 
     @property
     @abstractmethod
-    def first_argument(self) -> str | None: ...
+    def script_name(self) -> str | None:
+        raise NotImplementedError("[c1]script_name[/] is an abstract method")
 
-    @property
-    @abstractmethod
-    def script_name(self) -> str | None: ...
+    # def set_console(self, console: Console) -> None:
+    #     self._console = console
+    #     console.input()
 
-    @property
-    def interactive(self) -> bool:
-        return True if self._interactive is None else self._interactive
+    # def read(self, length: int, default: str = "") -> str:
+    #     """
+    #     Reads the given amount of characters from the input stream.
+    #     """
+    #     if not self._console.is_interactive:
+    #         return default
+    #
+    #     return self.stream.read(length)
 
-    @interactive.setter
-    def interactive(self, interactive: bool = True) -> None:
-        self._interactive = interactive
-
-    def read(self, length: int, default: str = "") -> str:
-        """
-        Reads the given amount of characters from the input stream.
-        """
-        ...
-
-    def read_line(self, length: int = -1, default: str = "") -> str:
-        """
-        Reads a line from the input stream.
-        """
-        ...
-
-    def close(self) -> None:
-        """
-        Closes the input.
-        """
-        ...
-
-    def is_closed(self) -> bool:
-        """
-        Returns whether the input is closed.
-        """
-        ...
+    # def read_line(self, length: int = -1, default: str = "") -> str:
+    #     """
+    #     Reads a line from the input stream.
+    #     """
+    #     if not self._console.is_interactive:
+    #         return default
+    #
+    #     self._console.file.readline(length)
+    #
+    # def close(self) -> None:
+    #     """
+    #     Closes the input.
+    #     """
+    #     self.stream.close()
+    #
+    # def is_closed(self) -> bool:
+    #     """
+    #     Returns whether the input is closed.
+    #     """
+    #     return self.stream.closed
 
     def bind(self, definition: Definition) -> None:
         """
@@ -150,13 +139,19 @@ class Input(ABC):
     def has_option(self, name: str) -> bool:
         return self._definition.has_option(name)
 
-    def escape_token(self, token: str) -> str: ...
+    @staticmethod
+    def escape_token(token: str) -> str:
+        if re.match(r"^[\w-]+$", token):
+            return token
+
+        return shell_quote(token)
 
     @abstractmethod
     def has_parameter_option(self, values: str | list[str], only_params: bool = False) -> bool:
         """
         Returns true if the raw parameters (not parsed) contain a value.
         """
+        raise NotImplementedError("[c1]has_parameter_option[/] is an abstract method")
 
     @abstractmethod
     def parameter_option(
@@ -168,6 +163,8 @@ class Input(ABC):
         """
         Returns the value of a raw option (not parsed).
         """
+        raise NotImplementedError("[c1]parameter_option[/] is an abstract method")
 
     @abstractmethod
-    def _parse(self) -> None: ...
+    def _parse(self) -> None:
+        raise NotImplementedError("[c1]_parse[/] is an abstract method")

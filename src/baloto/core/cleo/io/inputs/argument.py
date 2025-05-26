@@ -70,3 +70,5 @@ class Argument:
             f"description={self._description!r}, "
             f"default={self._default!r})"
         )
+
+

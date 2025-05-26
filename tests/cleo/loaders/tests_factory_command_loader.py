@@ -21,9 +21,6 @@ def factory_command_loader_step() -> FactoryCommandLoader:
         def __init__(self):
             super().__init__()
 
-        def interact(self, io: IO) -> None:
-            pass
-
         def handle(self) -> int:
             pass
 
