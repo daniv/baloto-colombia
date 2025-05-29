@@ -14,6 +14,7 @@ dependencies = [
     "rapidfuzz (>=3.13.0,<4.0.0)",
     "rich (>=14.0.0,<15.0.0)",
     "cleo (>=2.1.0,<3.0.0)",
+    "pydantic (>=2.11.5,<3.0.0)",
 ]
 
 [project.urls]
@@ -41,6 +42,8 @@ baloto = 'baloto.baloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
+pytest-mock = "^3.14.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -60,12 +63,14 @@ python_functions = ["*_test"]
 norecursedirs = ["src", ".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
+log_cli_level = "DEBUG"
 addopts = [
-    "-p no:logging"
+    "-p no:logging", "-ra"
 ]
+xfail_strict = true
 
 [tool.black]
-line-length = 100
+line-length = 150
 verbose = true
 
 [tool.mypy]
