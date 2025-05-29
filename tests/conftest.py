@@ -2,7 +2,7 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 import pytest
 
@@ -15,132 +15,102 @@ from abc import abstractmethod
 import re
 from rich.style import Style
 
+from baloto.cleo.rich.factory.console_factory import ConsoleFactory
 
-class Formatter(ABC):
-    @abstractmethod
-    def format(self, msg: str) -> str: ...
-
-
-class BuilderLogFormatter(Formatter):
-    def format(self, msg: str) -> str:
-        if msg.startswith("Building "):
-            msg = re.sub("Building (.+)", "  - Building <info>\\1</info>", msg)
-        elif msg.startswith("Built "):
-            msg = re.sub("Built (.+)", "  - Built <success>\\1</success>", msg)
-        elif msg.startswith("Adding: "):
-            msg = re.sub("Adding: (.+)", "  - Adding: <b>\\1</b>", msg)
-        elif msg.startswith("Executing build script: "):
-            msg = re.sub(
-                "Executing build script: (.+)",
-                "  - Executing build script: <b>\\1</b>",
-                msg,
-            )
-
-        return msg
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
-FORMATTERS = {
-    "poetry.core.masonry.builders.builder": BuilderLogFormatter(),
-    "poetry.core.masonry.builders.sdist": BuilderLogFormatter(),
-    "poetry.core.masonry.builders.wheel": BuilderLogFormatter(),
-}
+def pytest_configure(config: pytest.Config) -> None:
+    from baloto.cleo.rich.logging.console_handler import ConsoleHandler
+    from baloto.cleo.rich.factory.console_factory import ConsoleFactory
 
-POETRY_FILTER = logging.Filter(name="poetry")
+    from _pytest.logging import get_log_level_for_setting
 
+    log_cli_level = get_log_level_for_setting(
+        config, "log_cli_level", "log_level"
+    )
+    enabled = config.getoption("--log-cli-level") is not None or config.getini("log_cli")
+    console = ConsoleFactory.console_output()
+    console.print("C:/Users/solma/PycharmProjects/baloto-colombia/tests/conftest.py:95")
+    rich_tracebacks = tracebacks_show_locals = True
+    if enabled:
+        console = ConsoleFactory.console_output()
+        handler = ConsoleHandler(
+            level=log_cli_level,
+            console=console,
+            rich_tracebacks=rich_tracebacks,
+            tracebacks_show_locals=tracebacks_show_locals
+        )
+    # from rich.logging import RichHandler
+    # handler = RichHandler(
+    #     console=console, level=log_cli_level,
+    #     show_time=False,
+    #     rich_tracebacks=rich_tracebacks,
+    #     tracebacks_show_locals=tracebacks_show_locals
+    # )
+    # formatter = ConsoleFormatter(
+    #     rich_tracebacks=rich_tracebacks
+    # )
+    # handler.setFormatter(formatter)
+    # if not io.is_very_verbose():
+    #     handler.addFilter(POETRY_FILTER)
 
-class IOFormatter(logging.Formatter):
-    def format(self, record: logging.LogRecord) -> str:
-        if not record.exc_info:
-            level = record.levelname.lower()
-            msg = record.msg
-            func = record.funcName
-            lineno = record.lineno
+    # FORMAT = "%(asctime)-15s - %(levelname)s - %(message)s"
+        logging.basicConfig(
+            level="NOTSET",
+            format="%(message)s",
+            datefmt="[%X]",
+            handlers=[handler],
+        )
 
-            if record.name in FORMATTERS:
-                msg = FORMATTERS[record.name].format(msg)
-            # elif level in self._colors:
-            else:
-                msg = f" | {func}.{lineno} | [{level}]{msg}[/]"
+        from time import sleep
+        log = logging.getLogger("conftest")
+        log.info("Server starting...")
 
-            record.msg = msg
+        log.info("Listening on http://127.0.0.1:8080")
+        #sleep(1)
 
-        formatted = super().format(record)
+        log.info("GET /index.html 200 1298")
+        log.info("GET /imgs/backgrounds/back1.jpg 200 54386")
+        log.info("GET /css/styles.css 200 54386")
+        log.warning("GET /favicon.ico 404 242")
+        # sleep(1)
 
-        if not POETRY_FILTER.filter(record):
-            # prefix all lines from third-party packages for easier debugging
-            formatted = textwrap.indent(
-                formatted, f"[dim bold]\\[{_log_prefix(record)}][/]", lambda line: True
-            )
+        log.debug(
+            "JSONRPC request\n--> %r\n<-- %r",
+            {
+                "version": "1.1",
+                "method": "confirmFruitPurchase",
+                "params": [["apple", "orange", "mangoes", "pomelo"], 1.123],
+                "id": "194521489",
+            },
+            {"version": "1.1", "result": True, "error": None, "id": "194521489"},
+        )
+        log.debug(
+            "Loading configuration file /adasd/asdasd/qeqwe/qwrqwrqwr/sdgsdgsdg/werwerwer/dfgerert/ertertert/ertetert/werwerwer"
+        )
+        log.error("Unable to find 'pomelo' in database!")
+        log.info("POST /jsonrpc/ 200 65532")
+        log.info("POST /admin/ 401 42234")
+        log.warning("password was rejected for admin site.")
 
-        return formatted
+        def divide() -> None:
+            number = 1
+            divisor = 0
+            foos = ["foo"] * 100
+            log.debug("in divide")
+            try:
+                number / divisor
+            except:
+                log.exception("An error of some kind occurred!")
 
-
-class ConsoleHandler(logging.Handler):
-    def __init__(self, console: Console, err_console: Console) -> None:
-        self._console = console
-        self._error_console = err_console
-
-        super().__init__()
-
-    def emit(self, record: logging.LogRecord) -> None:
-        try:
-            msg = self.format(record)
-            level = record.levelname.lower()
-            err = level in ("warning", "error", "exception", "critical")
-            if err:
-                self._error_console.print(msg)
-            else:
-                self._console.print(msg)
-        except Exception:
-            self.handleError(record)
-
-
-from rich.theme import Theme
-
-miloto_theme = Theme(
-    {
-        "error": Style(color="red", bold=True),
-        "warning": Style(color="dark_goldenrod", bold=True),
-        "info": Style(color="blue", bold=False),
-        "debug": Style(bold=False, dim=True),
-        "switch": Style(color="green", bold=True),
-        "option": Style(color="bright_cyan", bold=True),
-        "debug.option": Style(color="bright_cyan", bold=True, italic=True),
-        "debug.argument": Style(color="bright_magenta", bold=True, italic=True),
-        "argument": Style(color="bright_magenta", bold=True),
-        "command": Style(color="magenta", bold=True),
-        "prog": Style(color="medium_orchid3", bold=True),
-        "metavar": Style(color="yellow", bold=True),
-        "money": Style(color="green3", bold=True),
-        "report": Style(bold=True, italic=True),
-        "date": Style(color="green", italic=True),
-        "help.var": Style(color="gray58", italic=True),
-        "cmd.class": Style(italic=True, color="bright_cyan"),
-        "cmd.def": Style(italic=True, color="bright_cyan"),
-        "cmd.callable": Style(italic=True, color="bright_cyan"),
-        "cmd.var": Style(italic=True, color="bright_cyan"),
-        "debug.hex": Style(italic=True, color="green_yellow"),
-    }
-)
-
-# @pytest.hookimpl
-# def pytest_configure(config: pytest.Config):
-#     import sys
-#     console = Console(theme=miloto_theme, file=sys.stdout, force_interactive=True)
-#     error_console = Console(theme=miloto_theme, stderr=True)
-#     handler = ConsoleHandler(console, error_console)
-#     handler.setFormatter(IOFormatter())
-#
-#     # log_format = '%(asctime)s %(message)s'
-#     logging.basicConfig(level=logging.DEBUG, handlers=[handler])
-#     # handler.addFilter(POETRY_FILTER)
-#     logger = logging.getLogger(__name__)
-#     logger.info("eiririirir")
-#
-#
-#     """Register `allure_step_logger` plugin if `allure_pytest` plugin is registered."""
-#     if config.pluginmanager.getplugin('allure_pytest'):
-#         allure_commons.plugin_manager.register(AllureStepLogger(config), "allure_step_logger")
+        divide()
+        sleep(1)
+        log.critical("Out of memory!")
+        log.info("Server exited with code=-1")
+        log.info("[bold]EXITING...[/bold]", extra=dict(markup=True))
+        i = 0
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -162,26 +132,6 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     return None
 
 
-def _log_prefix(record: logging.LogRecord) -> str:
-    prefix = _path_to_package(Path(record.pathname)) or record.module
-    if record.name != "root":
-        prefix = ":".join([prefix, record.name])
-    return prefix
-
-
-def _path_to_package(path: Path) -> str | None:
-    """Return main package name from the LogRecord.pathname."""
-    prefix: Path | None = None
-    # Find the most specific prefix in sys.path.
-    # We have to search the entire sys.path because a subsequent path might be
-    # a sub path of the first match and thereby a better match.
-    for syspath in sys.path:
-        if (prefix and prefix in (p := Path(syspath)).parents and p in path.parents) or (
-            not prefix and (p := Path(syspath)) in path.parents
-        ):
-            prefix = p
-    if not prefix:
-        # this is unexpected, but let's play it safe
-        return None
-    path = path.relative_to(prefix)
-    return path.parts[0]  # main package name
+@pytest.fixture(scope="session")
+def console_output() -> Console:
+    return ConsoleFactory.console_output()
