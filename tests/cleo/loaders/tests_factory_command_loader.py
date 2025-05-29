@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from baloto.core.cleo.commands.command import Command
+from functools import partial
+
+from baloto.cleo.commands.command import Command
+from baloto.cleo.loaders.factory_command_loader import FactoryCommandLoader
 from baloto.core.cleo.exceptions import CleoCommandNotFoundError
-from baloto.core.cleo.io.io import IO
-from baloto.core.cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 """
 A simple command loader using factories to instantiate commands lazily.
@@ -12,18 +13,19 @@ A simple command loader using factories to instantiate commands lazily.
 import pytest
 
 
-def factory_command_loader_step() -> FactoryCommandLoader:
+class TestCommand(Command):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def handle(self) -> int:
+        return 1
+
+
+@pytest.fixture(scope="module", name="factory_command_loader")
+def factory_command_loader() -> FactoryCommandLoader:
     """
     "Creating a FactoryCommandLoader instance"
     """
-
-    class TestCommand(Command):
-        def __init__(self):
-            super().__init__()
-
-        def handle(self) -> int:
-            pass
-
     def command(name: str) -> Command:
         command_ = TestCommand()
         command_.name = name
@@ -32,21 +34,19 @@ def factory_command_loader_step() -> FactoryCommandLoader:
     return FactoryCommandLoader({"foo": lambda: command("foo"), "bar": lambda: command("bar")})
 
 
-def method_has_test():
+def method_has_test(factory_command_loader: FactoryCommandLoader) -> None:
     """
     The method returns a boolean value when it contains a command factory by name
     """
-    factory_command_loader = factory_command_loader_step()
     assert factory_command_loader.has("foo"), "The has('foo') method result is unexpected"
     assert factory_command_loader.has("bar"), "The has('bar') method result is unexpected"
     assert not factory_command_loader.has("baz"), "The has('baz') method result is unexpected"
 
 
-def method_get_test() -> None:
+def method_get_test(factory_command_loader: FactoryCommandLoader) -> None:
     """
     "The method returns a Command instance"
     """
-    factory_command_loader = factory_command_loader_step()
     assert isinstance(
         factory_command_loader.get("foo"), Command
     ), "The factory_command_loader instance result is unexpected"
@@ -55,19 +55,20 @@ def method_get_test() -> None:
     ), "The factory_command_loader instance result is unexpected"
 
 
-def get_invalid_command_raises_error_test() -> None:
+def method_get_invalid_name_raises_error_test(factory_command_loader: FactoryCommandLoader) -> None:
     """
     The method raises CleoCommandNotFoundError on ivalid command name
     """
-    factory_command_loader = factory_command_loader_step()
-
-    with pytest.raises(CleoCommandNotFoundError):
+    with pytest.raises(CleoCommandNotFoundError) as exc_ifo:
         factory_command_loader.get("baz")
 
+    assert (
+        exc_ifo.value.args[0] == 'The command "baz" does not exist.'
+    ), "The get('baz') property result is unexpected"
 
-def property_names_test() -> None:
+
+def property_names_test(factory_command_loader: FactoryCommandLoader) -> None:
     """
     The property return a list[str] of commands
     """
-    factory_command_loader = factory_command_loader_step()
     assert factory_command_loader.names == ["foo", "bar"], "The names property result is unexpected"
