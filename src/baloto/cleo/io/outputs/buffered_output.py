@@ -4,8 +4,8 @@ from io import StringIO
 from typing import TYPE_CHECKING
 from typing import IO
 
-from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
-from baloto.core.cleo.io.outputs.output import Verbosity
+from baloto.cleo.io.outputs.console_output import ConsoleOutput
+from baloto.cleo.io.outputs.output import Verbosity
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -28,9 +28,8 @@ class BufferedOutput(ConsoleOutput):
 
         return content
 
-    def _clear(self) -> None:
+    def clear(self, home: bool = True) -> None:
         """
         Empties the buffer.
         """
         self._buffer = StringIO()
-

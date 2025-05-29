@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from baloto.core.cleo.io.inputs.string_input import StringInput
-from baloto.core.cleo.io.io import IO
-from baloto.core.cleo.io.outputs.null_output import NullOutput
+from baloto.cleo.io.inputs.string_input import StringInput
+from baloto.cleo.io.io import IO
+from baloto.cleo.io.outputs.null_output import NullOutput
 
 
 if TYPE_CHECKING:

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import IntEnum
 from typing import TYPE_CHECKING
 from typing import Any
 
-from baloto.core.cleo.formatters.formatter import Formatter
+# from baloto.core.cleo.formatters.formatter import Formatter
 
 if TYPE_CHECKING:
     from baloto.core.cleo.io.outputs.section_output import SectionOutput
@@ -15,18 +15,17 @@ if TYPE_CHECKING:
     from rich.console import OverflowMethod
 
 
-class Verbosity(Enum):
-    QUIET = 16
+class Verbosity(IntEnum):
+    QUIET = 16  # --quiet
     NORMAL = 32
     VERBOSE = 64  # -v
     VERY_VERBOSE = 128  # -vv
     DEBUG = 256  # -vvv
 
 
-class Type(Enum):
+class OutputType(IntEnum):
     NORMAL = 1
     RAW = 2
-    PLAIN = 4
 
 
 class Output(ABC):
@@ -54,20 +53,6 @@ class Output(ABC):
     def is_debug(self) -> bool:
         return self.verbosity is Verbosity.DEBUG
 
-    def out(
-        self,
-        *objects: Any,
-        sep: str = " ",
-        end: str = "\n",
-        verbosity: Verbosity = Verbosity.NORMAL
-    ) -> None:
-        if verbosity.value > self.verbosity.value:
-            return
-
-        self._out(
-
-        )
-
     def write(
         self,
         *objects: Any,
@@ -84,7 +69,8 @@ class Output(ABC):
         crop: bool = True,
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
-        verbosity: Verbosity = Verbosity.NORMAL
+        verbosity: Verbosity = Verbosity.NORMAL,
+        type: OutputType = OutputType.NORMAL,
     ) -> None:
         if verbosity.value > self.verbosity.value:
             return
@@ -104,23 +90,24 @@ class Output(ABC):
             crop=crop,
             soft_wrap=soft_wrap,
             new_line_start=new_line_start,
+            type=type,
         )
 
     @abstractmethod
     def section(self) -> SectionOutput:
         raise NotImplementedError("[c1]section[/] is an abstract method")
 
-    @staticmethod
-    def strip_ansi(value: str) -> str:
-        from click._compat import strip_ansi
-
-        return strip_ansi(value)
-
-    @staticmethod
-    def remove_format(text: str) -> str:
-        # TODO: test against formatter remove style
-        text = re.sub(r"\033\[[^m]*m", "", text)
-        return text
+    # @staticmethod
+    # def strip_ansi(value: str) -> str:
+    #     from click._compat import strip_ansi
+    #
+    #     return strip_ansi(value)
+    #
+    # @staticmethod
+    # def remove_format(text: str) -> str:
+    #     # TODO: test against formatter remove style
+    #     text = re.sub(r"\033\[[^m]*m", "", text)
+    #     return text
 
     @abstractmethod
     def _write(
@@ -139,21 +126,14 @@ class Output(ABC):
         crop: bool = True,
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
+        type: OutputType = OutputType.NORMAL,
     ) -> None:
         raise NotImplementedError("[c1]_write[/] is an abstract method")
 
     @abstractmethod
-    def _clear(self) -> None:
-        raise NotImplementedError("[c1]_clear[/] is an abstract method")
+    def clear(self, home: bool = True) -> None:
+        raise NotImplementedError("[c1]clear[/] is an abstract method")
 
     @abstractmethod
-    def _out(
-        self,
-        *objects: Any,
-        sep: str = " ",
-        end: str = "\n"
-    ) -> None:
-        raise NotImplementedError("[c1]_out[/] is an abstract method")
-
-    def clear(self) -> None:
-        self._clear()
+    def line(self, count: int = 1) -> None:
+        raise NotImplementedError("[c1]line[/] is an abstract method")

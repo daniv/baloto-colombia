@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from io import StringIO
 from typing import Any
 from typing import TYPE_CHECKING
 
@@ -9,8 +8,8 @@ from rich.control import CONTROL_CODES_FORMAT
 from rich.control import Control
 from rich.segment import ControlType
 
-from baloto.core.cleo.io.outputs.console_output import ConsoleOutput
-from baloto.core.cleo.io.outputs.output import Verbosity
+from baloto.cleo.io.outputs.console_output import ConsoleOutput
+from baloto.cleo.io.outputs.output import Verbosity, OutputType
 
 if TYPE_CHECKING:
     from rich.console import Console, ConsoleDimensions
@@ -83,10 +82,7 @@ class SectionOutput(ConsoleOutput):
     def add_content(self, *objects: Any) -> None:
         for line_content in objects:
             no_format = len(self.remove_format(line_content).replace("\t", " " * 8))
-            self._lines += (
-                math.ceil(no_format / self.console.width)
-                or 1
-            )
+            self._lines += math.ceil(no_format / self.console.width) or 1
             self._content.append(line_content)
             self._content.append("\n")
 
@@ -98,7 +94,7 @@ class SectionOutput(ConsoleOutput):
         self,
         *objects: Any,
         sep: str = " ",
-        end: str = "",
+        end: str = "\n",
         style: str | Style | None = None,
         justify: JustifyMethod | None = None,
         overflow: OverflowMethod | None = None,
@@ -110,6 +106,7 @@ class SectionOutput(ConsoleOutput):
         crop: bool = True,
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
+        type: OutputType = OutputType.NORMAL,
     ) -> None:
         erased_content = self._pop_stream_content_until_current_section()
 

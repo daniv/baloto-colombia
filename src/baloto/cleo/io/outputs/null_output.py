@@ -4,8 +4,8 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Any
 
-from baloto.core.cleo.io.outputs.output import Output
-from baloto.core.cleo.io.outputs.output import Verbosity
+from baloto.cleo.io.outputs.output import Output, OutputType
+from baloto.cleo.io.outputs.output import Verbosity
 from baloto.core.cleo.io.outputs.section_output import SectionOutput
 
 if TYPE_CHECKING:
@@ -23,7 +23,6 @@ class NullOutput(Output):
     def supports_utf8(self) -> bool:
         return True
 
-
     def is_quiet(self) -> bool:
         return True
 
@@ -36,7 +35,13 @@ class NullOutput(Output):
     def is_debug(self) -> bool:
         return False
 
-    def section(self) -> SectionOutput: # type: ignore[empty-body]
+    def section(self) -> SectionOutput:  # type: ignore[empty-body]
+        pass
+
+    def clear(self, home: bool = True) -> None:
+        pass
+
+    def line(self, count: int = 1) -> None:
         pass
 
     def _write(
@@ -55,18 +60,6 @@ class NullOutput(Output):
         crop: bool = True,
         soft_wrap: bool | None = None,
         new_line_start: bool = False,
+        type: OutputType = OutputType.NORMAL,
     ) -> None:
         pass
-
-    def _out(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            verbosity: Verbosity = Verbosity.NORMAL
-    ) -> None:
-        pass
-
-    def _clear(self) -> None:
-        pass
-
