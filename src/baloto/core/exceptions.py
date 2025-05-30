@@ -6,7 +6,9 @@ import shlex
 
 from dataclasses import InitVar
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, Self, Any
+
+from rich.padding import PaddingDimensions
 
 from baloto.core.cleo.exceptions import CleoError
 
@@ -15,6 +17,9 @@ from baloto.core.utils.compat import decode
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from rich.table import Table
+    from rich.padding import Padding
+    from rich.console import RenderableType
 
 
 class BalotoConsoleError(CleoError):
@@ -24,9 +29,150 @@ class BalotoConsoleError(CleoError):
 class GroupNotFoundError(BalotoConsoleError):
     pass
 
+def text_after_validator(text: str) -> Text:
+    if isinstance(text, str):
+        return Text.from_markup(text)
+    return text
+
+import dataclasses as _dataclasses
+
+
+from pydantic import BaseModel, computed_field, ConfigDict, Field, StringConstraints, ValidationError, WrapValidator, \
+    PlainValidator, ValidatorFunctionWrapHandler, BeforeValidator
+from rich.style import Style, StyleType
+from rich.text import Text, TextType
+
+
+def truncate(value: Any, handler: ValidatorFunctionWrapHandler) -> str:
+    try:
+        return handler(value)
+    except ValidationError as err:
+        if err.errors()[0]['type'] == 'string_too_long':
+            return handler(value[:5])
+        else:
+            raise
+
+def validate_not_empty(value: str) -> str:
+    text = Text.from_markup(value)
+    if len(text.plain) <= 1:
+        return text.plain
+    return text.markup
+
+# BeforeValidator(lambda v: Text.from_markup(v).plain)
+class ConsoleMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True, arbitrary_types_allowed=True, strict=True)
+
+    message: Annotated[
+        str,
+        StringConstraints(min_length=1, strict=True),
+        BeforeValidator(validate_not_empty)
+    ]
+    debug: bool = False
+    style: StyleType | None = Field("")
+
+    _text: TextType | list[TextType] | None = None
+    _section: Padding | None = None
+
+    def model_post_init(self, __context: Any) -> None:
+        # self._text = Text.from_markup(self.message)
+        # if self.style:
+        self._text = Text.from_markup(self.message, style=self.style)
+
+    @computed_field(description="the rmessage without any styles")  # type: ignore[prop-decorator]
+    @property
+    def plain(self) -> str:
+        return self.text.plain
+
+    @computed_field
+    @property
+    def markup(self) -> str:
+        return self.text.markup
+
+    @property
+    def text(self) -> Text:
+        return self._text
+
+    @property
+    def section(self) -> Padding:
+        return self._section
+
+    # type: ignore[prop-decorator]
+
+    def indent(self, indent: str, style: StyleType = "") -> Self:
+
+        lines = []
+        indent_text = Text.from_markup(indent, style=style)
+        split_list = self.text.split("\n")
+        for split in split_list:
+            current = Text("")
+            lines.append(current.append(indent_text).append(split).append("\n"))
+        self._text = Text().join(lines)
+        return self
+
+    def make_section(
+            self,
+            title: str,
+            style: StyleType = "",
+            padding: PaddingDimensions = 0,
+    ) -> Self:
+        from rich.table import Table
+        from rich.containers import Renderables
+        from rich.padding import Padding
+
+        if self._section is not None:
+            return self
+
+        renderables = [self.text]
+        output = Table.grid(padding=(0, 1), expand=True)
+        output.add_column(style=style, width=len(title) + 1)
+        output.add_column(ratio=1, overflow="fold", highlight=True)
+        row: list[RenderableType] = []
+        if title:
+            row.append(Text(title, style=style))
+        row.append(Renderables(renderables))
+
+        output.add_row(*row)
+        padding = Padding(output, padding)
+        return padding
+
+    def _render_as_padding(self, title: str, title_style: StyleType = "", indent: str = "") -> ConsoleRenderable:
+        renderables = [self.text]
+        from rich.table import Table
+        output = Table.grid(padding=(0, 1), expand=True)
+        output.add_column(style=title_style, width=len(title) + 1)
+        output.add_column(ratio=1, overflow="fold", highlight=True)
+        row: list[RenderableType] = []
+        if title:
+            row.append(f"[b]{title}:[/]")
+        from rich.containers import Renderables
+        row.append(Renderables(renderables))
+
+        output.add_row(*row)
+        from rich.padding import Padding
+
+        return Padding(output, (0, 0, 0, len(indent)))
+
+
+        # if not self.text:
+        #     return self
+        #
+        # if self.text:
+        #     section = [f"[b]{title}:[/]"] if title else []
+        #     section.extend(self.text.splitlines())
+        #     self.text = f"\n{indent}".join(section).strip()
+        #
+        # return self
+
+    def __str__(self) -> str:
+        return self.message
+    #
+    def __repr__(self) -> str:
+        return f"<ConsoleMessage {self.message!r} {self.style!r}>"
+
+
 
 @dataclasses.dataclass
-class ConsoleMessage:
+class ConsoleMessage2:
     """
     Representation of a console message, providing utilities for formatting text
     with tags, indentation, and sections.

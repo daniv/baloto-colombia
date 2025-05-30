@@ -7,7 +7,7 @@ from typing import cast
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from baloto.core.cleo.events.event import Event
+    from baloto.cleo.events.event import Event
 
     Listener = Callable[[Event, str, "EventDispatcher"], None]
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from baloto.core.cleo.events.console_event import ConsoleEvent
+from baloto.cleo.events.console_event import ConsoleEvent
 
 
 if TYPE_CHECKING:
-    from baloto.core.cleo.commands.command import Command
-    from baloto.core.cleo.io.io import IO
+    from baloto.cleo.commands.command import Command
+    from baloto.cleo.io.io import IO
 
 
 class ConsoleCommandEvent(ConsoleEvent):

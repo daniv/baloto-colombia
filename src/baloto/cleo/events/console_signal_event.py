@@ -8,8 +8,8 @@ from cleo.events.console_event import ConsoleEvent
 if TYPE_CHECKING:
     import signal
 
-    from baloto.core.cleo.commands.command import Command
-    from baloto.core.cleo.io.io import IO
+    from baloto.cleo.commands.command import Command
+    from baloto.cleo.io.io import IO
 
 
 class ConsoleSignalEvent(ConsoleEvent):
