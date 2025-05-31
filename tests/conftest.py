@@ -1,21 +1,19 @@
+"""
+https://github.com/TvoroG/pytest-lazy-fixture
+
+"""
+
+from __future__ import annotations
+
 import logging
-import sys
-import textwrap
-from pathlib import Path
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import pytest
-
-# from tests import AllureStepLogger
-
 from rich.console import Console
 
-from abc import ABC
-from abc import abstractmethod
-import re
-from rich.style import Style
-
 from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+
+# from tests import AllureStepLogger
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -27,9 +25,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     from _pytest.logging import get_log_level_for_setting
 
-    log_cli_level = get_log_level_for_setting(
-        config, "log_cli_level", "log_level"
-    )
+    log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
     enabled = config.getoption("--log-cli-level") is not None or config.getini("log_cli")
     console = ConsoleFactory.console_output()
     console.print("C:/Users/solma/PycharmProjects/baloto-colombia/tests/conftest.py:95")
@@ -40,23 +36,23 @@ def pytest_configure(config: pytest.Config) -> None:
             level=log_cli_level,
             console=console,
             rich_tracebacks=rich_tracebacks,
-            tracebacks_show_locals=tracebacks_show_locals
+            tracebacks_show_locals=tracebacks_show_locals,
         )
-    # from rich.logging import RichHandler
-    # handler = RichHandler(
-    #     console=console, level=log_cli_level,
-    #     show_time=False,
-    #     rich_tracebacks=rich_tracebacks,
-    #     tracebacks_show_locals=tracebacks_show_locals
-    # )
-    # formatter = ConsoleFormatter(
-    #     rich_tracebacks=rich_tracebacks
-    # )
-    # handler.setFormatter(formatter)
-    # if not io.is_very_verbose():
-    #     handler.addFilter(POETRY_FILTER)
+        # from rich.logging import RichHandler
+        # handler = RichHandler(
+        #     console=console, level=log_cli_level,
+        #     show_time=False,
+        #     rich_tracebacks=rich_tracebacks,
+        #     tracebacks_show_locals=tracebacks_show_locals
+        # )
+        # formatter = ConsoleFormatter(
+        #     rich_tracebacks=rich_tracebacks
+        # )
+        # handler.setFormatter(formatter)
+        # if not io.is_very_verbose():
+        #     handler.addFilter(POETRY_FILTER)
 
-    # FORMAT = "%(asctime)-15s - %(levelname)s - %(message)s"
+        # FORMAT = "%(asctime)-15s - %(levelname)s - %(message)s"
         logging.basicConfig(
             level="NOTSET",
             format="%(message)s",
@@ -65,11 +61,12 @@ def pytest_configure(config: pytest.Config) -> None:
         )
 
         from time import sleep
+
         log = logging.getLogger("conftest")
         log.info("Server starting...")
 
         log.info("Listening on http://127.0.0.1:8080")
-        #sleep(1)
+        # sleep(1)
 
         log.info("GET /index.html 200 1298")
         log.info("GET /imgs/backgrounds/back1.jpg 200 54386")
@@ -115,8 +112,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
-    from _pytest.outcomes import Skipped
-
     # from itertools import product
     # combinations8 = list(product(range(2), repeat=8))
     # combinations8 = list(filter(lambda x: sum(x) == 5, combinations8))

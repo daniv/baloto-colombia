@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-import re
 from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import TYPE_CHECKING
 from typing import Any
+from typing import TYPE_CHECKING
 
-# from baloto.core.cleo.formatters.formatter import Formatter
+from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+from baloto.utils import is_pydevd_mode
 
 if TYPE_CHECKING:
-    from baloto.core.cleo.io.outputs.section_output import SectionOutput
+    from baloto.cleo.formatters.formatter import Formatter
+    from baloto.cleo.io.outputs.section_output import SectionOutput
     from rich.style import Style
     from rich.console import JustifyMethod
     from rich.console import OverflowMethod
+    from rich.console import Console
 
 
 class Verbosity(IntEnum):
@@ -22,6 +24,9 @@ class Verbosity(IntEnum):
     VERY_VERBOSE = 128  # -vv
     DEBUG = 256  # -vvv
 
+V = Verbosity.VERBOSE
+VV = Verbosity.VERY_VERBOSE
+VVV = Verbosity.DEBUG
 
 class OutputType(IntEnum):
     NORMAL = 1
@@ -29,9 +34,19 @@ class OutputType(IntEnum):
 
 
 class Output(ABC):
-    def __init__(self, verbosity: Verbosity = Verbosity.NORMAL) -> None:
+    def __init__(self, verbosity: Verbosity = Verbosity.NORMAL, formatter: Formatter | None = None) -> None:
+        from baloto.cleo.formatters.formatter import Formatter
+
         self.verbosity: Verbosity = verbosity
+        self._dev_mode = is_pydevd_mode()
+        self._formatter = formatter or Formatter()
         self._section_outputs: list[SectionOutput] = []
+
+
+    @property
+    @abstractmethod
+    def console(self) -> Console:
+        raise NotImplementedError("[c1]console[/] is an abstract method")
 
     @property
     @abstractmethod
@@ -40,6 +55,15 @@ class Output(ABC):
         Returns whether the stream supports the UTF-8 encoding.
         """
         raise NotImplementedError("[c1]supports_utf8[/] is an abstract method")
+
+    @property
+    def formatter(self) -> Formatter:
+        return self._formatter
+
+    @formatter.setter
+    def formatter(self, formatter: Formatter) -> None:
+        self._formatter = formatter
+        ConsoleFactory.formatter = formatter
 
     def is_quiet(self) -> bool:
         return self.verbosity is Verbosity.QUIET
@@ -52,6 +76,38 @@ class Output(ABC):
 
     def is_debug(self) -> bool:
         return self.verbosity is Verbosity.DEBUG
+
+    def log(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+        stack_offset: int = 3,
+    ) -> None:
+
+        # if not self._dev_mode:
+        #     return
+        # if verbosity.value > self.verbosity.value and self._dev_mode:
+        #     return
+        self._log(
+            *objects,
+                sep=sep,
+                end=end,
+                style=style,
+                justify=justify,
+                markup=markup,
+                highlight=highlight,
+                log_locals=log_locals,
+                emoji=emoji,
+                stack_offset=stack_offset
+        )
 
     def write(
         self,
@@ -108,6 +164,22 @@ class Output(ABC):
     #     # TODO: test against formatter remove style
     #     text = re.sub(r"\033\[[^m]*m", "", text)
     #     return text
+
+    @abstractmethod
+    def _log(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+        stack_offset: int = 1,
+    ) -> None:
+        raise NotImplementedError("[c1]_log[/] is an abstract method")
 
     @abstractmethod
     def _write(

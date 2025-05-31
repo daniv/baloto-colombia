@@ -1,79 +1,37 @@
 from __future__ import annotations
 
 import logging
-import threading
-from pathlib import Path
-
+from types import ModuleType
 from typing import (
     TYPE_CHECKING,
-    ClassVar,
-    Type,
     Iterable,
     Callable,
     Annotated,
     Any,
-    ParamSpecArgs,
-    ParamSpecKwargs,
 )
-from types import ModuleType
 
 import pendulum
-from rich._null_file import NullFile
-from rich.highlighter import ReprHighlighter
-from rich.logging import RichHandler
-from rich.text import Text
 from annotated_types import Ge, Le
 from pydantic import (
     BaseModel,
     Field,
-    NonNegativeInt,
-    StrictBool,
-    PositiveInt,
     computed_field,
     field_validator,
-    field_serializer,
-    PositiveFloat,
     ConfigDict,
 )
+from rich._null_file import NullFile
+from rich.logging import RichHandler
+from rich.text import Text
 
-
-from baloto.cleo.rich.traceback import RichTraceback
 from baloto.cleo.io.outputs.output import Verbosity
+from baloto.cleo.rich.traceback import RichTraceback
 
 if TYPE_CHECKING:
     from logging import LogRecord
-    from rich.console import ConsoleRenderable
-    from rich.traceback import Traceback
-    from rich.table import Table
-    from rich.console import RenderableType
     from rich.console import Console
     from rich.highlighter import Highlighter
-    from rich.text import TextType
 
     FormatTimeCallable = Callable[[pendulum.DateTime], Text]
-
-
-"""
-      
-    def __init__(self, console: Console, level: int | str = logging.NOTSET, *, show_time: bool = True, omit_repeated_times: bool = True,
-                 show_level: bool = True, enable_link_path: bool = True,
-                 highlighter: Highlighter | None = None, markup: bool = False, rich_tracebacks: bool = False,
-                 tracebacks_width: int | None = None, tracebacks_code_width: int = 88, tracebacks_extra_lines: int = 3,
-                 tracebacks_theme: str | None = None, tracebacks_word_wrap: bool = True,
-                 tracebacks_show_locals: bool = False, tracebacks_suppress: Iterable[str | ModuleType] = (),
-                 tracebacks_max_frames: int = 100, locals_max_length: int = 10, locals_max_string: int = 80,
-                 log_time_format: str | FormatTimeCallable = "[%x %X]", keywords: list[str] | None = None) -> None:
-
-        super().__init__(level, console, omit_repeated_times=omit_repeated_times, show_level=show_level,
-                         show_time=show_time, show_path=show_path, enable_link_path=enable_link_path, highlighter=highlighter, markup=markup,
-                         rich_tracebacks=rich_tracebacks, tracebacks_width=tracebacks_width,
-                         tracebacks_code_width=tracebacks_code_width, tracebacks_extra_lines=tracebacks_extra_lines,
-                         tracebacks_theme=tracebacks_theme, tracebacks_word_wrap=tracebacks_word_wrap,
-                         tracebacks_show_locals=tracebacks_show_locals, tracebacks_suppress=tracebacks_suppress,
-                         tracebacks_max_frames=tracebacks_max_frames, locals_max_length=locals_max_length,
-                         locals_max_string=locals_max_string, log_time_format=log_time_format, keywords=keywords)
-
-"""
 
 
 class ConsoleHandler(RichHandler):
@@ -95,7 +53,7 @@ class ConsoleHandler(RichHandler):
         tracebacks_max_frames: int = 100,
         locals_max_length: int = 10,
         locals_max_string: int = 80,
-        keywords: list[str] | None = None
+        keywords: list[str] | None = None,
     ) -> None:
 
         super().__init__(
@@ -115,7 +73,7 @@ class ConsoleHandler(RichHandler):
             tracebacks_max_frames=tracebacks_max_frames,
             locals_max_length=locals_max_length,
             locals_max_string=locals_max_string,
-            keywords=keywords,
+            keywords=keywords
         )
 
         from baloto.cleo.rich.logging.log_render import ConsoleLogRender
@@ -157,9 +115,7 @@ class ConsoleHandler(RichHandler):
                 message = formatter.formatMessage(record)
 
         message_renderable = self.render_message(record, message)
-        log_renderable = self.render(
-            record=record, traceback=traceback, message_renderable=message_renderable
-        )
+        log_renderable = self.render(record=record, traceback=traceback, message_renderable=message_renderable)
         try:
             self.console.print(log_renderable)
         except Exception as e:
@@ -173,14 +129,10 @@ class ConsoleHandler(RichHandler):
 
 # noinspection PyNestedDecorators
 class TracebackPolicy(BaseModel):
-    model_config = ConfigDict(
-        extra="ignore", validate_assignment=True, arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(extra="ignore", validate_assignment=True, arbitrary_types_allowed=True)
 
     verbosity: Verbosity
-    logging_level: Annotated[int, Ge(logging.NOTSET), Le(logging.CRITICAL)] = Field(
-        default=logging.NOTSET
-    )
+    logging_level: Annotated[int, Ge(logging.NOTSET), Le(logging.CRITICAL)] = Field(default=logging.NOTSET)
     rich_tracebacks: bool = False
     tracebacks_show_locals: bool = False
 
@@ -195,9 +147,7 @@ class TracebackPolicy(BaseModel):
     @classmethod
     def logging_level_values(cls, value: int) -> int:
         mappings = logging.getLevelNamesMapping()
-        mappings = dict(
-            filter(lambda key_value: key_value[0] not in ["WARN", "FATAL"], mappings.items())
-        )
+        mappings = dict(filter(lambda key_value: key_value[0] not in ["WARN", "FATAL"], mappings.items()))
         values = list(mappings.values())
 
         if value not in values:

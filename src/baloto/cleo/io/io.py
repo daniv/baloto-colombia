@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from baloto.cleo.io.outputs.output import Verbosity, OutputType
 
@@ -42,49 +42,50 @@ class IO:
         return self.output.section()
 
     def clear(self, home: bool = True) -> None:
-        self. output.clear(home)
+        self.output.clear(home)
 
     def write(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            overflow: OverflowMethod | None = None,
-            no_wrap: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool = True,
-            width: int | None = None,
-            height: int | None = None,
-            crop: bool = True,
-            soft_wrap: bool | None = None,
-            new_line_start: bool = False,
-            verbosity: Verbosity = Verbosity.NORMAL,
-            type: OutputType = OutputType.NORMAL
-    ) -> None:
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        verbosity: Verbosity = Verbosity.NORMAL,
+        type: OutputType = OutputType.NORMAL,
+    ) -> None: ...
 
     def write_error(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            justify: JustifyMethod | None = None,
-            overflow: OverflowMethod | None = None,
-            no_wrap: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool = True,
-            width: int | None = None,
-            height: int | None = None,
-            crop: bool = True,
-            soft_wrap: bool | None = None,
-            new_line_start: bool = False,
-            type: OutputType = OutputType.NORMAL
-    ) -> None:
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        no_wrap: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool = True,
+        width: int | None = None,
+        height: int | None = None,
+        crop: bool = True,
+        soft_wrap: bool | None = None,
+        new_line_start: bool = False,
+        type: OutputType = OutputType.NORMAL,
+    ) -> None: ...
 
-    def overwrite(self, *messages: Any,) -> None:
+    def overwrite(
+        self,
+        *messages: Any,
+    ) -> None:
         from cleo.cursor import Cursor
 
         cursor = Cursor(self._output)
@@ -92,7 +93,7 @@ class IO:
         cursor.clear_line()
         self.write(messages)
 
-    def overwrite_error(self,  *messages: Any) -> None:
+    def overwrite_error(self, *messages: Any) -> None:
         from cleo.cursor import Cursor
 
         cursor = Cursor(self._error_output)

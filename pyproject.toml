@@ -40,7 +40,6 @@ classifiers = [
 
 [tool.poetry.scripts]
 miloto = 'baloto.miloto.__main__:main'
-baloto = 'baloto.baloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
@@ -92,21 +91,6 @@ exclude = [
     "tests/masonry/builders/fixtures",
     "tests/utils/fixtures",
 ]
-
-[tool.baloto]
-description = """
-Baloto es un juego novedoso de tipo loto en línea de suerte y azar,
-donde el jugador por $5.700 apuesta por un gran acumulado multimillonario inicial de $4.000 millones de pesos,
-que se irá acumulando en cada sorteo si no se tiene un ganador.
-
-Jugar Baloto y Revancha es muy fácil:
-- Elige 5 numeros del 1 al 43
-- y una SUPERBALOTA con numeros de 1 a 16
-"""
-min_number = 1
-max_number = 43
-min_balota = 1
-max_balota = 16
 
 [tool.miloto]
 description = """

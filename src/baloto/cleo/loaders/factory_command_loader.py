@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from baloto.cleo.commands.command import Command
-from baloto.core.cleo.exceptions import CleoCommandNotFoundError
+from baloto.cleo.exceptions.errors import CleoCommandNotFoundError
 from baloto.cleo.loaders.command_loader import CommandLoader
 
-
-Factory = Callable[[], Command]
+if TYPE_CHECKING:
+    from baloto.cleo.commands.cleo_command import Command
+    Factory = Callable[[], Command]
 
 
 class FactoryCommandLoader(CommandLoader):

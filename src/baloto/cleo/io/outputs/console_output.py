@@ -24,9 +24,10 @@ if TYPE_CHECKING:
 
 
 class ConsoleOutput(Output):
+
     def __init__(self, console: Console, verbosity: Verbosity = Verbosity.NORMAL) -> None:
         super().__init__(verbosity)
-        self.console = console
+        self._console = console
         self.interactive: bool = console.is_interactive
 
     @cached_property
@@ -41,8 +42,38 @@ class ConsoleOutput(Output):
         except LookupError:
             return True
 
+    @property
+    def console(self) -> Console:
+        return self._console
+
     def section(self) -> SectionOutput:
         return SectionOutput(self.console, self._section_outputs, verbosity=self.verbosity)
+
+    def _log(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+        stack_offset: int = 4,
+    ) -> None:
+        self.console.log(
+                *objects,
+                sep=sep,
+                end=end,
+                style=style,
+                justify=justify,
+                markup=markup,
+                highlight=highlight,
+                log_locals=log_locals,
+                emoji=emoji,
+                _stack_offset=stack_offset
+        )
 
     def _write(
         self,
@@ -107,13 +138,9 @@ class ConsoleOutput(Output):
         pad: bool = True,
         new_lines: bool = False,
     ) -> list[list[Segment]]:
-        return self.console.render_lines(
-            renderable, options, style=style, pad=pad, new_lines=new_lines
-        )
+        return self.console.render_lines(renderable, options, style=style, pad=pad, new_lines=new_lines)
 
-    def render(
-        self, renderable: RenderableType, options: ConsoleOptions | None = None
-    ) -> Iterable[Segment]:
+    def render(self, renderable: RenderableType, options: ConsoleOptions | None = None) -> Iterable[Segment]:
         return self.console.render(renderable, options)
 
     def render_str(

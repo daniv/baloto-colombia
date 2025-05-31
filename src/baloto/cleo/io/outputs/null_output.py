@@ -1,23 +1,25 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING
 from typing import Any
+from typing import TYPE_CHECKING
 
 from baloto.cleo.io.outputs.output import Output, OutputType
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.core.cleo.io.outputs.section_output import SectionOutput
+from baloto.cleo.io.outputs.section_output import SectionOutput
+from baloto.cleo.rich.factory.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
     from rich.style import Style
     from rich.console import JustifyMethod
     from rich.console import OverflowMethod
+    from rich.console import Console
 
 
 class NullOutput(Output):
 
     def __init__(self) -> None:
         super().__init__(verbosity=Verbosity.QUIET)
+        self._console = ConsoleFactory.null_file()
 
     @property
     def supports_utf8(self) -> bool:
@@ -44,6 +46,21 @@ class NullOutput(Output):
     def line(self, count: int = 1) -> None:
         pass
 
+    def _log(
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+        _stack_offset: int = 1,
+    ) -> None:
+        pass
+
     def _write(
         self,
         *objects: Any,
@@ -63,3 +80,7 @@ class NullOutput(Output):
         type: OutputType = OutputType.NORMAL,
     ) -> None:
         pass
+
+    @property
+    def console(self) -> Console:
+        return self._console

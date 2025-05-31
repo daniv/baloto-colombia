@@ -17,10 +17,7 @@ def pretty_print_error(error: CleoCommandError) -> None:
 def pretty_error_message(error: CleoCommandError) -> Panel:
     from rich.columns import Columns
 
-    error_col = Columns(
-        [str(error), error.command_name],
-        column_first=True
-    )
+    error_col = Columns([str(error), error.command_name], column_first=True)
 
     return Panel.fit(
         error_col,

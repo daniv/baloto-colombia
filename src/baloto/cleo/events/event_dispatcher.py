@@ -26,9 +26,7 @@ class EventDispatcher:
 
         return event
 
-    def get_listeners(
-        self, event_name: str | None = None
-    ) -> list[Listener] | dict[str, list[Listener]]:
+    def get_listeners(self, event_name: str | None = None) -> list[Listener] | dict[str, list[Listener]]:
         if event_name is not None:
             if event_name not in self._listeners:
                 return []

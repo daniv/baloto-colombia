@@ -4,9 +4,8 @@ from typing import TYPE_CHECKING
 
 from baloto.cleo.events.console_event import ConsoleEvent
 
-
 if TYPE_CHECKING:
-    from baloto.cleo.commands.command import Command
+    from baloto.cleo.commands.cleo_command import Command
     from baloto.cleo.io.io import IO
 
 

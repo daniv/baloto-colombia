@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from collections.abc import Mapping
 from datetime import datetime
@@ -11,8 +10,10 @@ from typing import TYPE_CHECKING
 
 from rich._null_file import NullFile
 from rich.console import Console
-from rich.highlighter import ReprHighlighter
 from rich.highlighter import NullHighlighter
+from rich.highlighter import ReprHighlighter
+
+from baloto.cleo.formatters.formatter import Formatter
 
 if TYPE_CHECKING:
     from rich.theme import Theme
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
 
 
 class ConsoleFactory:
+
+    formatter: Formatter | None = None
+
     def __init__(
         self,
         *,
@@ -85,13 +89,24 @@ class ConsoleFactory:
 
     @classmethod
     def console_output(cls, soft_wrap: bool = True) -> Console:
-        return cls(
+        console = cls(
             force_terminal=True,
             highlight=True,
             soft_wrap=soft_wrap,
             force_interactive=True,
-            theme=ConsoleFactory.default_theme()
+            theme=ConsoleFactory.default_theme(),
         ).console
+        from baloto.cleo.rich.logging.log_render import ConsoleLogRender
+
+        render = console._log_render
+        console._log_render = ConsoleLogRender(
+            show_time=False,
+            show_path=True,
+            time_format=render.time_format,
+        )
+
+        return console
+
 
     @classmethod
     def console_error_output(cls, soft_wrap: bool = True) -> Console:
@@ -107,7 +122,7 @@ class ConsoleFactory:
 
     @classmethod
     def null_file(cls) -> Console:
-        return cls(file=NullFile(), highlight=False).console
+        return cls(file=NullFile(), highlight=False, quiet=True).console
 
     @classmethod
     def console_output_string_io(cls) -> Console:
@@ -128,8 +143,10 @@ class ConsoleFactory:
             style=NULL_STYLE,
         ).console
 
-    @staticmethod
-    def default_theme() -> Theme:
-        from baloto.cleo.formatters.formatter import Formatter
-
-        return Formatter().create_theme()
+    @classmethod
+    def default_theme(cls) -> Theme:
+        if cls.formatter is None:
+            import warnings
+            warnings.warn("The formatter was not set! the rich.Theme will be the default", RuntimeWarning, stacklevel=2)
+            return Formatter().create_theme()
+        return cls.formatter.create_theme()

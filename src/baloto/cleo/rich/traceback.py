@@ -71,8 +71,7 @@ class RichTraceback(Traceback):
                 posix = Path(frame.filename).as_posix()
                 content = f"{frame.filename}:{frame.lineno} in {frame.name}"
                 text = Text.from_markup(
-                    f'[blue bold][link={posix}:{frame.lineno}]{content}[/link][/]',
-                    style="pygments.text"
+                    f"[blue bold][link={posix}:{frame.lineno}]{content}[/link][/]", style="pygments.text"
                 )
             else:
                 text = Text.assemble(
