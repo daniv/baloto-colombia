@@ -15,6 +15,8 @@ dependencies = [
     "rich (>=14.0.0,<15.0.0)",
     "cleo (>=2.1.0,<3.0.0)",
     "pydantic (>=2.11.5,<3.0.0)",
+    "glom (>=24.11.0,<25.0.0)",
+    "pydantic-extra-types (>=2.10.4,<3.0.0)",
 ]
 
 [project.urls]
@@ -58,8 +60,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 minversion = "8.3"
 testpaths = ["tests"]
-python_files = ["tests_*.py"]
-python_functions = ["*_test"]
+python_files = ["test_*.py"]
+python_functions = ["*_test", "test_*"]
 norecursedirs = ["src", ".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
@@ -70,7 +72,7 @@ addopts = [
 xfail_strict = true
 
 [tool.black]
-line-length = 150
+line-length = 120
 verbose = true
 
 [tool.mypy]
@@ -90,8 +92,6 @@ exclude = [
     "tests/masonry/builders/fixtures",
     "tests/utils/fixtures",
 ]
-
-
 
 [tool.baloto]
 description = """
