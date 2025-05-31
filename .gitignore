@@ -242,4 +242,5 @@ fabric.properties
 tests/allure-results/
 tests/allure-report/
 
-resources/
+static/
+.run/
