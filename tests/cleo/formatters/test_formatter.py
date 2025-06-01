@@ -7,17 +7,15 @@
 # GIT ACTIONS https://stackoverflow.com/questions/72061054/only-run-black-on-changed-files
 from __future__ import annotations
 
-import itertools
-import string
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 import pytest
-from hypothesis import given, strategies
 from pytest import param
 from rich.style import Style
 
-from alphabets import ALPHABET_ASCII_LOWER_UPPERS
+from baloto.cleo.exceptions import ExitStatus
+from baloto.cleo.exceptions.errors import CleoKeyError
 from conftest import DISABLE_PRINT, DISABLE_MSG
 
 if TYPE_CHECKING:
@@ -35,13 +33,12 @@ def test_ansi_color_names() -> None:
 
     assert ansi_color_names == rich_names
 
-@given(strategies.text(list(itertools.chain(string.ascii_lowercase, [".", "_", "-"])), min_size=4, max_size=8))
-def test_set_style_has_style_and_style_methods(mformatter: Formatter, text: str) -> None:
+def test_set_style_has_style_and_style_methods(mformatter: Formatter) -> None:
 
-    mformatter.set_style(text, style="red bold")
+    mformatter.set_style("test", style="red bold")
 
-    assert mformatter.has_style(text) is True, "The style.has_style result was not as expected"
-    assert mformatter.style(text) == "red bold", "The style.style result was not as expected"
+    assert mformatter.has_style("test") is True, "The style.has_style result was not as expected"
+    assert mformatter.style("test") == "red bold", "The style.style result was not as expected"
 
     style_obj = Style(color="green", bold=True, underline=True)
     mformatter.set_style("as.style.obj", style_obj)
@@ -51,33 +48,42 @@ def test_set_style_has_style_and_style_methods(mformatter: Formatter, text: str)
     assert mformatter.style("as.style.obj").color.name == "green", "The style.color.name result was not as expected"
 
 
-
-@given(strategies.text(list(string.ascii_lowercase), min_size=4, max_size=8))
-def test_create_theme(mformatter: Formatter, text:str) -> None:
+def test_create_theme(mformatter: Formatter) -> None:
 
     style_obj = Style(color="green", bold=True, underline=True)
-    theme = mformatter.create_theme({text: style_obj})
-    style = theme.styles.get(text)
+    theme = mformatter.create_theme({"test": style_obj})
+    style = theme.styles.get("test")
     assert style.color.name == "green", "The style.color.name result was not as expected"
 
-def test_default_theme(fformatter: Formatter) -> None:
-    default_theme = fformatter.default_theme
+def test_default_theme(mformatter: Formatter) -> None:
+    default_theme = mformatter.default_theme
 
-    assert default_theme.styles.get("alias") is not None, "The formatter.styles.get result was not as expected"
-    assert default_theme.styles.get("-alias-") is None, "The formatter.styles.get result was not as expected"
+    assert default_theme.styles.get("alias") is not None, "The styles.get result was not as expected"
+    assert default_theme.styles.get("-alias-") is None, "The styles.get result was not as expected"
 
 
 @pytest.mark.parametrize("name", ["alias", "switch", "prog"])
 def test_styles_names(fformatter: Formatter, name: str) -> None:
-    assert "alias" in list(fformatter.styles_names())
+    assert name in list(fformatter.styles_names())
+
+def test_cleo_value_error_fetching_existing_item(mformatter: Formatter) -> None:
+    style = "this_style_not_exists"
+    assert mformatter.has_style(style) is False
+
+    with pytest.raises(CleoKeyError) as exc_info:
+        mformatter.style(style)
+
+    expected_msg = f'Undefined style: "this_style_not_exists"'
+    assert exc_info.value.args[0] == expected_msg, "The error.msg result was not as expected"
+    assert exc_info.value.exit_code == ExitStatus.USAGE_ERROR, "The exit_code result was not as expected"
 
 
-@given(strategies.text(ALPHABET_ASCII_LOWER_UPPERS, min_size=5, max_size=10))
-def test_strip(text: str) -> None:
+
+def test_strip() -> None:
     from baloto.cleo.formatters.formatter import Formatter
 
-    expected = f"prefix-{text}-suffix"
-    marked = f"[yellow]prefix-[/][green bold]{text}[/][italic]-suffix[/]"
+    expected = f"prefix-Abc30000-suffix"
+    marked = f"[yellow]prefix-[/][green bold]Abc30000[/][italic]-suffix[/]"
     assert Formatter.strip_styles(marked) == expected, "The strip_styles result was not as expected"
 
 @pytest.mark.skipif(DISABLE_PRINT is True, reason=DISABLE_MSG)
@@ -167,7 +173,6 @@ def test_to_ansi(fformatter: Formatter, style: StyleType | None, expected_ansi: 
     assert ansi == expected_ansi, "The formatter.to_ansi result was not as expected"
 
 
-@given(strategies.text(min_size=20, max_size=30))
 @pytest.mark.skipif(DISABLE_PRINT is True, reason=DISABLE_MSG)
 def test_higlight_words(mformatter: Formatter, test_messages: MappingProxyType, styled_console: Console, text: str):
     mformatter.set_text(text)

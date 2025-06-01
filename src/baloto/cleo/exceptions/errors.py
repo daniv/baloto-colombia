@@ -100,6 +100,19 @@ class CleoNoSuchOptionError(CleoErrorMixin, CleoError):
         return "Raised when command does not have given option."
 
 
+class CleoKeyError(CleoError, KeyError):
+    """
+    Raised when wrong key is fetching non-existing keys
+    """
+
+    exit_code: int | None = ExitStatus.USAGE_ERROR
+
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
+        self.add_note("Raised when wrong key is fetching non-existing keys.")
+
+
+
 class CleoValueError(CleoError, ValueError):
     """
     Raised when wrong value was given to Cleo components.
