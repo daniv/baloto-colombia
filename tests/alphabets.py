@@ -15,3 +15,6 @@ if TYPE_CHECKING:
 
 
 ALPHABET_ASCII_LOWER_UPPERS = list(itertools.chain(list(string.ascii_lowercase), list(string.ascii_uppercase)))
+
+alphabet = list(itertools.chain(string.ascii_lowercase, [".", "_", "-"]))
+i = 0

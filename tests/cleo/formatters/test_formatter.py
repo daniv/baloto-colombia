@@ -7,6 +7,8 @@
 # GIT ACTIONS https://stackoverflow.com/questions/72061054/only-run-black-on-changed-files
 from __future__ import annotations
 
+import itertools
+import string
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
@@ -33,26 +35,29 @@ def test_ansi_color_names() -> None:
 
     assert ansi_color_names == rich_names
 
+@given(strategies.text(list(itertools.chain(string.ascii_lowercase, [".", "_", "-"])), min_size=4, max_size=8))
+def test_set_style_has_style_and_style_methods(mformatter: Formatter, text: str) -> None:
 
-def test_set_style_has_style_and_style_methods(fformatter: Formatter) -> None:
+    mformatter.set_style(text, style="red bold")
 
-    fformatter.set_style("test", style="red bold")
-
-    assert fformatter.has_style("test") is True, "The style.has_style result was not as expected"
-    assert fformatter.style("test") == "red bold", "The style.style result was not as expected"
-
-    style_obj = Style(color="green", bold=True, underline=True)
-    fformatter.set_style("as.style.obj", style_obj)
-    assert fformatter.has_style("as.style.obj") is True, "The style.has_style result was not as expected"
-    assert fformatter.style("as.style.obj") == style_obj, "The style.style result was not as expected"
-
-    assert fformatter.style("as.style.obj").color.name == "green", "The style.color.name result was not as expected"
-
-def test_create_theme(fformatter: Formatter) -> None:
+    assert mformatter.has_style(text) is True, "The style.has_style result was not as expected"
+    assert mformatter.style(text) == "red bold", "The style.style result was not as expected"
 
     style_obj = Style(color="green", bold=True, underline=True)
-    theme = fformatter.create_theme({"as.style.obj": style_obj})
-    style = theme.styles.get("as.style.obj")
+    mformatter.set_style("as.style.obj", style_obj)
+    assert mformatter.has_style("as.style.obj") is True, "The style.has_style result was not as expected"
+    assert mformatter.style("as.style.obj") == style_obj, "The style.style result was not as expected"
+
+    assert mformatter.style("as.style.obj").color.name == "green", "The style.color.name result was not as expected"
+
+
+
+@given(strategies.text(list(string.ascii_lowercase), min_size=4, max_size=8))
+def test_create_theme(mformatter: Formatter, text:str) -> None:
+
+    style_obj = Style(color="green", bold=True, underline=True)
+    theme = mformatter.create_theme({text: style_obj})
+    style = theme.styles.get(text)
     assert style.color.name == "green", "The style.color.name result was not as expected"
 
 def test_default_theme(fformatter: Formatter) -> None:
