@@ -9,7 +9,7 @@ from rich.color import ColorSystem
 from rich.style import Style
 from rich.text import Text
 
-from baloto.cleo.exceptions.errors import CleoValueError
+from baloto.cleo.exceptions.errors import CleoKeyError
 
 if TYPE_CHECKING:
     from rich.console import OverflowMethod, JustifyMethod, ConsoleRenderable
@@ -181,7 +181,7 @@ class Formatter:
 
     def style(self, name: str) -> Style:
         if not self.has_style(name):
-            raise CleoValueError(f'Undefined style: "{name}"')
+            raise CleoKeyError(f'Undefined style: "{name}"')
 
         return self._styles[name]
 
