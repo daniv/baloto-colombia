@@ -5,18 +5,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from baloto.utils.helpers import EMPTY_STRING
-
-if TYPE_CHECKING:
-    pass
-
-
 """
 Determine if a string contains only whitespace characters or is empty.
 """
-is_whitespace = lambda string: string.strip() == EMPTY_STRING
+is_whitespace = lambda string: string.strip() == ""
 
 """
 Determine if a string contains any of the given values. *matches* may be a

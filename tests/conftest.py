@@ -6,18 +6,18 @@ https://github.com/TvoroG/pytest-lazy-fixture
 from __future__ import annotations
 
 import logging
+import os
 from typing import TYPE_CHECKING
 
 import pytest
-from rich.console import Console
-
-from baloto.cleo.rich.factory.console_factory import ConsoleFactory
-
-# from tests import AllureStepLogger
+from rich.console import detect_legacy_windows
 
 if TYPE_CHECKING:
     from rich.console import Console
 
+
+DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
+DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT was set to True"
 
 def pytest_configure(config: pytest.Config) -> None:
     from baloto.cleo.rich.logging.console_handler import ConsoleHandler
@@ -27,8 +27,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
     enabled = config.getoption("--log-cli-level") is not None or config.getini("log_cli")
-    console = ConsoleFactory.console_output()
-    console.print("C:/Users/solma/PycharmProjects/baloto-colombia/tests/conftest.py:95")
+
     rich_tracebacks = tracebacks_show_locals = True
     if enabled:
         console = ConsoleFactory.console_output()
@@ -118,6 +117,7 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     # combinations10 = list(product(range(2), repeat=10))
     # combinations10 = list(filter(lambda x: sum(x) == 5, combinations10))
 
+    os.environ["DISABLE_PRINT"] = "1"
     if not "--strict-markers" in config.invocation_params.args:
         config.option.strict_markers = True
     if not "--strict-config" in config.invocation_params.args:
@@ -126,7 +126,26 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     config.option.ignore_glob = ["*__init*", "*.log"]
     return None
 
-
 @pytest.fixture(scope="session")
 def console_output() -> Console:
+    from baloto.cleo.rich.factory.console_factory import ConsoleFactory
     return ConsoleFactory.console_output()
+
+
+@pytest.fixture(scope="session", name="styled_console")
+def create_styled_rich_console() -> Console:
+    from baloto.cleo.formatters.formatter import Formatter
+    from rich.console import Console
+
+    theme = Formatter().create_theme(None)
+    console = Console(
+            color_system="truecolor",
+            force_terminal=True,
+            theme=theme,
+            highlight=True,
+            legacy_windows=False
+    )
+    if detect_legacy_windows():
+        console.width = 296
+    return console
+

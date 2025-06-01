@@ -94,6 +94,7 @@ class ConsoleFactory:
             highlight=True,
             soft_wrap=soft_wrap,
             force_interactive=True,
+            legacy_windows=False,
             theme=ConsoleFactory.default_theme(),
         ).console
         from baloto.cleo.rich.logging.log_render import ConsoleLogRender
@@ -112,11 +113,12 @@ class ConsoleFactory:
     def console_error_output(cls, soft_wrap: bool = True) -> Console:
         return cls(
             stderr=True,
-            style="bold red",
             force_terminal=True,
+            force_interactive=True,
+            legacy_windows=False,
+            style="bold red",
             highlight=True,
             soft_wrap=soft_wrap,
-            force_interactive=False,
             theme=ConsoleFactory.default_theme(),
         ).console
 
@@ -137,6 +139,8 @@ class ConsoleFactory:
         return cls(
             file=StringIO(),
             highlight=False,
+            legacy_windows=True,
+            force_terminal=False,
             markup=False,
             highlighter=NullHighlighter(),
             no_color=True,

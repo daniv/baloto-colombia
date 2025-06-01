@@ -43,6 +43,8 @@ class Argument(BaseInputModel):
         default: str | list[str] | None = None,
         choices: Sequence[str] | None = None,
     ):
+        arg: Argument = cls.__new__(Argument)
+        arg.name = name
         return cls(
             name=name, required=required, is_list=is_list, description=description, default=default, choices=choices
         )

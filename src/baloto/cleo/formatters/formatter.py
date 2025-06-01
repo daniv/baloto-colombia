@@ -3,52 +3,28 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 from functools import cached_property
-from typing import Any, TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Iterator, Iterable, Pattern
 
+from rich.color import ColorSystem
+from rich.style import Style
 from rich.text import Text
 
 from baloto.cleo.exceptions.errors import CleoValueError
 
 if TYPE_CHECKING:
-    from rich.console import ConsoleRenderable, OverflowMethod, JustifyMethod
+    from rich.console import OverflowMethod, JustifyMethod, ConsoleRenderable
     from rich.emoji import EmojiVariant
-    from rich.style import Style
+    from rich.style import StyleType
     from rich.theme import Theme
+    from rich.text import GetStyleCallable
+
 
 # https://github.com/paul-ollis/pytest-richer/blob/main/src/pytest_richer/theming.py
 
 
 ## https://github.com/paul-ollis/pytest-richer/blob/main/src/pytest_richer/theming.py
 
-# ANSI_LIGHT: dict[TokenType, Style] = {
-#     Token: Style(),
-#     Whitespace: Style(color="white"),
-#     Comment: Style(dim=True),
-#     Comment.Preproc: Style(color="cyan"),
-#     Keyword: Style(color="blue"),
-#     Keyword.Type: Style(color="cyan"),
-#     Operator.Word: Style(color="magenta"),
-#     Name.Builtin: Style(color="cyan"),
-#     Name.Function: Style(color="green"),
-#     Name.Namespace: Style(color="cyan", underline=True),
-#     Name.Class: Style(color="green", underline=True),
-#     Name.Exception: Style(color="cyan"),
-#     Name.Decorator: Style(color="magenta", bold=True),
-#     Name.Variable: Style(color="red"),
-#     Name.Constant: Style(color="red"),
-#     Name.Attribute: Style(color="cyan"),
-#     Name.Tag: Style(color="bright_blue"),
-#     String: Style(color="yellow"),
-#     Number: Style(color="blue"),
-#     Generic.Deleted: Style(color="bright_red"),
-#     Generic.Inserted: Style(color="green"),
-#     Generic.Heading: Style(bold=True),
-#     Generic.Subheading: Style(color="magenta", bold=True),
-#     Generic.Prompt: Style(bold=True),
-#     Generic.Error: Style(color="bright_red"),
-#     Error: Style(color="red", underline=True),
-# }
-#
+
 # ANSI_DARK: Dict[TokenType, Style] = {
 #     Token: Style(),
 #     Whitespace: Style(color="bright_black"),
@@ -82,12 +58,12 @@ if TYPE_CHECKING:
 class Formatter:
     _escape = re.compile(r"(\\*)(\[[a-z#/@][^[]*?])")
 
+
     def __init__(self, styles: dict[str, Style] | None = None) -> None:
-        from rich.style import Style
 
         self._theme: Theme | None = None
         self._styles: dict[str, Style] = {}
-        self._text: Text | None = None
+        self._text: Text = Text("")
 
         self.set_style("error", Style(color="red", bold=True))
         self.set_style("warning", Style(color="yellow"))
@@ -128,7 +104,28 @@ class Formatter:
     def text(self) -> Text:
         return self._text
 
-    def from_ansi(
+    def set_text(self, text: str, style: StyleType = "") -> None:
+        self._text = Text(text, style=style)
+
+    def highlight_words(
+        self,
+        words: Iterable[str],
+        style: str | Style,
+        *,
+        case_sensitive: bool = True,
+    ) -> int:
+        return self._text.highlight_words(words, style, case_sensitive=case_sensitive)
+
+    def highlight_regex(
+        self,
+        re_highlight: Pattern[str] | str,
+        style: GetStyleCallable | StyleType | None = None,
+        *,
+        style_prefix: str = "",
+    ) -> int:
+        return self._text.highlight_regex(re_highlight, style, style_prefix=style_prefix)
+
+    def set_from_ansi(
         self,
         text: str,
         *,
@@ -138,12 +135,29 @@ class Formatter:
         no_wrap: bool | None = None,
         end: str = "\n",
         tab_size: int | None = 8,
-    ) -> None:
+    ) -> Text:
         self._text = Text.from_ansi(
             text, style=style, justify=justify, overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size
         )
+        return self._text
 
-    def from_markup(
+    def to_ansi(
+        self,
+        *,
+        color_system: ColorSystem | None = ColorSystem.TRUECOLOR,
+        legacy_windows: bool = False,
+    ) -> str:
+        style = Style()
+        if self._text.style or self._text.style == "":
+            if isinstance(self._text.style, Style):
+                style = self._text.style
+            if isinstance(self._text.style, str):
+                style = Style.parse(self._text.style)
+
+        return style.render(self._text.plain, color_system=color_system, legacy_windows=legacy_windows)
+
+
+    def set_from_markup(
         self,
         text: str,
         *,
@@ -153,12 +167,13 @@ class Formatter:
         justify: JustifyMethod | None = None,
         overflow: OverflowMethod | None = None,
         end: str = "\n",
-    ) -> None:
+    ) -> Text:
         self._text = Text.from_markup(
             text, style=style, justify=justify, overflow=overflow, emoji=emoji, end=end, emoji_variant=emoji_variant
         )
+        return self._text
 
-    def set_style(self, name: str, style: Style) -> None:
+    def set_style(self, name: str, style: StyleType) -> None:
         self._styles[name] = style
 
     def has_style(self, name: str) -> bool:
@@ -170,8 +185,26 @@ class Formatter:
 
         return self._styles[name]
 
-    def styles_names(self) -> Iterator[str]:
+    def styles_names(self, rich_styles: bool = False) -> Iterator[str]:
+        if rich_styles:
+            return iter(self.ansi_color_names)
         return iter(self._styles.keys())
+
+    def render_styles(
+        self,
+        styles: dict[str, Style],
+    ) -> Iterator[str]:
+        lines: list[str] = []
+
+        if not styles:
+            styles = self.formatter_styles()
+
+        largest = len(max(list(styles.keys()), key=len))
+        for n, s in styles.items():
+            fmt = f"{{:>{largest}}} ->  {s.render(self._text.plain)}"
+            lines.append(fmt.format(n))
+
+        return iter(lines)
 
     def create_theme(self, styles: dict[str, Style] | None) -> Theme:
         from rich.theme import Theme
@@ -180,48 +213,53 @@ class Formatter:
             styles = self._styles
         return Theme(styles)
 
-    @staticmethod
-    def raw_output(*objects: Any, sep: str = " ") -> str:
-        return sep.join(str(_object) for _object in objects)
-
-    def strip(self, text: str) -> str:
-        return self.strip_styles(text)
-
-    def styles_renderables(self, styles_names: Sequence[str] | None = None) -> ConsoleRenderable:
-        from rich.table import Table
-
-        if styles_names is None:
-            styles_names = list(self.styles_names())
-
-        # color_table = Table(
-        #         box=None,
-        #         expand=False,
-        #         show_header=False,
-        #         show_edge=False,
-        #         pad_edge=False,
-        # )
-        lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 1234567890  !¡¿'=)(/&"
-        table = Table.grid(padding=1, pad_edge=True)
-        table.title = "Formatter styles"
-        table.add_column("Stle Name", no_wrap=True, justify="center", style="bold red")
-        table.add_column("Demonstration")
-        t = table.row_count
-
-        map(lambda n: table.add_row(n, Text(lorem, style=n)), styles_names)
-        t = table.row_count
-        i = 0
-
-        return Table
-
-    def rich_renderables(self) -> ConsoleRenderable:
-        return self.styles_renderables(self.ansi_color_names)
-
     @cached_property
     def ansi_color_names(self) -> Sequence[str]:
         from rich.color import ANSI_COLOR_NAMES
 
         return list(ANSI_COLOR_NAMES.keys())
 
+    @cached_property
+    def rich_default_styles(self) -> dict[str, Style]:
+        from rich.default_styles import DEFAULT_STYLES
+        styles_dict: dict[str, Style] = DEFAULT_STYLES.copy()
+        return styles_dict
+
+    @cached_property
+    def rich_ansi_styles(self) -> dict[str, Style]:
+        styles_dict = {name: Style.parse(name) for name in self.ansi_color_names}
+        return styles_dict
+
+    def formatter_styles(self) -> dict[str, Style]:
+        return self._styles.copy()
+
+    def render_rich_colors(self) -> ConsoleRenderable:
+        from rich.table import Table
+        from rich.color import ANSI_COLOR_NAMES
+
+        color_names = list(ANSI_COLOR_NAMES.keys())
+
+        color_table = Table(
+                title="Rich colors",
+                expand=False,
+                show_header=True,
+                show_edge=False,
+                pad_edge=False,
+                highlight=True
+        )
+        color_table.add_column(Text("Color Name", style="bright_blue bold"), no_wrap=True, justify="right", style="bold gray69")
+        color_table.add_column(Text("Demonstration", style="bright_blue bold") )
+
+        plain = self._text.plain
+        for n in color_names:
+            color_table.add_row(n, Text(plain, style=n))
+
+        return color_table
+
+    # --- Service Functions
+
     @staticmethod
     def strip_styles(text: str) -> str:
         return Formatter._escape.sub("", text)
+
+
