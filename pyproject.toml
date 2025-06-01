@@ -45,6 +45,7 @@ miloto = 'baloto.miloto.__main__:main'
 pytest = "^8.3.5"
 pytest-cov = "^6.1.1"
 pytest-mock = "^3.14.1"
+hypothesis = "^6.132.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -61,7 +62,7 @@ minversion = "8.3"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["*_test", "test_*"]
-norecursedirs = ["src", ".idea", ".pytest_cache"]
+# norecursedirs = [".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
 log_cli_level = "DEBUG"
