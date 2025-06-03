@@ -7,10 +7,14 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from rich.console import detect_legacy_windows
+
+from assert_report import AssertionReportException
+from baloto.cleo.formatters.formatter import Formatter
+from baloto.cleo.rich.factory.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -18,6 +22,9 @@ if TYPE_CHECKING:
 
 DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
 DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT was set to True"
+
+
+# pytest.register_assert_rewrite("baloto.plugin.assertion_plugin.plugin")
 
 def pytest_configure(config: pytest.Config) -> None:
     from baloto.cleo.rich.logging.console_handler import ConsoleHandler
@@ -108,6 +115,40 @@ def pytest_configure(config: pytest.Config) -> None:
         log.info("[bold]EXITING...[/bold]", extra=dict(markup=True))
         i = 0
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_exception_interact(
+    node: pytest.Item | pytest.Collector,
+    call: pytest.CallInfo[Any],
+    report: pytest.CollectReport | pytest.TestReport
+) -> None:
+    from tests.assert_report import AssertionErrorReport
+
+    try:
+        if call.excinfo.type is AssertionError:
+            call.excinfo.value.add_note("The report was generated using pytest_exception_interact hook")
+            print("")
+            formatter = Formatter()
+            from rich import box
+
+            console = ConsoleFactory.console_output()
+            formatter.set_text("jojowoorogoodfgo")
+            c = formatter.render_rich_colors()
+            console.print(c)
+
+            aer = AssertionErrorReport(node, call, report)
+            if aer.report_status:
+                # console.print(aer)
+                rend = aer.render(console)
+                console.print(rend)
+                # console.print(aer)
+                console.rule("[bright_red]Stack Trace", characters="=", style="bright_red dim")
+                # traceback = Traceback(show_locals=True, suppress=["pluggy"], theme="ansi_dark")
+                # console.print(traceback)
+
+    except* AssertionReportException as e:
+        print(e)
+
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
@@ -127,13 +168,13 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     return None
 
 @pytest.fixture(scope="session")
-def console_output() -> Console:
+def console_output(record_testsuite_property) -> Console:
     from baloto.cleo.rich.factory.console_factory import ConsoleFactory
     return ConsoleFactory.console_output()
 
 
 @pytest.fixture(scope="session", name="styled_console")
-def create_styled_rich_console() -> Console:
+def create_styled_rich_console(record_testsuite_property) -> Console:
     from baloto.cleo.formatters.formatter import Formatter
     from rich.console import Console
 

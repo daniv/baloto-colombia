@@ -1,3 +1,7 @@
+"""
+DOCSTRINGS https://peps.python.org/pep-0287/
+"""
+
 from __future__ import annotations
 
 import re
@@ -58,7 +62,6 @@ if TYPE_CHECKING:
 class Formatter:
     _escape = re.compile(r"(\\*)(\[[a-z#/@][^[]*?])")
 
-
     def __init__(self, styles: dict[str, Style] | None = None) -> None:
 
         self._theme: Theme | None = None
@@ -114,6 +117,15 @@ class Formatter:
         *,
         case_sensitive: bool = True,
     ) -> int:
+        """Highlight words with a style.
+
+            Encapsulates `rich.text.Text.highlight_words()`
+
+        :param words: Words to highlight.
+        :param style: Style to apply.
+        :param case_sensitive: Enable case sensitive matching. Defaults to True.
+        :return: Number of words highlighted.
+        """
         return self._text.highlight_words(words, style, case_sensitive=case_sensitive)
 
     def highlight_regex(
@@ -123,6 +135,17 @@ class Formatter:
         *,
         style_prefix: str = "",
     ) -> int:
+        """Highlight text with a regular expression, where group names are
+        translated to styles.
+
+            Encapsulates `rich.text.Text.highlight_regex()` internally applies to `Formatter.text`
+
+        :param re_highlight: A regular expression object or string.
+        :param style: Optional style to apply to whole match, or a callable
+                which accepts the matched text and returns a style. Defaults to None.
+        :param style_prefix: Optional prefix to add to style group names.
+        :return: Number of regex matches
+        """
         return self._text.highlight_regex(re_highlight, style, style_prefix=style_prefix)
 
     def set_from_ansi(
@@ -136,8 +159,46 @@ class Formatter:
         end: str = "\n",
         tab_size: int | None = 8,
     ) -> Text:
+        """Stores a ´Text´ object from a string containing ANSI escape codes
+
+        :param text: A string containing escape codes.
+        :param style: Base style for text. Defaults to "".
+        :param justify: Justify method: "left", "center", "full", "right". Defaults to None.
+        :param overflow: Overflow method: "crop", "fold", "ellipsis". Defaults to None.
+        :param no_wrap: Disable text wrapping, or None for default. Defaults to None.
+        :param end: Character to end text with. Defaults to "\\\\n".
+        :param tab_size: Number of spaces per tab, or ``None`` to use ``console.tab_size``. Defaults to None.
+        :return: the stored ´Text´ object
+        """
         self._text = Text.from_ansi(
             text, style=style, justify=justify, overflow=overflow, no_wrap=no_wrap, end=end, tab_size=tab_size
+        )
+        return self._text
+
+    def set_from_markup(
+        self,
+        text: str,
+        *,
+        style: str | Style = "",
+        emoji: bool = True,
+        emoji_variant: EmojiVariant | None = None,
+        justify: JustifyMethod | None = None,
+        overflow: OverflowMethod | None = None,
+        end: str = "\n",
+    ) -> Text:
+        """Create Text instance from markup.
+
+        :param text: A string containing console markup.
+        :param style: Base style for text. Defaults to "".
+        :param emoji: Also render emoji code. Defaults to True.
+        :param emoji_variant: Optional emoji variant, either "text" or "emoji". Defaults to None.
+        :param justify: Justify method: "left", "center", "full", "right". Defaults to None.
+        :param overflow: Overflow method: "crop", "fold", "ellipsis". Defaults to None.
+        :param end: Character to end text with. Defaults to "\\\\n".
+        :return: A ´Text´ instance with markup rendere
+        """
+        self._text = Text.from_markup(
+            text, style=style, justify=justify, overflow=overflow, emoji=emoji, end=end, emoji_variant=emoji_variant
         )
         return self._text
 
@@ -156,24 +217,7 @@ class Formatter:
 
         return style.render(self._text.plain, color_system=color_system, legacy_windows=legacy_windows)
 
-
-    def set_from_markup(
-        self,
-        text: str,
-        *,
-        style: str | Style = "",
-        emoji: bool = True,
-        emoji_variant: EmojiVariant | None = None,
-        justify: JustifyMethod | None = None,
-        overflow: OverflowMethod | None = None,
-        end: str = "\n",
-    ) -> Text:
-        self._text = Text.from_markup(
-            text, style=style, justify=justify, overflow=overflow, emoji=emoji, end=end, emoji_variant=emoji_variant
-        )
-        return self._text
-
-    def set_style(self, name: str, style: StyleType) -> None:
+    def set_style(self, name: str, style: Style) -> None:
         self._styles[name] = style
 
     def has_style(self, name: str) -> bool:
@@ -222,6 +266,7 @@ class Formatter:
     @cached_property
     def rich_default_styles(self) -> dict[str, Style]:
         from rich.default_styles import DEFAULT_STYLES
+
         styles_dict: dict[str, Style] = DEFAULT_STYLES.copy()
         return styles_dict
 
@@ -233,26 +278,27 @@ class Formatter:
     def formatter_styles(self) -> dict[str, Style]:
         return self._styles.copy()
 
-    def render_rich_colors(self) -> ConsoleRenderable:
+    def render_rich_colors(self, more_styles: list[str] | None = None) -> ConsoleRenderable:
         from rich.table import Table
         from rich.color import ANSI_COLOR_NAMES
 
+        if more_styles is None:
+            more_styles = ""
+        else:
+            more_styles =" " + " ".join(more_styles)
         color_names = list(ANSI_COLOR_NAMES.keys())
 
         color_table = Table(
-                title="Rich colors",
-                expand=False,
-                show_header=True,
-                show_edge=False,
-                pad_edge=False,
-                highlight=True
+            title="Rich colors", expand=False, show_header=True, show_edge=False, pad_edge=False, highlight=True
         )
-        color_table.add_column(Text("Color Name", style="bright_blue bold"), no_wrap=True, justify="right", style="bold gray69")
-        color_table.add_column(Text("Demonstration", style="bright_blue bold") )
+        color_table.add_column(
+            Text("Color Name", style="bright_blue bold"), no_wrap=True, justify="right", style="bold gray69"
+        )
+        color_table.add_column(Text("Demonstration", style="bright_blue bold"))
 
         plain = self._text.plain
         for n in color_names:
-            color_table.add_row(n, Text(plain, style=n))
+            color_table.add_row(n, Text(plain, style=f"{n}{more_styles}"))
 
         return color_table
 
@@ -261,5 +307,3 @@ class Formatter:
     @staticmethod
     def strip_styles(text: str) -> str:
         return Formatter._escape.sub("", text)
-
-

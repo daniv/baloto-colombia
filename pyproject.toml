@@ -45,8 +45,8 @@ miloto = 'baloto.miloto.__main__:main'
 pytest = "^8.3.5"
 pytest-cov = "^6.1.1"
 pytest-mock = "^3.14.1"
-hypothesis = "^6.132.0"
 faker = "^37.3.0"
+pyhamcrest = "^2.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -68,9 +68,19 @@ enable_assertion_pass_hook = true
 console_output_style = "count"
 log_cli_level = "DEBUG"
 addopts = [
-    "-p no:logging", "-ra"
+    "-p no:logging", "-ra", "-s"
 ]
 xfail_strict = true
+
+# pytest --showlocals # show local variables in tracebacks
+# pytest -l           # show local variables (shortcut)
+#pytest --tb=auto    # (default) 'long' tracebacks for the first and last
+#                     # entry, but 'short' style for the other entries
+#pytest --tb=long    # exhaustive, informative traceback formatting
+#pytest --tb=short   # shorter traceback format
+#pytest --tb=line    # only one line per failure
+#pytest --tb=native  -> Python standard library formatting
+#pytest --tb=no      -> no traceback at all
 
 [tool.black]
 line-length = 120

@@ -10,7 +10,10 @@ __all__ = (
     "CleoUserError",
     "CleoCommandNotFoundError",
     "CleoNamespaceNotFoundError",
+    "CleoKeyError"
 )
+
+from typing import Any
 
 from pydantic import validate_call
 
@@ -25,6 +28,13 @@ class CleoError(Exception):
     """
 
     exit_code: int | None = None
+
+
+class _Trimmable(CleoError):
+    """Cleo can trim these tracebacks even if they're raised internally."""
+
+class CleoNameError(CleoError, NameError):
+    ...
 
 
 class CleoLogicError(CleoErrorMixin, CleoError):
@@ -77,7 +87,7 @@ class CleoRuntimeError(CleoError, RuntimeError):
         return "Raised when wrong value was given to Cleo components."
 
 
-class CleoNoSuchOptionError(CleoErrorMixin, CleoError):
+class CleoNoSuchOptionError(CleoErrorMixin, CleoNameError):
     """
     Raised when command does not have given option.
     """
@@ -133,6 +143,36 @@ class CleoValueError(CleoError, ValueError):
     #     self.pydantic_custom = PydanticCustomError(error_type, message, {"error": self})
 
 
+def note_deprecation(
+    message: str, *, since: str, has_codemod: bool, stacklevel: int = 0
+) -> None:
+    if since != "RELEASEDAY":
+        date = datetime.date.fromisoformat(since)
+        assert datetime.date(2021, 1, 1) <= date
+    if has_codemod:
+        message += (
+            "\n    The `hypothesis codemod` command-line tool can automatically "
+            "refactor your code to fix this warning."
+        )
+    warnings.warn(HypothesisDeprecationWarning(message), stacklevel=2 + stacklevel)
+
+def __getattr__(name: str) -> Any:
+    if name == "MultipleFailures":
+        from hypothesis._settings import note_deprecation
+        from hypothesis.internal.compat import BaseExceptionGroup
+
+        note_deprecation(
+            "MultipleFailures is deprecated; use the builtin `BaseExceptionGroup` type "
+            "instead, or `exceptiongroup.BaseExceptionGroup` before Python 3.11",
+            since="2022-08-02",
+            has_codemod=False,  # This would be a great PR though!
+            stacklevel=1,
+        )
+        return BaseExceptionGroup
+
+    raise AttributeError(f"Module 'hypothesis.errors' has no attribute {name}")
+
+
 class CleoUserError(CleoErrorMixin, CleoError):
     """
     Base exception for user errors.
@@ -183,21 +223,34 @@ class CleoNamespaceNotFoundError(CleoUserError):
         super().__init__(message, code="namespace-not-found")
         self.add_note("Raised when called namespace has no commands.")
 
+class InvalidArgument(_Trimmable, TypeError):
+    """Used to indicate that the arguments to a Hypothesis function were in
+    some manner incorrect.""
 
 """
-@contextlib.contextmanager
-def add_exc_note(note: str):
-    try:
-        yield
-    except Exception as err:
-        err.add_note(note)
-        raise
 
-with add_exc_note(f"While attempting to frobnicate {item=}"):
-    frobnicate_or_raise(item)
+class InvalidDefinition(_Trimmable, TypeError):
+    """Used to indicate that a class definition was not well put together and
+    has something wrong with it."""
 
 
-"""
+class CleosWarning(CleoError, Warning):
+    """A generic warning issued by Hypothesis."""
+
+
+# @contextlib.contextmanager
+# def add_exc_note(note: str):
+#     try:
+#         yield
+#     except Exception as err:
+#         err.add_note(note)
+#         raise
+#
+# with add_exc_note(f"While attempting to frobnicate {item=}"):
+#     frobnicate_or_raise(item)
+
+
+
 
 
 def _suggest_similar_names(name: str, names: list[str]) -> str | None:

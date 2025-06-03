@@ -5,7 +5,6 @@ from collections.abc import Mapping
 from datetime import datetime
 from io import StringIO
 from typing import IO
-from typing import Literal
 from typing import TYPE_CHECKING
 
 from rich._null_file import NullFile
@@ -30,7 +29,7 @@ class ConsoleFactory:
     def __init__(
         self,
         *,
-        color_system: None | Literal["auto", "standard", "256", "truecolor", "windows"] = "auto",
+        # color_system: None | Literal["auto", "standard", "256", "truecolor", "windows"] = "auto",
         force_terminal: bool | None = None,
         force_interactive: bool | None = None,
         soft_wrap: bool = False,
@@ -59,13 +58,13 @@ class ConsoleFactory:
         _environ: Mapping[str, str] | None = None,
     ) -> None:
         self.console = Console(
-            color_system=color_system,
+            color_system="truecolor",
             force_interactive=force_interactive,
             soft_wrap=soft_wrap,
             file=file,
             theme=theme,
             stderr=stderr,
-            width=width,
+            width=180,
             height=height,
             style=style,
             no_color=no_color,
@@ -95,7 +94,7 @@ class ConsoleFactory:
             soft_wrap=soft_wrap,
             force_interactive=True,
             legacy_windows=False,
-            theme=ConsoleFactory.default_theme(),
+            # theme=ConsoleFactory.default_theme()
         ).console
         from baloto.cleo.rich.logging.log_render import ConsoleLogRender
 

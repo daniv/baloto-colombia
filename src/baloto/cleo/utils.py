@@ -11,7 +11,7 @@ import shlex
 import subprocess
 import sys
 from difflib import SequenceMatcher
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 WINDOWS = sys.platform == "win32"
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     pass
 
 
-__all__ = ("find_similar_names", "escape_trailing_backslash", "escape", "shell_quote")
+__all__ = ("find_similar_names", "escape_trailing_backslash", "escape", "shell_quote", "safe_str")
 
 
 def find_similar_names(name: str, names: list[str]) -> list[str]:
@@ -55,6 +55,7 @@ def shell_quote(token: str) -> str:
 
     return shlex.quote(token)
 
+
 def escape(text: str) -> str:
     """
     Escapes "<" special char in given text.
@@ -73,3 +74,24 @@ def escape_trailing_backslash(text: str) -> str:
         text = text.rstrip("\\").replace("\0", "").ljust(length, "\0")
 
     return text
+
+
+def try_convert(typ, value, name):
+    if value is None:
+        return None
+    if isinstance(value, typ):
+        return value
+    try:
+        return typ(value)
+    except (TypeError, ValueError, ArithmeticError) as err:
+        raise InvalidArgument(
+            f"Cannot convert {name}={value!r} of type " f"{type(value).__name__} to type {typ.__name__}"
+        ) from err
+
+
+def safe_str(_object: Any) -> str:
+    """Don't allow exceptions from __str__ to propagate."""
+    try:
+        return str(_object)
+    except Exception:
+        return "<exception str() failed>"
