@@ -23,8 +23,9 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     if not "——strict—config" in config.invocation_params.args:
         config.option.strict_config = True
 
-    if bool(os.getenv("TESTMODE", False)):
-        from baloto.miloto.config.poetry.poetry import Poetry
+    test_mode = os.getenv("TESTMODE", 'False').lower() in ('true', '1', 't')
+
+    if test_mode:
         from baloto.utils import is_pydevd_mode
         from glom import glom
         import tomllib
