@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 import pytest
 from rich.console import detect_legacy_windows
 
+
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -108,23 +110,6 @@ def pytest_configure(config: pytest.Config) -> None:
         log.info("[bold]EXITING...[/bold]", extra=dict(markup=True))
         i = 0
 
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
-    # from itertools import product
-    # combinations8 = list(product(range(2), repeat=8))
-    # combinations8 = list(filter(lambda x: sum(x) == 5, combinations8))
-    # combinations10 = list(product(range(2), repeat=10))
-    # combinations10 = list(filter(lambda x: sum(x) == 5, combinations10))
-
-    os.environ["DISABLE_PRINT"] = "1"
-    if not "--strict-markers" in config.invocation_params.args:
-        config.option.strict_markers = True
-    if not "--strict-config" in config.invocation_params.args:
-        config.option.strict_config = True
-
-    config.option.ignore_glob = ["*__init*", "*.log"]
-    return None
 
 @pytest.fixture(scope="session")
 def console_output() -> Console:
