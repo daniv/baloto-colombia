@@ -17,6 +17,8 @@ dependencies = [
     "pydantic (>=2.11.5,<3.0.0)",
     "glom (>=24.11.0,<25.0.0)",
     "pydantic-extra-types (>=2.10.4,<3.0.0)",
+    "mypy (==1.16.0)",
+    "pytest (==8.4.0)",
 ]
 
 [project.urls]
@@ -104,6 +106,5 @@ max_number = 39
 [tool.miloto.testmode]
 showlocals = true
 maxfail = 1
-runxfail = false
 newfirst = true
 verbose = 0
