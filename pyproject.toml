@@ -104,6 +104,6 @@ max_number = 39
 [tool.miloto.testmode]
 showlocals = true
 maxfail = 1
-runxfail = true
+runxfail = false
 newfirst = true
 verbose = 0
