@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from abc import ABC
 from pathlib import Path
 from typing import Any
 from typing import TYPE_CHECKING
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from baloto.miloto.config.poetry.file import TOMLFile
 
 
-class BasePoetry:
+class BasePoetry(ABC):
     def __init__(self, file: Path, pyproject_type: type[PyProjectTOML] = PyProjectTOML) -> None:
         self._pyproject = pyproject_type(file)
         self.version: str | None = None

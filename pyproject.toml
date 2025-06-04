@@ -68,7 +68,7 @@ enable_assertion_pass_hook = true
 console_output_style = "count"
 log_cli_level = "DEBUG"
 addopts = [
-    "-p no:logging", "-ra", "-s"
+    "-p no:logging", "-p tests.plugins.testmode_plugin", "-ra"
 ]
 xfail_strict = true
 
@@ -112,3 +112,10 @@ Elige tus 5 números de la suerte del 1 al 39
 """
 min_number = 1
 max_number = 39
+
+[tool.miloto.testmode]
+showlocals = true
+maxfail = 1
+runxfail = false
+newfirst = true
+verbose = 0
