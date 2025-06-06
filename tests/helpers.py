@@ -6,24 +6,9 @@
 from __future__ import annotations
 
 import re
-from typing import Pattern
+from typing import Pattern, Any, Callable
 
-"""
-Determine if a string contains only whitespace characters or is empty.
-"""
-is_whitespace = lambda string: string.strip() == ""
-
-"""
-Determine if a string contains any of the given values. *matches* may be a
-single string, or a list of strings.
-"""
-contains = lambda string, matches: any([m in string for m in ([matches] if isinstance(matches, str) else matches)])
-
-"""
-Determine if a string contains all of the given values.
-"""
-contains_all = lambda string, matches: all([m in string for m in matches])
-
+import pytest
 
 def multi_replace(text: str, pairs: dict[str, str]) -> str:
     pairs = dict((re.escape(k), v) for k, v in pairs.items())
@@ -38,11 +23,9 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
     """
     return regex.sub(replacement, regex.sub(replacement, original))
 
-class StopTest(BaseException):
-    """Raised when a test should stop running and return control to
-    the Hypothesis engine, which should then continue normally.
-    """
-
-    def __init__(self, testcounter: int) -> None:
-        super().__init__(repr(testcounter))
-        self.testcounter = testcounter
+def cleanup_factory(config: pytest.Config, plugin: object) -> Callable[[], Any]:
+    def clean_up() -> None:
+        pluginmanager = config.pluginmanager
+        name = pluginmanager.get_name(plugin)
+        pluginmanager.unregister(name=name)
+    return clean_up

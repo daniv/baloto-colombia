@@ -6,13 +6,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Callable
 
 import pendulum
+from rich.abc import RichRenderable
 from rich.columns import Columns
 from rich.console import group
+from rich.containers import Renderables
 from rich.scope import render_scope
 from rich.text import Text
-from rich.traceback import PathHighlighter
-from rich.traceback import Traceback
-from rich.traceback import _iter_syntax_lines
+from rich.traceback import PathHighlighter, Traceback, _iter_syntax_lines
+from rich.padding import Padding
 
 if TYPE_CHECKING:
     from rich.console import ConsoleRenderable
@@ -24,6 +25,10 @@ if TYPE_CHECKING:
 
     FormatTimeCallable = Callable[[pendulum.DateTime], Text]
 
+
+
+INDENT = "    "
+MIN_WIDTH = 120
 
 class RichTraceback(Traceback):
     @group()
@@ -143,3 +148,27 @@ class RichTraceback(Traceback):
                         if frame.locals
                         else syntax
                     )
+
+
+
+def render_from_exception(
+        exc: BaseException
+) -> ConsoleRenderable:
+    from rich.traceback import Traceback
+    from pathlib import Path
+    import _pytest
+    import pluggy
+    import importlib
+
+    collector_path = Path(__file__).parent / "collector"
+    width = MIN_WIDTH - len(INDENT)
+    tb = Traceback.from_exception(
+        type(BaseException),
+        exc,
+        exc.__traceback__,
+        suppress=(_pytest, pluggy, importlib, str(collector_path)),
+        max_frames=1,
+        width=width,
+        show_locals=config.option.showlocals
+    )
+    return Padding(tb, (0, 0, 0, 4))

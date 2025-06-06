@@ -1,171 +1,107 @@
 """
-https://github.com/TvoroG/pytest-lazy-fixture
-
+PYTEST_DONT_REWRITE
 """
+
+# https://github.com/TvoroG/pytest-lazy-fixture
 
 from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable, Literal, Sequence
 
 import pytest
-from rich.console import detect_legacy_windows
+
+from rich.console import Console
+
+from helpers import cleanup_factory
 
 if TYPE_CHECKING:
-    from rich.console import Console
+    pass
 
 
 DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
 DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT was set to True"
+MILOTO_LABEL_MARK = 'miloto_label'
+
+@pytest.hookimpl
+def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager) -> None:
+    from tests.plugins import tracebacks
+    from tests.plugins import logging
+
+    pluginmanager.register(tracebacks, tracebacks.PLUGIN_NAME)
+    pluginmanager.register(logging, logging.PLUGIN_NAME)
 
 
-# pytest.register_assert_rewrite("baloto.plugin.assertion_plugin.plugin")
+    group = parser.getgroup("miloto", description="main application testing configuration")
+    # group.addoption(
+    #     "--rich-tracebacks",
+    #     action="store_true",
+    #     dest="logging_rich_tracebacks",
+    #     help="Enable rich tracebacks with syntax highlighting and formatting. Defaults to %(default)s."
+    # )
 
-def pytest_configure(config: pytest.Config) -> None:
-    from baloto.cleo.rich.logging.console_handler import ConsoleHandler
-    from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+    # group.addoption('--miloto-features',
+    #                                      action="store",
+    #                                      dest="allure_features",
+    #                                      metavar="FEATURES_SET",
+    #                                      default={},
+    #                                      type=label_type(LabelType.FEATURE),
+    #                                      help="""Comma-separated list of feature names.
+    #                                       Run tests that have at least one of the specified feature labels.""")
 
-    from _pytest.logging import get_log_level_for_setting
+    #
+    # test_mode = os.getenv("TESTMODE", 'False').lower() in ('true', '1', 't')
+    # if test_mode:
+    #     from tests.plugins import testmode_plugin
+    #     pluginmanager.register(testmode_plugin, testmode_plugin.PLUGIN_NAME)
 
-    log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
-    enabled = config.getoption("--log-cli-level") is not None or config.getini("log_cli")
-
-    rich_tracebacks = tracebacks_show_locals = True
-    if enabled:
-        console = ConsoleFactory.console_output()
-        handler = ConsoleHandler(
-            level=log_cli_level,
-            console=console,
-            rich_tracebacks=rich_tracebacks,
-            tracebacks_show_locals=tracebacks_show_locals,
-        )
-        # from rich.logging import RichHandler
-        # handler = RichHandler(
-        #     console=console, level=log_cli_level,
-        #     show_time=False,
-        #     rich_tracebacks=rich_tracebacks,
-        #     tracebacks_show_locals=tracebacks_show_locals
-        # )
-        # formatter = ConsoleFormatter(
-        #     rich_tracebacks=rich_tracebacks
-        # )
-        # handler.setFormatter(formatter)
-        # if not io.is_very_verbose():
-        #     handler.addFilter(POETRY_FILTER)
-
-        # FORMAT = "%(asctime)-15s - %(levelname)s - %(message)s"
-        logging.basicConfig(
-            level="NOTSET",
-            format="%(message)s",
-            datefmt="[%X]",
-            handlers=[handler],
-        )
-
-        from time import sleep
-
-        log = logging.getLogger("conftest")
-        log.info("Server starting...")
-
-        log.info("Listening on http://127.0.0.1:8080")
-        # sleep(1)
-
-        log.info("GET /index.html 200 1298")
-        log.info("GET /imgs/backgrounds/back1.jpg 200 54386")
-        log.info("GET /css/styles.css 200 54386")
-        log.warning("GET /favicon.ico 404 242")
-        # sleep(1)
-
-        log.debug(
-            "JSONRPC request\n--> %r\n<-- %r",
-            {
-                "version": "1.1",
-                "method": "confirmFruitPurchase",
-                "params": [["apple", "orange", "mangoes", "pomelo"], 1.123],
-                "id": "194521489",
-            },
-            {"version": "1.1", "result": True, "error": None, "id": "194521489"},
-        )
-        log.debug(
-            "Loading configuration file /adasd/asdasd/qeqwe/qwrqwrqwr/sdgsdgsdg/werwerwer/dfgerert/ertertert/ertetert/werwerwer"
-        )
-        log.error("Unable to find 'pomelo' in database!")
-        log.info("POST /jsonrpc/ 200 65532")
-        log.info("POST /admin/ 401 42234")
-        log.warning("password was rejected for admin site.")
-
-        def divide() -> None:
-            number = 1
-            divisor = 0
-            foos = ["foo"] * 100
-            log.debug("in divide")
-            try:
-                number / divisor
-            except:
-                log.exception("An error of some kind occurred!")
-
-        divide()
-        sleep(1)
-        log.critical("Out of memory!")
-        log.info("Server exited with code=-1")
-        log.info("[bold]EXITING...[/bold]", extra=dict(markup=True))
-        i = 0
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_exception_interact(
-    node: pytest.Item | pytest.Collector,
-    call: pytest.CallInfo[Any],
-    report: pytest.CollectReport | pytest.TestReport
-) -> None:
-    from tests.assert_report import AssertionErrorReport
+def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
+    if not "——strict—markers" in config.invocation_params.args:
+        config.option.strict_markers = True
+    if not "——strict—config" in config.invocation_params.args:
+        config.option.strict_config = True
 
-    try:
-        if call.excinfo.type is AssertionError:
-            call.excinfo.value.add_note("The report was generated using pytest_exception_interact hook")
-            print("")
-            formatter = Formatter()
-            from rich import box
+    return None
 
-            console = ConsoleFactory.console_output()
-            formatter.set_text("jojowoorogoodfgo")
-            c = formatter.render_rich_colors()
-            console.print(c)
 
-            aer = AssertionErrorReport(node, call, report)
-            if aer.report_status:
-                # console.print(aer)
-                rend = aer.render(console)
-                console.print(rend)
-                # console.print(aer)
-                console.rule("[bright_red]Stack Trace", characters="=", style="bright_red dim")
-                # traceback = Traceback(show_locals=True, suppress=["pluggy"], theme="ansi_dark")
-                # console.print(traceback)
+@pytest.hookimpl(trylast=True)
+def pytest_configure(config: pytest.Config) -> None:
+    from tests.plugins import tracebacks
+    from tests.plugins import logging
+    from tests.plugins.tracker import tracker
 
-    except* AssertionReportException as e:
-        print(e)
+    config.pluginmanager.register(tracker, tracker.PLUGIN_NAME)
+
+    config.add_cleanup(cleanup_factory(config, tracebacks))
+    config.add_cleanup(cleanup_factory(config, logging))
+    config.add_cleanup(cleanup_factory(config, tracker))
+
+    # config.addinivalue_line("markers", f"{MILOTO_LABEL_MARK}: miloto label marker")
+
+
+@pytest.hookimpl
+def pytest_unconfigure(config: pytest.Config) -> None:
+   ...
 
 
 
-@pytest.fixture(scope="session")
-def console_output(record_testsuite_property) -> Console:
-    from baloto.cleo.rich.factory.console_factory import ConsoleFactory
-    return ConsoleFactory.console_output()
 
 
-@pytest.fixture(scope="session", name="styled_console")
-def create_styled_rich_console(record_testsuite_property) -> Console:
-    from baloto.cleo.formatters.formatter import Formatter
-    from rich.console import Console
 
-    theme = Formatter().create_theme(None)
-    console = Console(
-            color_system="truecolor",
-            force_terminal=True,
-            theme=theme,
-            highlight=True,
-            legacy_windows=False
-    )
-    if detect_legacy_windows():
-        console.width = 296
-    return console
+# def pytest_collection_modifyitems(
+#     session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
+# ) -> None:
+#     selected, deselected_by_testcase = select_by_testcase(items, config)
+#     selected, deselected_by_labels = select_by_labels(selected, config)
+#
+#     items[:] = selected
+#
+#     if deselected_by_testcase or deselected_by_labels:
+#         config.hook.pytest_deselected(items=[*deselected_by_testcase, *deselected_by_labels])
+
+
+
 
