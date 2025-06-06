@@ -18,7 +18,6 @@ dependencies = [
     "glom (>=24.11.0,<25.0.0)",
     "pydantic-extra-types (>=2.10.4,<3.0.0)",
     "mypy (==1.16.0)",
-    "pytest (==8.4.0)",
 ]
 
 [project.urls]
@@ -44,12 +43,11 @@ classifiers = [
 miloto = 'baloto.miloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.3.5"
 pytest-cov = "^6.1.1"
 pytest-mock = "^3.14.1"
-faker = "^37.3.0"
 pyhamcrest = "^2.1.0"
-
+# faker = "^37.3.0"
+pytest = "^8.4.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
@@ -68,11 +66,13 @@ python_functions = ["*_test", "test_*"]
 # norecursedirs = [".idea", ".pytest_cache"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
-log_cli_level = "DEBUG"
 addopts = [
-    "-p no:logging", "-p tests.plugins.testmode_plugin", "-ra"
+    "-p no:logging", "-ra", "--assert=plain", "--tb=line"
 ]
-xfail_strict = true
+
+log_level = "WARNING"
+log_format = "%(message)s"
+log_date_format = "[%X]"
 
 # pytest --showlocals # show local variables in tracebacks
 # pytest -l           # show local variables (shortcut)
