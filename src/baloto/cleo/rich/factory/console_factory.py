@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import os
+import sys
 from collections.abc import Callable
 from collections.abc import Mapping
 from datetime import datetime
 from io import StringIO
 from typing import IO
-from typing import Literal
 from typing import TYPE_CHECKING
 
 from rich._null_file import NullFile
@@ -14,6 +15,7 @@ from rich.highlighter import NullHighlighter
 from rich.highlighter import ReprHighlighter
 
 from baloto.cleo.formatters.formatter import Formatter
+from baloto.cleo.rich.logging.log_render import ConsoleLogRender
 
 if TYPE_CHECKING:
     from rich.theme import Theme
@@ -22,6 +24,8 @@ if TYPE_CHECKING:
     from rich._log_render import FormatTimeCallable
     from rich.console import HighlighterType
 
+_FALLBACK_COLUMNS = "254"
+_FALLBACK_LINES = "14"
 
 class ConsoleFactory:
 
@@ -30,7 +34,6 @@ class ConsoleFactory:
     def __init__(
         self,
         *,
-        color_system: None | Literal["auto", "standard", "256", "truecolor", "windows"] = "auto",
         force_terminal: bool | None = None,
         force_interactive: bool | None = None,
         soft_wrap: bool = False,
@@ -54,12 +57,10 @@ class ConsoleFactory:
         highlighter: HighlighterType | None = ReprHighlighter(),
         legacy_windows: bool | None = None,
         safe_box: bool = True,
-        get_datetime: Callable[[], datetime] | None = None,
-        get_time: Callable[[], float] | None = None,
-        _environ: Mapping[str, str] | None = None,
+        environ: dict[str, str] | None = None,
     ) -> None:
         self.console = Console(
-            color_system=color_system,
+            color_system="truecolor",
             force_interactive=force_interactive,
             soft_wrap=soft_wrap,
             file=file,
@@ -83,43 +84,48 @@ class ConsoleFactory:
             highlighter=highlighter,
             record=record,
             log_time_format=log_time_format,
-            get_time=get_time,
-            get_datetime=get_datetime,
+            _environ=environ
         )
-
-    @classmethod
-    def console_output(cls, soft_wrap: bool = True) -> Console:
-        console = cls(
-            force_terminal=True,
-            highlight=True,
-            soft_wrap=soft_wrap,
-            force_interactive=True,
-            legacy_windows=False,
-            theme=ConsoleFactory.default_theme(),
-        ).console
-        from baloto.cleo.rich.logging.log_render import ConsoleLogRender
-
-        render = console._log_render
-        console._log_render = ConsoleLogRender(
-            show_time=False,
-            show_path=True,
+        render = getattr(self.console, "_log_render")
+        self.console._log_render = ConsoleLogRender(
+            show_time=render.time_format,
+            show_path=render.time_format,
             time_format=render.time_format,
         )
 
-        return console
+    @classmethod
+    def is_isatty(cls) -> bool:
+        return sys.stdout.isatty()
 
+    @classmethod
+    def console_output(cls, soft_wrap: bool = True) -> Console:
+        force_terminal = True
+        legacy_windows = None
+        environ = {}
+
+        if not cls.is_isatty():
+            legacy_windows = False
+            environ = {"COLUMNS":_FALLBACK_COLUMNS, "LINES":_FALLBACK_LINES}
+        console = cls(
+            force_terminal=force_terminal,
+            # force_interactive=True,
+            legacy_windows=legacy_windows,
+            soft_wrap=soft_wrap,
+            environ=environ
+            # theme=ConsoleFactory.default_theme()
+        ).console
+
+        return console
 
     @classmethod
     def console_error_output(cls, soft_wrap: bool = True) -> Console:
         return cls(
             stderr=True,
             force_terminal=True,
-            force_interactive=True,
-            legacy_windows=False,
+            force_interactive=False,
             style="bold red",
-            highlight=True,
-            soft_wrap=soft_wrap,
-            theme=ConsoleFactory.default_theme(),
+            # soft_wrap=soft_wrap,
+            # theme=ConsoleFactory.default_theme(),
         ).console
 
     @classmethod
@@ -154,3 +160,4 @@ class ConsoleFactory:
             warnings.warn("The formatter was not set! the rich.Theme will be the default", RuntimeWarning, stacklevel=2)
             return Formatter().create_theme()
         return cls.formatter.create_theme()
+

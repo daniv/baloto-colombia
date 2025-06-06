@@ -5,18 +5,27 @@
 
 from __future__ import annotations
 
-"""
-Determine if a string contains only whitespace characters or is empty.
-"""
-is_whitespace = lambda string: string.strip() == ""
+import re
+from typing import Pattern, Any, Callable
 
-"""
-Determine if a string contains any of the given values. *matches* may be a
-single string, or a list of strings.
-"""
-contains = lambda string, matches: any([m in string for m in ([matches] if isinstance(matches, str) else matches)])
+import pytest
 
-"""
-Determine if a string contains all of the given values.
-"""
-contains_all = lambda string, matches: all([m in string for m in matches])
+def multi_replace(text: str, pairs: dict[str, str]) -> str:
+    pairs = dict((re.escape(k), v) for k, v in pairs.items())
+    pattern = re.compile("|".join(pairs.keys()))
+    return pattern.sub(lambda m: pairs[re.escape(m.group(0))], text)
+
+def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
+    """Replace `regex` with `replacement` twice on `original`.
+
+    This is used by string normalization to perform replaces on
+    overlapping matches.
+    """
+    return regex.sub(replacement, regex.sub(replacement, original))
+
+def cleanup_factory(config: pytest.Config, plugin: object) -> Callable[[], Any]:
+    def clean_up() -> None:
+        pluginmanager = config.pluginmanager
+        name = pluginmanager.get_name(plugin)
+        pluginmanager.unregister(name=name)
+    return clean_up

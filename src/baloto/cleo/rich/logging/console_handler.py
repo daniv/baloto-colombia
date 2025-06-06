@@ -33,13 +33,19 @@ if TYPE_CHECKING:
 
     FormatTimeCallable = Callable[[pendulum.DateTime], Text]
 
+__all__ = "ConsoleHandler"
 
 class ConsoleHandler(RichHandler):
     def __init__(
         self,
-        console: Console,
         level: int | str = logging.NOTSET,
+        console: Console | None = None,
         *,
+        show_time: bool = True,
+        omit_repeated_times: bool = True,
+        show_level: bool = True,
+        show_path: bool = True,
+        enable_link_path: bool = True,
         highlighter: Highlighter | None = None,
         markup: bool = False,
         rich_tracebacks: bool = False,
@@ -59,7 +65,11 @@ class ConsoleHandler(RichHandler):
         super().__init__(
             level,
             console,
-            show_time=False,
+            show_time=show_time,
+            omit_repeated_times=omit_repeated_times,
+            show_level=show_level,
+            show_path=show_path,
+            enable_link_path=enable_link_path,
             highlighter=highlighter,
             markup=markup,
             rich_tracebacks=rich_tracebacks,
