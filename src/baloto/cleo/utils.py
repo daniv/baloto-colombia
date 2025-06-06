@@ -7,25 +7,27 @@
 from __future__ import annotations
 
 import re
-import shlex
-import subprocess
 import sys
-from difflib import SequenceMatcher
 from typing import TYPE_CHECKING, Any
 
-WINDOWS = sys.platform == "win32"
+from pydantic.types import PathType
+from rich.console import WINDOWS
+
+
 
 if TYPE_CHECKING:
-    pass
+    from pathlib import Path
+    from baloto.utils.types import PathStr
 
 
-__all__ = ("find_similar_names", "escape_trailing_backslash", "escape", "shell_quote", "safe_str")
+__all__ = ("find_similar_names", "escape_trailing_backslash", "escape", "shell_quote", "safe_str", "markup_path", "markup_loation")
 
 
 def find_similar_names(name: str, names: list[str]) -> list[str]:
     """
-    Finds names similar to a given command name.
+    Finds names matching to a given command name.
     """
+    from difflib import SequenceMatcher
     threshold = 0.4
     distance_by_name = {}
     if " " in name:
@@ -50,6 +52,8 @@ def find_similar_names(name: str, names: list[str]) -> list[str]:
 
 
 def shell_quote(token: str) -> str:
+    import shlex
+    import subprocess
     if WINDOWS:
         return subprocess.list2cmdline([token])
 
@@ -75,23 +79,29 @@ def escape_trailing_backslash(text: str) -> str:
 
     return text
 
-
-def try_convert(typ, value, name):
-    if value is None:
-        return None
-    if isinstance(value, typ):
-        return value
-    try:
-        return typ(value)
-    except (TypeError, ValueError, ArithmeticError) as err:
-        raise InvalidArgument(
-            f"Cannot convert {name}={value!r} of type " f"{type(value).__name__} to type {typ.__name__}"
-        ) from err
-
-
 def safe_str(_object: Any) -> str:
     """Don't allow exceptions from __str__ to propagate."""
     try:
         return str(_object)
     except Exception:
         return "<exception str() failed>"
+
+def markup_path(filename: PathStr, *, relative_to: PathStr = None) -> str:
+    from pathlib import Path
+
+    file_path = filename
+    if isinstance(filename, str):
+        file_path = Path(filename)
+    file_name = f"[bright_magenta]{file_path.name}[/]"
+    if relative_to:
+        parent = file_path.relative_to(relative_to).parent
+    else:
+        parent = file_path.parent
+
+    folder = f"[magenta]{parent.as_posix()}/[/]"
+
+    return f"{folder}{file_name}"
+
+def markup_loation(filename: PathStr, lineno: int, *, relative_to: PathStr = None) -> str:
+    markup = markup_path(filename, relative_to=relative_to)
+    return f"{markup}:{lineno}"

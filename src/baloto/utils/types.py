@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic_extra_types.pendulum_dt import DateTime, Date
@@ -13,7 +14,18 @@ from pydantic_extra_types.pendulum_dt import DateTime, Date
 if TYPE_CHECKING:
     pass
 
-__all__ = ("StrIntFloat", "OptionalStrIntFloat", "OptionalBool", "OptionalStr", "OptionalInt", "OptionalIntFloat", "OptionalAny", "OptionalBool", "DictStrStr")
+__all__ = (
+    "StrIntFloat",
+    "OptionalStrIntFloat",
+    "OptionalBool",
+    "OptionalStr",
+    "PathStr",
+    "OptionalInt",
+    "OptionalIntFloat",
+    "OptionalAny",
+    "OptionalBool",
+    "DictStrStr",
+)
 
 
 StrIntFloat = str | int | float
@@ -33,3 +45,4 @@ ListInt = list[int]
 ListStrIntFloat = list[StrIntFloat]
 IntStr = int | str
 OptionalAny = Any | None
+PathStr = Path | str

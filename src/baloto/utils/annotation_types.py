@@ -12,9 +12,4 @@ if TYPE_CHECKING:
     pass
 
 
-__all__ = (
-)
-
-
-
-
+__all__ = ()
