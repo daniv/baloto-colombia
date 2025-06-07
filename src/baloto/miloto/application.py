@@ -133,6 +133,8 @@ class Application(CleoApplication):
         formatter.set_style("option", Style(color="bright_cyan", bold=True))
 
         ConsoleOutput.formatter = formatter
+
+
         io.output = ConsoleOutput(ConsoleFactory.console_output())
         io.error_output = ConsoleOutput(ConsoleFactory.console_error_output())
 
