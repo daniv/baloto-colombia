@@ -311,6 +311,18 @@ files = [
 ]
 
 [[package]]
+name = "multipledispatch"
+version = "1.0.0"
+description = "Multiple dispatch"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "multipledispatch-1.0.0-py3-none-any.whl", hash = "sha256:0c53cd8b077546da4e48869f49b13164bebafd0c2a5afceb6bb6a316e7fb46e4"},
+    {file = "multipledispatch-1.0.0.tar.gz", hash = "sha256:5c839915465c68206c3e9c473357908216c28383b425361e5d144594bf85a7e0"},
+]
+
+[[package]]
 name = "mypy"
 version = "1.16.0"
 description = "Optional static typing for Python"
@@ -959,4 +971,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "3f08ef2a0ebdafafa5b0dc133e2ab77a0197117499a4601e89676fb57009b481"
+content-hash = "5e1e1ce8774673dc109769a14e7026808995da703c243ce69df9664a7c2963f9"
