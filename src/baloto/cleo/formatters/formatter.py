@@ -285,7 +285,7 @@ class Formatter:
         if more_styles is None:
             more_styles = ""
         else:
-            more_styles =" " + " ".join(more_styles)
+            more_styles = " " + " ".join(more_styles)
         color_names = list(ANSI_COLOR_NAMES.keys())
 
         color_table = Table(

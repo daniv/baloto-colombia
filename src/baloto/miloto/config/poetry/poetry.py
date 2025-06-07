@@ -49,20 +49,7 @@ class BasePoetry(ABC):
 
     @classmethod
     def locate(cls, cwd: Path | None = None) -> Path:
-        cwd = Path(cwd or Path.cwd())
-        candidates = [cwd]
-        candidates.extend(cwd.parents)
-
-        for path in candidates:
-            poetry_file = path / "pyproject.toml"
-
-            if poetry_file.exists():
-                return poetry_file
-
-        else:
-            raise BalotoRuntimeError(
-                    f"Poetry could not find a 'pyproject.toml' file in {cwd} or its parents"
-            )
+        return locate("pyproject.toml")
 
 
 class Poetry(BasePoetry):
@@ -152,3 +139,20 @@ class Poetry(BasePoetry):
                 exception=e,
                 info=[str(e), e.stderr],
             )
+
+
+def locate(filename: str, cwd: Path | None = None) -> Path:
+    cwd = Path(cwd or Path.cwd())
+    candidates = [cwd]
+    candidates.extend(cwd.parents)
+
+    for path in candidates:
+        requested_file = path / filename
+
+        if requested_file.exists():
+            return requested_file
+
+    else:
+        raise BalotoRuntimeError(
+                f"Miloto could not find a '{filename}' file in {cwd} or its parents"
+        )
