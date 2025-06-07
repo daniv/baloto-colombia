@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import pytest
-from rich.console import Console
 
-_CONSOLE_KEY = None # pytest.StashKey[Console]
+from baloto.cleo.io.outputs.console_output import ConsoleOutput
 
-def get_console_key() -> pytest.StashKey[Console]:
-    global _CONSOLE_KEY
-    if _CONSOLE_KEY is None:
-        _CONSOLE_KEY = pytest.StashKey[Console]()
+_CONSOLE_OUTPUT_KEY = None # pytest.StashKey[Console]
 
-    return _CONSOLE_KEY
+def get_console_output_key() -> pytest.StashKey[ConsoleOutput]:
+    global _CONSOLE_OUTPUT_KEY
+    if _CONSOLE_OUTPUT_KEY is None:
+        _CONSOLE_OUTPUT_KEY = pytest.StashKey[ConsoleOutput]()
+
+    return _CONSOLE_OUTPUT_KEY

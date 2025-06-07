@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Callable, Literal, Sequence
+import sys
+from typing import TYPE_CHECKING, Any, Callable, Literal, Sequence, IO, TextIO
 
 import pytest
-
-from rich.console import Console
 
 from helpers import cleanup_factory
 
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 
 DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
-DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT was set to True"
+DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT set to True"
 MILOTO_LABEL_MARK = 'miloto_label'
 
 @pytest.hookimpl

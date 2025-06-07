@@ -242,6 +242,4 @@ fabric.properties
 tests/allure-results/
 tests/allure-report/
 
-static/
-.run/
 tests/papa

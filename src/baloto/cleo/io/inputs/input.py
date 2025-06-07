@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, TextIO
 
-from baloto.cleo.exceptions.errors import CleoValueError
+from baloto.cleo.exceptions.errors import CleoValueError, CleoMissingArgumentsError
+from baloto.cleo.utils import shell_quote
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.definition import Definition
@@ -16,18 +17,25 @@ class Input(ABC):
     """
 
     def __init__(self, definition: Definition | None = None) -> None:
-        # self._stream: TextIO = None  # type: ignore[assignment]
-
+        self._stream: TextIO = None  # type: ignore[assignment]
         self._definition: Definition
         self._options: dict[str, Any] = {}
         self._arguments: dict[str, Any] = {}
 
         if definition is None:
             from baloto.cleo.io.inputs.definition import Definition
+
             self._definition = Definition()
         else:
             self.bind(definition)
             self.validate()
+
+    @property
+    def is_interactive(self) -> bool:
+        return True if self._interactive is None else self._interactive
+
+    def set_interactive(self, interactive: bool = True) -> None:
+        self._interactive = interactive
 
     @property
     def arguments(self) -> dict[str, Any]:
@@ -36,6 +44,14 @@ class Input(ABC):
     @property
     def options(self) -> dict[str, Any]:
         return {**self._definition.option_defaults, **self._options}
+
+    @property
+    def stream(self) -> TextIO:
+        return self._stream
+
+    @stream.setter
+    def stream(self, stream: TextIO) -> None:
+        self._stream = stream
 
     @property
     @abstractmethod
@@ -47,39 +63,37 @@ class Input(ABC):
     def script_name(self) -> str | None:
         raise NotImplementedError("[c1]script_name[/] is an abstract method")
 
-    # def set_console(self, console: Console) -> None:
-    #     self._console = console
-    #     console.input()
+    def read(self, length: int, default: str = "") -> str:
+        """
+        Reads the given amount of characters from the input stream.
+        """
+        # TODO: block inner or console
 
-    # def read(self, length: int, default: str = "") -> str:
-    #     """
-    #     Reads the given amount of characters from the input stream.
-    #     """
-    #     if not self._console.is_interactive:
-    #         return default
-    #
-    #     return self.stream.read(length)
+        if not self._console.is_interactive:
+            return default
 
-    # def read_line(self, length: int = -1, default: str = "") -> str:
-    #     """
-    #     Reads a line from the input stream.
-    #     """
-    #     if not self._console.is_interactive:
-    #         return default
-    #
-    #     self._console.file.readline(length)
-    #
-    # def close(self) -> None:
-    #     """
-    #     Closes the input.
-    #     """
-    #     self.stream.close()
-    #
-    # def is_closed(self) -> bool:
-    #     """
-    #     Returns whether the input is closed.
-    #     """
-    #     return self.stream.closed
+        return self.stream.read(length)
+
+    def read_line(self, length: int = -1, default: str = "") -> str:
+        """
+        Reads a line from the input stream.
+        """
+        if not self.is_interactive():
+            return default
+
+        return self._stream.readline(length)
+
+    def close(self) -> None:
+        """
+        Closes the input.
+        """
+        self._stream.close()
+
+    def is_closed(self) -> bool:
+        """
+        Returns whether the input is closed.
+        """
+        return self._stream.closed
 
     def bind(self, definition: Definition) -> None:
         """

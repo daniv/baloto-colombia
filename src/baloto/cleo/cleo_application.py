@@ -66,19 +66,14 @@ class Application:
         self.auto_exit = True
         self.catch_exceptions = True
         self.single_command = False
-
         self._display_name: str | None = None
-
         self._default_command = "list"
-
         self._commands: dict[str, Command] = dict()
         self._running_command: Command | None = None
         self._want_helps = False
         self._definition: Definition | None = None
         self._command_loader: CommandLoader | None = None
-
         self._terminal_size = shutil.get_terminal_size()
-
         self._initialized = False
 
         from baloto.utils import is_pydevd_mode
@@ -468,14 +463,6 @@ class Application:
 
         # TODO: check if alreay set to avoid duplication
 
-        level_mapping = {
-            Verbosity.QUIET: logging.CRITICAL,  # Nothing gets emitted to the output anyway
-            Verbosity.NORMAL: logging.WARNING,
-            Verbosity.VERBOSE: logging.INFO,
-            Verbosity.VERY_VERBOSE: logging.DEBUG,
-            Verbosity.DEBUG: logging.DEBUG,
-        }
-
         logging_level = level_mapping[io.output.verbosity]
         level_name = logging.getLevelName(logging_level)
         root = logging.getLogger()
@@ -507,34 +494,34 @@ class Application:
     @staticmethod
     def _configure_io(io: IO) -> None:
 
-        io.output.log("Configuring IO on Cleo application")
-        io.output.log("Determine level of verbosity")
+        # io.output.log("Configuring IO on Cleo application")
+        # io.output.log("Determine level of verbosity")
 
         shell_verbosity = int(os.getenv("SHELL_VERBOSITY", 0))
         if io.input.has_parameter_option(["--quiet", "-q"], True):
-            io.set_verbosity(Verbosity.QUIET)
-            io.output.log("Verbosity level will be Verbosity.QUIET")
+            io.set_quiet()
+            # io.output.log("Verbosity level will be Verbosity.QUIET")
             shell_verbosity = -1
         else:
             if io.input.has_parameter_option("-vvv", True):
-                io.set_verbosity(Verbosity.DEBUG)
-                io.output.log("Verbosity level will be Verbosity.DEBUG")
+                io.set_debug()
+                # io.output.log("Verbosity level will be Verbosity.DEBUG")
                 shell_verbosity = 3
             elif io.input.has_parameter_option("-vv", True):
-                io.set_verbosity(Verbosity.VERY_VERBOSE)
-                io.output.log("Verbosity level will be Verbosity.VERY_VERBOSE")
+                io.set_very_verbose()
+                # io.output.log("Verbosity level will be Verbosity.VERY_VERBOSE")
                 shell_verbosity = 2
             elif io.input.has_parameter_option("-v", True) or io.input.has_parameter_option(
                 "--verbose", only_params=True
             ):
-                io.set_verbosity(Verbosity.VERBOSE)
-                io.output.log("Verbosity level will be Verbosity.VERBOSE")
+                io.set_verbose()
+                # io.output.log("Verbosity level will be Verbosity.VERBOSE")
                 shell_verbosity = 1
 
         if shell_verbosity == -1:
             io.input.interactive = False
 
-        io.output.log("setting verbosity level for function decorator [yellow]@log[/]")
+        # io.output.log("setting verbosity level for function decorator [yellow]@log[/]")
         # set_verbositye(io.output.verbosity)
 
     def _init(self) -> None:

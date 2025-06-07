@@ -14,11 +14,10 @@ from typing import TYPE_CHECKING, Any, Literal
 import pytest
 from rich.console import Console, ConsoleRenderable
 
-from baloto.cleo.rich.factory.console_factory import ConsoleFactory
-from baloto.cleo.utils import markup_path
+from baloto.cleo.io.outputs.console_output import ConsoleOutput
 from helpers import cleanup_factory
 from plugins.tracker.assert_report import AssertionReportException
-from plugins.tracker.console import print_hook_info, print_separator, print_key_value
+from plugins.tracker.console import print_separator
 
 if TYPE_CHECKING:
     from _pytest._code.code import ExceptionInfo
@@ -33,15 +32,14 @@ PLUGIN_NAME = "miloto-tracker"
 
 @pytest.hookimpl
 def pytest_configure(config: pytest.Config) -> None:
-    from tests import get_console_key
+    from tests import get_console_output_key
 
-    console_key = get_console_key()
-    console = config.stash.get(console_key, None)
-    if console is None:
-        console = ConsoleFactory.console_output()
-        config.stash.setdefault(console_key, console)
+    console_output_key = get_console_output_key()
+    console_output = config.stash.get(console_output_key, None)
+    if console_output is None:
+        raise Exception
 
-    tracker = TrackerPlugin(config, console)
+    tracker = TrackerPlugin(config, console_output)
     config.pluginmanager.register(tracker, TrackerPlugin.name)
 
     config.add_cleanup(cleanup_factory(config, tracker))
@@ -50,9 +48,9 @@ def pytest_configure(config: pytest.Config) -> None:
 class TrackerPlugin:
     name: str = "pytest-hook-tracker"
 
-    def __init__(self, config: pytest.Config, console: Console) -> None:
+    def __init__(self, config: pytest.Config, output: ConsoleOutput) -> None:
         self.config = config
-        self.console = console
+        self.output = output
 
     @property
     def verbosity(self) -> int:
@@ -118,8 +116,7 @@ class TrackerPlugin:
         report: pytest.CollectReport | pytest.TestReport,
     ) -> None:
         from tests.plugins.tracker.assert_report import AssertionErrorReport
-        print_separator(
-            self.console,
+        self.output.rule(
             f"[red bold]EXCEPTION INTERACT [dim]({call.excinfo.type})",
             style="red bold",
             align="center",
@@ -130,10 +127,10 @@ class TrackerPlugin:
             try:
                 aer = AssertionErrorReport(node, call, report)
                 if aer.report_status:
-                    self.console.print(aer)
-                    self.console.rule("[bright_red]Stack Trace", characters="=", style="bright_red dim")
+                    self.output.write(aer)
+                    self.output.rule("[bright_red]Stack Trace", characters="=", style="bright_red dim")
                     renderable = self.render_exception_info(call.excinfo)
-                    self.console.print(renderable)
+                    self.output.write(renderable)
 
             except* AssertionReportException as e:
                 self.console.print_exception()
