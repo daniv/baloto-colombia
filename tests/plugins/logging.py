@@ -6,12 +6,13 @@
 from __future__ import annotations
 
 import logging
+from argparse import Action
 from typing import TYPE_CHECKING, Literal, Any, Sequence
 
 import pytest
-from argparse import Action
 
-from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+from baloto.cleo.io.outputs.console_output import ConsoleOutput
+from baloto.cleo.io.outputs.output import Verbosity
 
 if TYPE_CHECKING:
     IniLiteral = Literal['string', 'paths', 'pathlist', 'args', 'linelist', 'bool']
@@ -128,11 +129,11 @@ def pytest_configure(config: pytest.Config) -> None:
     log_date_format = get_option_ini(config, "log_date_format")
 
     handler_options = dict(
-        show_time=config.getoption("--show-time"),
-        omit_repeated_times=config.getoption("--omit-repeated-times"),
-        show_level=config.getoption("--show-level"),
-        show_path=config.getoption("--show-path"),
-        enable_link_path=config.getoption("--enable-link-path"),
+        show_time=get_option_ini(config, "logging_show_time"),
+        omit_repeated_times=get_option_ini(config, "logging_omit_repeated_times"),
+        show_level=get_option_ini(config, "logging_show_level"),
+        show_path=get_option_ini(config, "logging_show_path"),
+        enable_link_path=get_option_ini(config, "logging_enable_link_path"),
         highlighter=config.getoption("--highlighter"),
         markup=config.getoption("--markup"),
         rich_tracebacks=config.getoption("--rich-tracebacks"),
@@ -150,14 +151,14 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
     try:
-        from tests import get_console_key
-        console_key = get_console_key()
-        console = config.stash.get(console_key, None)
-        if console is None:
-            console = ConsoleFactory.console_output()
-            config.stash.setdefault(console_key, console)
+        from tests import get_console_output_key
+        console_output_key = get_console_output_key()
+        console_output = config.stash.get(console_output_key, None)
+        if console_output is None:
+            console_output = ConsoleOutput.stdout_console(verbosity=config.option.verbose)
+            config.stash.setdefault(console_output_key, console_output)
 
-        rich_handler = ConsoleHandler(log_level, console, **handler_options)
+        rich_handler = ConsoleHandler(log_level, getattr(console_output, "_console"), **handler_options)
     except ValueError as e:
         if str(e).startswith("Unknown level"):
             raise pytest.UsageError(
