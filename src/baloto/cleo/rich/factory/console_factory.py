@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 _FALLBACK_COLUMNS = "254"
 _FALLBACK_LINES = "14"
 
-class ConsoleFactory:
+class ConsoleFactoryy:
+    log_time_format: str | FormatTimeCallable = "[%X]",
 
     formatter: Formatter | None = None
 
@@ -48,9 +49,6 @@ class ConsoleFactory:
         emoji: bool = True,
         emoji_variant: EmojiVariant | None = None,
         highlight: bool = True,
-        log_time: bool = True,
-        log_path: bool = True,
-        log_time_format: str | FormatTimeCallable = "[%X]",
         highlighter: HighlighterType | None = ReprHighlighter(),
         legacy_windows: bool | None = None,
         safe_box: bool = True,
@@ -77,41 +75,45 @@ class ConsoleFactory:
             highlight=highlight,
             force_terminal=force_terminal,
             legacy_windows=legacy_windows,
-            log_time=log_time,
-            log_path=log_path,
+            log_time=False,
+            log_path=True,
             highlighter=highlighter,
             record=record,
-            log_time_format=log_time_format,
+            log_time_format="[%X]",
             _environ=environ
         )
-        render = getattr(self.console, "_log_render")
-        self.console._log_render = ConsoleLogRender(
-            show_time=render.time_format,
-            show_path=render.time_format,
-            time_format=render.time_format,
-        )
+        # render = getattr(self.console, "_log_render")
+        # self.console._log_render = ConsoleLogRender(
+        #     show_time=render.time_format,
+        #     show_path=render.time_format,
+        #     time_format=render.time_format,
+        # )
 
     @staticmethod
-    def is_isatty() -> bool:
+    def isatty() -> bool:
         return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
 
     @classmethod
-    def console_output(cls, soft_wrap: bool = True) -> Console:
+    def console_output(cls, soft_wrap: bool = True, **kwargs) -> Console:
         environ = {}
         legacy_windows = None
 
         if not cls.is_isatty():
             legacy_windows = False
             environ = {"COLUMNS":_FALLBACK_COLUMNS, "LINES":_FALLBACK_LINES}
-        console = cls(
+
+        data = dict(
             force_terminal=True,
             force_interactive=True,
             legacy_windows=legacy_windows,
             soft_wrap=soft_wrap,
             environ=environ,
             highlighter=MilotoHighlighter(),
-            theme=MilotoTheme()
-        ).console
+            theme=MilotoTheme().styles,
+        )
+
+        kwargs.update(data)
+        console = cls(**kwargs).console
 
         return console
 

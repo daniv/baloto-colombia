@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from rich.console import OverflowMethod
 
 
-class SectionOutput(ConsoleOutput):
+class SectionOutput:
     def __init__(
         self,
         console: Console,

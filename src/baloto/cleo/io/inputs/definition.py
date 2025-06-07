@@ -209,6 +209,7 @@ from baloto.cleo.io.inputs.option import Option
 #
 #         return " ".join(elements) + tail
 
+
 class Definition:
     """
     A Definition represents a set of command line arguments and options.
@@ -281,9 +282,7 @@ class Definition:
 
     def add_argument(self, argument: Argument) -> None:
         if argument.name in self._arguments:
-            raise CleoLogicError(
-                f'An argument with name "{argument.name}" already exists', code=""
-            )
+            raise CleoLogicError(f'An argument with name "{argument.name}" already exists', code="")
 
         if self._has_list_argument:
             raise CleoLogicError("Cannot add an argument after a list argument")
@@ -333,13 +332,8 @@ class Definition:
 
         if option.shortcut:
             for shortcut in option.shortcut.split("|"):
-                if (
-                    shortcut in self._shortcuts
-                    and option.name != self._shortcuts[shortcut]
-                ):
-                    raise CleoLogicError(
-                        f'An option with shortcut "{shortcut}" already exists', code=""
-                    )
+                if shortcut in self._shortcuts and option.name != self._shortcuts[shortcut]:
+                    raise CleoLogicError(f'An option with shortcut "{shortcut}" already exists', code="")
 
         self._options[option.name] = option
 
@@ -377,11 +371,7 @@ class Definition:
             for option in self._options.values():
                 value = ""
                 if option.accepts_value:
-                    formatted = (
-                        option.name.upper()
-                        if option.is_value_required()
-                        else f"[{option.name.upper()}]"
-                    )
+                    formatted = option.name.upper() if option.is_value_required() else f"[{option.name.upper()}]"
                     value = f" {formatted}"
 
                 shortcut = ""
@@ -406,4 +396,3 @@ class Definition:
             elements.append(element)
 
         return " ".join(elements) + tail
-

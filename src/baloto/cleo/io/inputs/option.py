@@ -65,7 +65,6 @@ class Option(BaseInputModel):
         #
         #         raise PydanticCustomError("shortcut-not-set", cast(LiteralString, msg), {"error": err})
 
-
         if self.is_list and self.flag:
             raise CleoLogicError("A flag option cannot be a list as well.", code="opt-flag-list-type")
 
