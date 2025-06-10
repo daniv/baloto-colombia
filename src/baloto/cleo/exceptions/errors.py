@@ -10,7 +10,8 @@ __all__ = (
     "CleoUserError",
     "CleoCommandNotFoundError",
     "CleoNamespaceNotFoundError",
-    "CleoKeyError"
+    "CleoKeyError",
+    "CleoMissingArgumentsError"
 )
 
 from typing import Any

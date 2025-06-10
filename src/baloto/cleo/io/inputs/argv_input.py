@@ -5,14 +5,15 @@ import sys
 from typing import Any
 from typing import TYPE_CHECKING
 
-from baloto.cleo.exceptions.errors import CleoRuntimeError, CleoNoSuchOptionError
-from baloto.cleo.io.inputs.input import Input
+from baloto.cleo.exceptions.errors import CleoNoSuchOptionError
+from baloto.cleo.exceptions.errors import CleoRuntimeError
+from baloto.cleo.io.inputs.definition_input import DefinitionInput
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.definition import Definition
 
 
-class ArgvInput(Input):
+class ArgvInput(DefinitionInput):
     """
     Represents an input coming from the command line.
     """
@@ -82,7 +83,9 @@ class ArgvInput(Input):
 
         return False
 
-    def parameter_option(self, values: str | list[str], default: Any = False, only_params: bool = False) -> Any:
+    def parameter_option(
+        self, values: str | list[str], default: Any = False, only_params: bool = False
+    ) -> Any:
         if not isinstance(values, list):
             values = [values]
 
@@ -143,7 +146,10 @@ class ArgvInput(Input):
 
         if len(name) > 1:
             shortcut = name[0]
-            if self._definition.has_shortcut(shortcut) and self._definition.option_for_shortcut(shortcut).accepts_value:
+            if (
+                self._definition.has_shortcut(shortcut)
+                and self._definition.option_for_shortcut(shortcut).accepts_value
+            ):
                 # An option with a value and no space
                 self._add_short_option(shortcut, name[1:])
             else:
@@ -193,7 +199,10 @@ class ArgvInput(Input):
                 )
             self._arguments[argument.name] = [token] if argument.is_list else token
         # If the last argument is a list, append the token to it
-        elif self._definition.has_argument(last_argument) and self._definition.argument(last_argument).is_list:
+        elif (
+            self._definition.has_argument(last_argument)
+            and self._definition.argument(last_argument).is_list
+        ):
             argument = self._definition.argument(last_argument)
             self._arguments[argument.name].append(token)
         # Unexpected argument
@@ -208,7 +217,10 @@ class ArgvInput(Input):
             if all_arguments:
                 all_names = " ".join(a.name.join('""') for a in all_arguments)
                 if command_name:
-                    message = f'Too many arguments to "{command_name}" command, ' f"expected arguments {all_names}"
+                    message = (
+                        f'Too many arguments to "{command_name}" command, '
+                        f"expected arguments {all_names}"
+                    )
                 else:
                     message = f"Too many arguments, expected arguments {all_names}"
             elif command_name:

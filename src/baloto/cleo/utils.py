@@ -7,13 +7,9 @@
 from __future__ import annotations
 
 import re
-import sys
 from typing import TYPE_CHECKING, Any
 
-from pydantic.types import PathType
 from rich.console import WINDOWS
-
-
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -85,22 +81,6 @@ def safe_str(_object: Any) -> str:
         return str(_object)
     except Exception:
         return "<exception str() failed>"
-
-def markup_path(filename: PathStr, *, relative_to: PathStr = None) -> str:
-    from pathlib import Path
-
-    file_path = filename
-    if isinstance(filename, str):
-        file_path = Path(filename)
-    file_name = f"[bright_magenta]{file_path.name}[/]"
-    if relative_to:
-        parent = file_path.relative_to(relative_to).parent
-    else:
-        parent = file_path.parent
-
-    folder = f"[magenta]{parent.as_posix()}/[/]"
-
-    return f"{folder}{file_name}"
 
 def markup_loation(filename: PathStr, lineno: int, *, relative_to: PathStr = None) -> str:
     markup = markup_path(filename, relative_to=relative_to)

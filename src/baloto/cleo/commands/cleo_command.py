@@ -6,10 +6,11 @@ from typing import Any
 from typing import ClassVar
 from typing import TYPE_CHECKING
 
+from baloto.cleo.io.outputs.output import Verbosity
+
 from baloto.cleo.exceptions.errors import CleoError
 from baloto.cleo.io.inputs.definition import Definition
 from baloto.cleo.io.inputs.string_input import StringInput
-from baloto.cleo.io.outputs.output import Verbosity
 
 if TYPE_CHECKING:
     from baloto.cleo.cleo_application import Application

@@ -4,12 +4,11 @@ import math
 from typing import Any
 from typing import TYPE_CHECKING
 
+from baloto.cleo.io.output import OutputType
+from baloto.cleo.io.output import Verbosity
 from rich.control import CONTROL_CODES_FORMAT
 from rich.control import Control
 from rich.segment import ControlType
-
-from baloto.cleo.io.outputs.console_output import ConsoleOutput
-from baloto.cleo.io.outputs.output import Verbosity, OutputType
 
 if TYPE_CHECKING:
     from rich.console import Console, ConsoleDimensions

@@ -9,10 +9,20 @@ from __future__ import annotations
 import re
 from abc import ABC
 from collections.abc import Sequence
-from typing import Annotated, Callable, TYPE_CHECKING, Any, LiteralString, cast
+from typing import Annotated
+from typing import Any
+from typing import Callable
+from typing import LiteralString
+from typing import TYPE_CHECKING
+from typing import cast
 
 from annotated_types import doc
-from pydantic import BaseModel, ValidationError, Field, StringConstraints, WrapValidator, ConfigDict
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import StringConstraints
+from pydantic import ValidationError
+from pydantic import WrapValidator
 from pydantic_core import PydanticCustomError
 
 from baloto.utils.types import OptionalStr
@@ -28,7 +38,9 @@ CALL_CONFIG = ConfigDict(arbitrary_types_allowed=True, strict=True)
 _re_special_symbols = re.compile(r"^[^0-9~`!@#$%° ^&*()_+={[}\]|:;\"<>/?]*$")
 
 
-def special_chars_error_validator(exc_factory: Callable[[str | None, ValidationError], ValueError]) -> Any:
+def special_chars_error_validator(
+    exc_factory: Callable[[str | None, ValidationError], ValueError],
+) -> Any:
 
     def _validator(v: Any, next_: Any, ctx: ValidationInfo) -> Any:
         try:
@@ -59,7 +71,12 @@ class SpecialCharsValidationError(PydanticCustomError):
 AnnotatedNameString = Annotated[
     str,
     StringConstraints(
-        min_length=2, max_length=12, to_lower=True, strict=True, strip_whitespace=True, pattern=_re_special_symbols
+        min_length=2,
+        max_length=12,
+        to_lower=True,
+        strict=True,
+        strip_whitespace=True,
+        pattern=_re_special_symbols,
     ),
     special_chars_error_validator(SpecialCharsValidationError.from_validator_exc),
     doc("The name of the argument or option"),

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import contextlib
-import logging
+# import logging
 import os
 import re
 import shutil
@@ -30,7 +30,6 @@ from baloto.cleo.exceptions.errors import (
 from baloto.cleo.io.inputs.argument import Argument
 from baloto.cleo.io.inputs.argv_input import ArgvInput
 from baloto.cleo.io.inputs.option import Option
-from baloto.cleo.io.outputs.output import Verbosity
 
 if TYPE_CHECKING:
     from baloto.cleo.events.event_dispatcher import EventDispatcher
@@ -127,7 +126,6 @@ class Application:
         error_output: Output | None = None,
     ) -> IO:
 
-        from baloto.cleo.io.outputs.null_output import NullOutput
         from baloto.cleo.io.io import IO
 
         if input is None:
@@ -135,10 +133,10 @@ class Application:
             input.stream = sys.stdin
 
         if output is None:
-            output = NullOutput()
+            output = Output.null_output()
 
         if error_output is None:
-            error_output = NullOutput()
+            error_output = Output.null_output()
 
         return IO(input, output, error_output)
 
@@ -287,6 +285,12 @@ class Application:
                 ),
                 Option.make("--no-ansi", flag=True, description="Disable [b]ANSI[/] output."),
                 Option.make("--ansi", flag=True, description="Force [b]ANSI[/] output."),
+                Option.make(
+                    "--no-interaction",
+                    "-n",
+                    flag=True,
+                    description="Do not ask any interactive question."
+                ),
             ]
         )
 
@@ -460,36 +464,37 @@ class Application:
         """
         Configures the built-in logging package to write it's output via Cleo's output class.
         """
+        return
 
         # TODO: check if alreay set to avoid duplication
 
-        logging_level = level_mapping[io.output.verbosity]
-        level_name = logging.getLevelName(logging_level)
-        root = logging.getLogger()
-        root.setLevel(logging_level)
-
-        from baloto.cleo.rich.logging.console_handler import ConsoleHandler
-
-        rich_tracebacks = True if logging_level <= logging.INFO else False
-        tracebacks_show_locals = logging_level == logging.DEBUG
-
-        if self.is_pydevd_mode:
-            rich_tracebacks = True
-            tracebacks_show_locals = True
-
-        handler = ConsoleHandler(
-                level=logging_level,
-                console=io.output.console,
-                rich_tracebacks=rich_tracebacks,
-                tracebacks_show_locals=tracebacks_show_locals,
-                keywords=["APP"]
-        )
-
-        handler.setLevel(level_mapping[io.output.verbosity])
-        root.addHandler(handler)
-        logging.debug(f"[APP] logging was set successfuly, current level is {level_name}")
-        io.output.log(
-            f"[APP] logging was set successfuly, current level is [{level_name.lower()}]{level_name}[/]")
+        # logging_level = level_mapping[io.output.verbosity]
+        # level_name = logging.getLevelName(logging_level)
+        # root = logging.getLogger()
+        # root.setLevel(logging_level)
+        #
+        # from baloto.cleo.rich.logging.console_handler import ConsoleHandler
+        #
+        # rich_tracebacks = True if logging_level <= logging.INFO else False
+        # tracebacks_show_locals = logging_level == logging.DEBUG
+        #
+        # if self.is_pydevd_mode:
+        #     rich_tracebacks = True
+        #     tracebacks_show_locals = True
+        #
+        # handler = ConsoleHandler(
+        #         level=logging_level,
+        #         console=io.output.console,
+        #         rich_tracebacks=rich_tracebacks,
+        #         tracebacks_show_locals=tracebacks_show_locals,
+        #         keywords=["APP"]
+        # )
+        #
+        # handler.setLevel(level_mapping[io.output.verbosity])
+        # root.addHandler(handler)
+        # logging.debug(f"[APP] logging was set successfuly, current level is {level_name}")
+        # io.output.log(
+        #     f"[APP] logging was set successfuly, current level is [{level_name.lower()}]{level_name}[/]")
 
     @staticmethod
     def _configure_io(io: IO) -> None:
@@ -610,16 +615,17 @@ class Application:
             if index is not None:
                 del argv[index + 1 : index + 1 + name.count(" ")]
 
-            # stream = io.input.stream
-            # interactive = io.input.interactive
+            stream = io.input.stream
+            interactive = io.input.is_interactive()
             io.input = ArgvInput(argv)
-            # io.input.stream = stream
-            # io.input.interactive = interactive
+            io.input.stream = stream
+            io.input.interactive(interactive)
 
         exit_code = self._run_command(command, io)
         self._running_command = None
 
         return exit_code
+
 
     def _run_command(self, command: Command, io: IO) -> int:
         if self.event_dispatcher is None:
@@ -661,3 +667,5 @@ class Application:
             raise error
 
         return terminate_event.exit_code
+
+

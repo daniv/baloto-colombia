@@ -243,3 +243,5 @@ tests/allure-results/
 tests/allure-report/
 
 tests/papa
+/output
+*.exe

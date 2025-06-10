@@ -120,7 +120,7 @@ class Application(CleoApplication):
         error_output: Output | None = None,
     ) -> IO:
         from rich.style import Style
-        from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+        from baloto.cleo.rich.console_factory import ConsoleFactory
 
         io = super().create_io(input, output, error_output)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import Any
+from typing import TYPE_CHECKING
 
 from pydantic import Field
 
@@ -10,6 +11,7 @@ from baloto.cleo.io.inputs.base_model import BaseInputModel
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+__all__ = ("Argument", )
 
 class Argument(BaseInputModel):
     required: bool = Field(True, frozen=True)
@@ -46,7 +48,12 @@ class Argument(BaseInputModel):
         arg: Argument = cls.__new__(Argument)
         arg.name = name
         return cls(
-            name=name, required=required, is_list=is_list, description=description, default=default, choices=choices
+            name=name,
+            required=required,
+            is_list=is_list,
+            description=description,
+            default=default,
+            choices=choices,
         )
 
     def __str__(self) -> str:
