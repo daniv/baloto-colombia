@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import sys
-
 from typing import TYPE_CHECKING
 
 import pytest
-
 from baloto.core.cleo.io.inputs.argument import Argument
 from baloto.core.cleo.io.inputs.argv_input import ArgvInput
 from baloto.core.cleo.io.inputs.definition import Definition
 from baloto.core.cleo.io.inputs.option import Option
-
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

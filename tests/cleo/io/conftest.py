@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 # Generator[YieldType, SendType, ReturnType]
 
+
 @pytest.fixture(scope="function")
 def assert_cleo_logic_error() -> Generator[Callable[[CleoLogicError, ...], None], ..., None]:
     def _validate_error(

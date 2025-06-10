@@ -5,20 +5,16 @@
 
 from __future__ import annotations
 
-import itertools
 import logging
-import os
 import sys
-from typing import TYPE_CHECKING, Generator, Callable, Any
-from unittest import skipIf
+from typing import TYPE_CHECKING, Callable, Any
 
 import pytest
-from hamcrest import assert_that, equal_to, none, is_not, any_of
-from pytest import param
+from hamcrest import assert_that, equal_to, none
 from rich.color import ColorSystem
 from rich.console import Console, WINDOWS
-from rich.pretty import Pretty
 from rich.panel import Panel
+from rich.pretty import Pretty
 
 if TYPE_CHECKING:
     CallableConsole = Callable[[dict[str, Any]], Console]

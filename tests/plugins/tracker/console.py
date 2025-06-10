@@ -124,7 +124,9 @@ def print_value(
     color: str = "white",
     wrap_text: bool = True,
 ) -> None:
-    output = _format_value(value, prefix=prefix, color=color, wrap_text=wrap_text, width=console.width)
+    output = _format_value(
+        value, prefix=prefix, color=color, wrap_text=wrap_text, width=console.width
+    )
     console.print(output, new_line_start=True)
 
 
@@ -152,4 +154,3 @@ def print_key_value(
 
     output = f"{prefix}[{key_color}]{key}[/]: {safe_str(value)}"
     console.print(output, overflow="ellipsis")
-
