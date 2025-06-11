@@ -7,6 +7,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 from baloto.cleo.io.null_io import NullIO
+from baloto.cleo.io.outputs.output import Output
 from baloto.miloto.config.poetry.toml import PyProjectTOML
 from baloto.miloto.exceptions.errors import BalotoRuntimeError
 

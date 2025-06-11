@@ -9,6 +9,8 @@ from baloto.cleo.io.inputs.argument import Argument
 from baloto.cleo.io.inputs.option import Option
 
 
+__all__ = ("Definition", )
+
 # class Definition:
 #     """
 #     A Definition represents a set of command line arguments and options.
@@ -333,7 +335,9 @@ class Definition:
         if option.shortcut:
             for shortcut in option.shortcut.split("|"):
                 if shortcut in self._shortcuts and option.name != self._shortcuts[shortcut]:
-                    raise CleoLogicError(f'An option with shortcut "{shortcut}" already exists', code="")
+                    raise CleoLogicError(
+                        f'An option with shortcut "{shortcut}" already exists', code=""
+                    )
 
         self._options[option.name] = option
 
@@ -371,7 +375,11 @@ class Definition:
             for option in self._options.values():
                 value = ""
                 if option.accepts_value:
-                    formatted = option.name.upper() if option.is_value_required() else f"[{option.name.upper()}]"
+                    formatted = (
+                        option.name.upper()
+                        if option.is_value_required()
+                        else f"[{option.name.upper()}]"
+                    )
                     value = f" {formatted}"
 
                 shortcut = ""

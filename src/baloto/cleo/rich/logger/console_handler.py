@@ -24,7 +24,7 @@ from rich.logging import RichHandler
 from rich.text import Text
 
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.cleo.rich.traceback import RichTraceback
+from baloto.cleo.rich._tracebacks import RichTraceback
 
 if TYPE_CHECKING:
     from logging import LogRecord
@@ -86,7 +86,7 @@ class ConsoleHandler(RichHandler):
             keywords=keywords
         )
 
-        from baloto.cleo.rich.logging.log_render import ConsoleLogRender
+        from baloto.cleo.rich.logger.log_render import ConsoleLogRender
 
         self._log_render = ConsoleLogRender(show_time=False, show_level=True)
 

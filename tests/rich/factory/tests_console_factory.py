@@ -4,9 +4,10 @@ import sys
 from io import StringIO
 
 from rich.highlighter import ReprHighlighter, NullHighlighter
-from rich.style import Style, NULL_STYLE
+from rich.style import NULL_STYLE
 
-from baloto.cleo.rich.factory.console_factory import ConsoleFactory
+from baloto.cleo.rich.console_factory import ConsoleFactory
+
 
 # noinspection PyProtectedMember
 def console_output_test() -> None:

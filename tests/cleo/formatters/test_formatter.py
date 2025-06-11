@@ -18,8 +18,6 @@ from rich.style import Style
 from baloto.cleo.exceptions import ExitStatus
 from baloto.cleo.exceptions.errors import CleoKeyError
 from conftest import DISABLE_PRINT, DISABLE_MSG
-from itertools import islice
-from traceback import walk_tb
 
 if TYPE_CHECKING:
     from baloto.cleo.formatters.formatter import Formatter

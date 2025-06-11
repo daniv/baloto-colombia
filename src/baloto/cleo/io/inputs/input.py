@@ -1,14 +1,26 @@
+# Project : baloto-colombia
+# File Name : cli_input.py
+# Dir Path : src/baloto/cleo/io/inputs
+# Created on: 2025–06–08 at 04:48:12.
+
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING, TextIO
+from abc import ABC
+from abc import abstractmethod
+from typing import Any
+from typing import TYPE_CHECKING
+from typing import TextIO
 
-from baloto.cleo.exceptions.errors import CleoValueError, CleoMissingArgumentsError
+from baloto.cleo.exceptions.errors import CleoMissingArgumentsError
+from baloto.cleo.exceptions.errors import CleoValueError
 from baloto.cleo.utils import shell_quote
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.definition import Definition
+
+
+__all__ = ("Input", )
 
 
 class Input(ABC):
@@ -17,10 +29,12 @@ class Input(ABC):
     """
 
     def __init__(self, definition: Definition | None = None) -> None:
+        super().__init__()
         self._stream: TextIO = None  # type: ignore[assignment]
         self._definition: Definition
         self._options: dict[str, Any] = {}
         self._arguments: dict[str, Any] = {}
+        self._interactive: bool | None = None
 
         if definition is None:
             from baloto.cleo.io.inputs.definition import Definition
@@ -30,7 +44,6 @@ class Input(ABC):
             self.bind(definition)
             self.validate()
 
-    @property
     def is_interactive(self) -> bool:
         return True if self._interactive is None else self._interactive
 
@@ -67,12 +80,10 @@ class Input(ABC):
         """
         Reads the given amount of characters from the input stream.
         """
-        # TODO: block inner or console
-
-        if not self._console.is_interactive:
+        if not self.is_interactive():
             return default
 
-        return self.stream.read(length)
+        return self._stream.read(length)
 
     def read_line(self, length: int = -1, default: str = "") -> str:
         """
@@ -114,7 +125,9 @@ class Input(ABC):
         ]
 
         if missing_arguments:
-            raise CleoMissingArgumentsError(f'Not enough arguments (missing: "{", ".join(missing_arguments)}")')
+            raise CleoMissingArgumentsError(
+                f'Not enough arguments (missing: "{", ".join(missing_arguments)}")'
+            )
 
     def argument(self, name: str) -> Any:
         if not self._definition.has_argument(name):

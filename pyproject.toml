@@ -45,7 +45,6 @@ miloto = 'baloto.miloto.__main__:main'
 
 [tool.poetry.group.test.dependencies]
 pytest-cov = "^6.1.1"
-pytest-mock = "^3.14.1"
 pyhamcrest = "^2.1.0"
 # faker = "^37.3.0"
 pytest = "^8.4.0"
@@ -64,16 +63,19 @@ minversion = "8.3"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["*_test", "test_*"]
-# norecursedirs = [".idea", ".pytest_cache"]
+norecursedirs = [".idea", ".pytest_cache", "src"]
 enable_assertion_pass_hook = true
 console_output_style = "count"
 addopts = [
-    "-p no:logging", "-ra", "--assert=plain", "--tb=line"
+    "-p no:logging", "-ra", "--assert=plain", "--tb=no",
 ]
-
+verbosity_assertions = 0
+verbosity_test_cases = 0
 log_level = "WARNING"
 log_format = "%(message)s"
 log_date_format = "[%X]"
+logging_show_time = false
+# required_plugins = "pytest-mock"
 
 # pytest --showlocals # show local variables in tracebacks
 # pytest -l           # show local variables (shortcut)
@@ -86,7 +88,7 @@ log_date_format = "[%X]"
 #pytest --tb=no      -> no traceback at all
 
 [tool.black]
-line-length = 120
+line-length = 100
 verbose = true
 
 [tool.mypy]

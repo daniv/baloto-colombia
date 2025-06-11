@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-PLUGIN_NAME= "test mode"
+PLUGIN_NAME = "test mode"
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
@@ -16,7 +17,6 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     # combinations8 = list(filter(lambda x: sum(x) == 5, combinations8))
     # combinations10 = list(product(range(2), repeat=10))
     # combinations10 = list(filter(lambda x: sum(x) == 5, combinations10))
-
 
     from baloto.utils import is_pydevd_mode
     from glom import glom
@@ -28,7 +28,7 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     testmode = glom(data, "tool.miloto.testmode")
     for k, v in testmode.items():
         code = f"config.option.{k} = {v}"
-        compiled_code = compile(code, '<string>', 'exec')
+        compiled_code = compile(code, "<string>", "exec")
         exec(compiled_code)
 
     if is_pydevd_mode():
@@ -40,4 +40,3 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
         config.option.reportchars = "fExXs"
 
     return None
-

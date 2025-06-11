@@ -6,14 +6,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Callable
 
 import pendulum
-from rich.abc import RichRenderable
 from rich.columns import Columns
 from rich.console import group
-from rich.containers import Renderables
+from rich.padding import Padding
 from rich.scope import render_scope
 from rich.text import Text
 from rich.traceback import PathHighlighter, Traceback, _iter_syntax_lines
-from rich.padding import Padding
 
 if TYPE_CHECKING:
     from rich.console import ConsoleRenderable

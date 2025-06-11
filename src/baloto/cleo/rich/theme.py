@@ -14,31 +14,36 @@ from rich.highlighter import ReprHighlighter
 from rich.style import Style
 from rich.syntax import ANSISyntaxTheme
 from rich.theme import Theme
-
+from rich.traceback import PathHighlighter
 
 if TYPE_CHECKING:
     from rich.syntax import TokenType
 
-__all__ = ("MilotoHighlighter", "MilotoTheme")
+__all__ = ("MilotoHighlighter", "MilotoTheme", "MilotoSyntaxTheme")
 
 DARK: dict[TokenType, Style] = {
     Token: Style(),
     Whitespace: Style(color="bright_black"),
     Comment: Style(color=Color.parse("#7A7E85")),
-    Comment.Preproc: Style(color="bright_cyan"),
-    Keyword: Style(color="bright_blue"),
-    Keyword.Type: Style(color="bright_cyan"),
+    Comment.Preproc: Style(color="yellow"),
+    #Keyword: Style(color="bright_blue"),
+    Keyword: Style(color=Color.parse("#CF8E6D")),
+    Keyword.Type: Style(color="yellow"),
+    # Keyword.Argument: Style(color=Color.parse("#AA4926")), # NOT FOUND
+    Operator.Sign: Style(color="violet", underline=True),
+    #Operator.Sign: Style(color="violet", underline=True),
     Operator.Word: Style(color="bright_magenta"),
-    Name.Builtin: Style(color="bright_cyan"),
+    Name.Builtin: Style(color="yellow"),
     Name.Function: Style(color=Color.parse("#56A8F5")),
-    Name.Namespace: Style(color="bright_cyan", underline=True),
-    Name.Class: Style(color="bright_green", underline=True),
+    Name.Namespace: Style(color="yellow", underline=True),
+    Name.Class: Style(color=Color.parse("#CF8E6D")),
     Name.Exception: Style(color=Color.parse("#8888C6")),
-    Name.Decorator: Style(color="bright_magenta", bold=True),
+    Name.Decorator: Style(color=Color.parse("#B3AE60"), bold=True),
     Name.Variable: Style(color="bright_red"),
     Name.Constant: Style(color="bright_red"),
-    Name.Attribute: Style(color="bright_cyan"),
-    Name.Tag: Style(color="bright_blue"),
+    Name.Attribute: Style(color="yellow"),
+    Name.Definition: Style(color=Color.parse("#B200B2")), # neet to validate __init__
+    Name.Tag: Style(color="bright_blue", underline=True),
     String: Style(color=Color.parse("#6AAB73")),
     Number: Style(color=Color.parse("#2AACB8")),
     Generic.Deleted: Style(color="bright_red"),
@@ -51,6 +56,11 @@ DARK: dict[TokenType, Style] = {
 }
 
 
+class MilotoSyntaxTheme(ANSISyntaxTheme):
+    def __init__(self) -> None:
+        super().__init__(DARK)
+
+
 class MilotoTheme(Theme):
 
     ini_file = "static/styles/miloto.ini"
@@ -58,10 +68,10 @@ class MilotoTheme(Theme):
     def __init__(self) -> None:
         from baloto.miloto.config.poetry.poetry import locate
 
+        syntax_theme = MilotoSyntaxTheme()
+
         filename = locate(self.ini_file)
         theme_from_file = Theme.read(str(filename))
-        syntax_theme = ANSISyntaxTheme(DARK)
-
         token_style = syntax_theme.get_style_for_token
 
         miloto_styles = {
@@ -74,8 +84,22 @@ class MilotoTheme(Theme):
             "repr.str": token_style(String),
             "repr.exception": token_style(Name.Exception),
         }
+
+
         miloto_styles.update(theme_from_file.styles)
         super().__init__(miloto_styles, True)
+
+        # "repr.indent": token_style(Comment) + Style(dim=True),
+        # "repr.str": token_style(String),
+        # "repr.brace": token_style(TextToken) + Style(bold=True),
+        # "repr.number": token_style(Number),
+        # "repr.bool_true": token_style(Keyword.Constant),
+        # "repr.bool_false": token_style(Keyword.Constant),
+        # "repr.none": token_style(Keyword.Constant),
+        # "scope.border": token_style(String.Delimiter),
+        # "scope.equals": token_style(Operator),
+        # "scope.key": token_style(Name),
+        # "scope.key.special": token_style(Name.Constant) + Style(dim=True),
 
     @classmethod
     def save_theme(cls, theme: Theme) -> None:
@@ -89,6 +113,7 @@ class MilotoTheme(Theme):
 class MilotoHighlighter(ReprHighlighter):
     def __init__(self):
         self.highlights.append(
-            r"\b(?P<exception>AssertionError|KeyError|AttributeError|Exception|RuntimeError|IOError|SyntaxError|FileNotFoundError|FileExistsError|TypeError|NotImplementedError|ValueError|BaseException|ModuleNotFoundError|KeyboardInterrupt|IndexError)\b"
+            r"\b(?P<exception>AssertionError|KeyError|AttributeError|Exception|RuntimeError|IOError|SyntaxError|FileNotFoundError|FileExistsError|TypeError|NotImplementedError|ValueError|BaseException|ModuleNotFoundError|KeyboardInterrupt|IndexError)\b",
         )
+        self.highlights.append(r"(?P<dim>.*/)(?P<bold>.+)")
 

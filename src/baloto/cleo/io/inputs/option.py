@@ -7,13 +7,20 @@
 from __future__ import annotations
 
 import re
-from typing import Any, cast, LiteralString, Sequence
+from typing import Any
+from typing import LiteralString
+from typing import Sequence
 from typing import TYPE_CHECKING
+from typing import cast
 
-from pydantic import Field, field_validator, TypeAdapter
+from pydantic import Field
+from pydantic import TypeAdapter
+from pydantic import field_validator
 
-from baloto.cleo.exceptions.errors import CleoLogicError, CleoValueError
-from baloto.cleo.io.inputs.base_model import AnnotatedNameString, BaseInputModel
+from baloto.cleo.exceptions.errors import CleoLogicError
+from baloto.cleo.exceptions.errors import CleoValueError
+from baloto.cleo.io.inputs.base_model import AnnotatedNameString
+from baloto.cleo.io.inputs.base_model import BaseInputModel
 from baloto.utils.types import OptionalStr
 
 if TYPE_CHECKING:
@@ -49,7 +56,9 @@ class Option(BaseInputModel):
                 err = CleoValueError(msg)
                 from pydantic_core import PydanticCustomError
 
-                raise PydanticCustomError("shortcut-not-set", cast(LiteralString, msg), {"error": err})
+                raise PydanticCustomError(
+                    "shortcut-not-set", cast(LiteralString, msg), {"error": err}
+                )
         return value
 
     def model_post_init(self, __context: Any) -> None:
@@ -66,18 +75,23 @@ class Option(BaseInputModel):
         #         raise PydanticCustomError("shortcut-not-set", cast(LiteralString, msg), {"error": err})
 
         if self.is_list and self.flag:
-            raise CleoLogicError("A flag option cannot be a list as well.", code="opt-flag-list-type")
+            raise CleoLogicError(
+                "A flag option cannot be a list as well.", code="opt-flag-list-type"
+            )
 
         default = self.default
         if self.flag and default is not None:
-            raise CleoLogicError("A flag option cannot have a default value.", code="opt-flag-with-default")
+            raise CleoLogicError(
+                "A flag option cannot have a default value.", code="opt-flag-with-default"
+            )
 
         if self.is_list:
             if default is None:
                 default = []
             elif not isinstance(default, list):
                 raise CleoLogicError(
-                    "A default value for a list option must be a list.", code="opt-default-not-list-type"
+                    "A default value for a list option must be a list.",
+                    code="opt-default-not-list-type",
                 )
         # elif self.is_list is False and default is not None:
         #     if isinstance(default, list):
@@ -92,13 +106,17 @@ class Option(BaseInputModel):
             # adapter = self._get_adapter()
             # adapter.validate_python(self.choices, strict=True)
             if default not in self.choices:
-                raise CleoLogicError("A default value must be in choices.", code="default-not-in-choices")
+                raise CleoLogicError(
+                    "A default value must be in choices.", code="default-not-in-choices"
+                )
 
         if self.choices and self.flag:
             raise CleoLogicError("A flag option cannot have choices.", code="opt-choices-on-flag")
 
         if self.choices and not self.is_value_required():
-            raise CleoLogicError("An option with choices requires a value.", code="opt-choices-required-value")
+            raise CleoLogicError(
+                "An option with choices requires a value.", code="opt-choices-required-value"
+            )
 
         if self.flag:
             default = False

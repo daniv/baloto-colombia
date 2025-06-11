@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from functools import partialmethod
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import Any
+from typing import Iterable
+from typing import TYPE_CHECKING
+
+from baloto.cleo.io.outputs.output import OutputType
+from baloto.cleo.io.outputs.output import Verbosity
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.input import Input
-    from baloto.cleo.io.output import Output, Verbosity, OutputType
+    from baloto.cleo.io.outputs.output import Output
     from baloto.cleo.io.outputs.section_output import SectionOutput
     from rich.console import JustifyMethod, OverflowMethod
     from rich.style import Style
@@ -33,13 +38,11 @@ class IO:
     def error_output(self) -> Output:
         return self._error_output
 
-    @property
-    def interactive(self) -> bool:
-        return self._input.interactive
+    def is_interactive(self) -> bool:
+        return self.input.is_interactive()
 
-    @interactive.setter
     def interactive(self, interactive: bool = True) -> None:
-        self._input.interactive = interactive
+        self.input.set_interactive(interactive)
 
     def read(self, length: int, default: str = "") -> str:
         """
@@ -147,11 +150,11 @@ class IO:
 
     @property
     def supports_utf8(self) -> bool:
-        return self.output.supports_utf8
+        return self._output.supports_utf8
 
     def set_verbosity(self, verbosity: Verbosity) -> None:
-        self.output.verbosity = verbosity
-        self.error_output.verbosity = verbosity
+        self.output.set_verbosity(verbosity)
+        self.error_output.set_verbosity(verbosity)
 
     set_quiet = partialmethod(set_verbosity, Verbosity.QUIET)
     set_normal = partialmethod(set_verbosity, Verbosity.NORMAL)

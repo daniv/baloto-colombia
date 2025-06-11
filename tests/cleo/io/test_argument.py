@@ -62,15 +62,16 @@ def test_required_list_argument_no_default() -> None:
     assert arg.is_list is True, "The Argument.is_list was not as expected"
     assert arg.default == [], "The Argument.default was not as expected"
 
+
 def test_required_list_argument_with_default() -> None:
     """
     Creates a required list argument without description and without default value
     """
-    arg = Argument(name="pytest", is_list=True, required=False, default=[1,2,3])
+    arg = Argument(name="pytest", is_list=True, required=False, default=[1, 2, 3])
 
     assert arg.required is False, "The Argument.required was not as expected"
     assert arg.is_list is True, "The Argument.is_list was not as expected"
-    assert arg.default == [1,2,3], "The Argument.default was not as expected"
+    assert arg.default == [1, 2, 3], "The Argument.default was not as expected"
 
 
 def test_argument_with_choices() -> None:
@@ -102,12 +103,9 @@ def test_if_default_value_set_to_required(assert_cleo_logic_error: Callable[[...
 
     # noinspection PyArgumentList
     assert_cleo_logic_error(
-        exc_info.value,
-        message=match,
-        code="arg-default-on-required",
-        exit_code=ExitStatus.USAGE_ERROR,
-        len_notes=1
+        exc_info.value, message=match, code="arg-default-on-required", exit_code=ExitStatus.USAGE_ERROR, len_notes=1
     )
+
 
 def test_fail_if_default_as_list_and_not_is_list(assert_cleo_logic_error: Callable[[...], None]) -> None:
     match = "A default value for a list argument must be a list."
@@ -117,12 +115,9 @@ def test_fail_if_default_as_list_and_not_is_list(assert_cleo_logic_error: Callab
 
     # noinspection PyArgumentList
     assert_cleo_logic_error(
-        exc_info.value,
-        message=match,
-        code="arg-default-not-list-type",
-        exit_code=ExitStatus.USAGE_ERROR,
-        len_notes=1
+        exc_info.value, message=match, code="arg-default-not-list-type", exit_code=ExitStatus.USAGE_ERROR, len_notes=1
     )
+
 
 @pytest.mark.parametrize(
     "input, type, msg",
