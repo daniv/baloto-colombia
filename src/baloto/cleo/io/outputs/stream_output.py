@@ -22,8 +22,8 @@ from rich.text import TextType
 from baloto.cleo.io.outputs.output import Output
 from baloto.cleo.io.outputs.output import OutputType
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.cleo.rich.console_factory import ConsoleFactory
-from baloto.cleo.rich.logger.log import Log
+from baloto.core.rich.logging.log import Log
+from baloto.core.rich.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
     from rich.console import JustifyMethod, RenderableType, ConsoleOptions

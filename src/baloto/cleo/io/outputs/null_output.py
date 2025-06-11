@@ -13,7 +13,7 @@ from rich.style import Style
 from baloto.cleo.io.outputs.output import Verbosity
 from baloto.cleo.io.outputs.output import OutputType
 from baloto.cleo.io.outputs.stream_output import StreamOutput
-from baloto.cleo.rich.console_factory import ConsoleFactory
+from baloto.core.rich.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
     from rich.console import JustifyMethod
