@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING, Literal, Any, Sequence
 import pytest
 
 from baloto.cleo.io.outputs.output import Verbosity
-from helpers import add_option_ini
+from tests.helpers import add_option_ini
+from baloto.core.config.settings import settings
 
 if TYPE_CHECKING:
     IniLiteral = Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
@@ -22,22 +23,10 @@ if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace, ArgumentTypeError
 
 
-__all__ = ("PLUGIN_NAME", "LoggingOptions")
+__all__ = ("PLUGIN_NAME",)
 
 
 PLUGIN_NAME = "miloto-logging"
-
-
-class LoggingOptions(StrEnum):
-    ENABLE_LINK_PATH = "logging_enable_link_path"
-    SHOW_PATH = "logging_show_path"
-    HIGHLIGHTER = "logging_highlighter"
-    SHOW_LEVEL = "logging_show_level"
-    OMIT_REPEATED_TIMES = "logging_omit_repeated_times"
-    SHOW_TIME = "logging_show_time"
-    MARKUP = "logging_markup"
-    RICH_TRACEBACKS = "logging_rich_tracebacks"
-    KEYWORDS = "logging_keywords"
 
 
 class StoreHighlighter(Action):
@@ -55,14 +44,14 @@ class StoreHighlighter(Action):
 @pytest.hookimpl
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup(
-        "logging", "Additional configuration for displaying rich-logging", after="miloto"
+        "logging", "Additional configuration for displaying rich-logging", after="tracebacks"
     )
 
     add_option_ini(
         parser,
         group,
         opts=["--logging-show-time", "--showtime"],
-        dest=LoggingOptions.SHOW_TIME,
+        dest="logging_show_time",
         action="store_false",
         default=True,
         ini_type="bool",
@@ -72,7 +61,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--no-showtime",
         action="store_true",
-        dest=LoggingOptions.SHOW_PATH,
+        dest="logging_show_time",
         help="Hide column for the time. (negate --showtime passed through addopts)",
     )
 
@@ -80,7 +69,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         parser,
         group,
         opts=["--logging-omit-repeated-times", "--omit-repeated"],
-        dest=LoggingOptions.OMIT_REPEATED_TIMES,
+        dest="logging_omit_repeated_times",
         action="store_false",
         ini_type="bool",
         default=True,
@@ -90,7 +79,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--no-omit-repeated",
         action="store_true",
-        dest=LoggingOptions.OMIT_REPEATED_TIMES,
+        dest="logging_omit_repeated_times",
         help="Repeats column for the time. (negate --omit-repeated passed through addopts)",
     )
 
@@ -98,7 +87,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         parser,
         group,
         opts=["--logging-show-level", "--showlevel"],
-        dest=LoggingOptions.SHOW_LEVEL,
+        dest="logging_show_level",
         action="store_false",
         default=True,
         ini_type="bool",
@@ -107,7 +96,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--no-showlevel",
         action="store_true",
-        dest=LoggingOptions.SHOW_LEVEL,
+        dest="logging_show_level",
         help="Removes the logging level. (negate --showlevel passed through addopts)",
     )
 
@@ -115,7 +104,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         parser,
         group,
         opts=["--logging-show-path", "--show-path"],
-        dest=LoggingOptions.SHOW_PATH,
+        dest="logging_show_path",
         action="store_false",
         default=True,
         ini_type="bool",
@@ -125,7 +114,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--no-showpath",
         action="store_true",
-        dest=LoggingOptions.SHOW_PATH,
+        dest="logging_show_path",
         help="Removes the logging path. (negate --show-path passed through addopts)",
     )
 
@@ -133,7 +122,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         parser,
         group,
         opts=["--logging-enable-link-path", "--linkpath"],
-        dest=LoggingOptions.ENABLE_LINK_PATH,
+        dest="logging_enable_link_path",
         action="store_false",
         default=True,
         ini_type="bool",
@@ -142,37 +131,22 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption(
         "--no-linkpath",
         action="store_true",
-        dest=LoggingOptions.ENABLE_LINK_PATH,
+        dest="logging_enable_link_path",
         help="Removes links for the path. (negate --linkpath passed through addopts)",
     )
-    group.addoption(
-        "--logging-highlighter",
-        action=StoreHighlighter,
-        default=None,
-        dest=LoggingOptions.HIGHLIGHTER,
-        metavar="TYPE",
-        type=validate_highlighter,
-        help="Highlighter to style log messages, Defaults to use ReprHighlighter.",
-    )
 
-    group.addoption(
-        "--logging-markup",
-        "--markup",
-        action="store_true",
-        dest=LoggingOptions.MARKUP,
+    parser.addini(
+        "logging_markup",
+        type="bool",
+        default=settings.logging.markup,
         help="Enable console markup in log messages. Defaults to False.",
     )
-    group.addoption(
-        "--no-markup",
-        action="store_false",
-        dest=LoggingOptions.MARKUP,
-        help="Disable markup on logging messages. (negate --markup passed through addopts)",
-    )
+
     add_option_ini(
         parser,
         group,
         opts=["--logging-rich-tracebacks", "-R"],
-        dest=LoggingOptions.RICH_TRACEBACKS,
+        dest="logging_rich_tracebacks",
         action="store_false",
         default=True,
         ini_type="bool",
@@ -184,54 +158,42 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--keywords",
         action="append",
         default=None,
-        dest=LoggingOptions.KEYWORDS,
+        dest="logging_keywords",
         metavar="list",
         help="List of words to highlight instead of ``RichHandler.KEYWORDS``.",
     )
 
 
-def pytest_unconfigure(config: pytest.Config) -> None:
-    from tests import get_console_key
-
-    console_key = get_console_key()
-    console = config.stash.get(console_key, None)
-    if console:
-        del console
-        config.stash.__delitem__(console_key)
-
-
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config: pytest.Config) -> None:
-    from baloto.cleo.rich.logger.console_handler import ConsoleHandler
     from _pytest.logging import get_option_ini
 
-    log_level = log_level_for_setting(config, "log_level")
-    log_format = get_option_ini(config, "log_format")
-    log_date_format = get_option_ini(config, "log_date_format")
+    log_level = get_option_ini(config, "log_level")
+    if log_level is None:
+        log_level = settings.logging.level
+    if isinstance(log_level, str):
+        log_level = log_level_for_setting(config, "log_level")
 
     if not sys.stdin.isatty():
-        config.option.logging_enable_link_path = False
+        settings.logging.enable_link_path = False
 
-    max_frames = 50
-    if config.option.verbose == Verbosity.NORMAL:
-        max_frames = 2
-    elif config.option.verbose == Verbosity.DEBUG:
-        max_frames = None
+    from baloto.core.rich.logging.console_handler import ConsoleHandler
 
+    settings.logging.markup = config.getini("logging_markup")
     handler_options = dict(
-        show_time=get_option_ini(config, "logging_show_time"),
-        omit_repeated_times=get_option_ini(config, "logging_omit_repeated_times"),
-        show_level=get_option_ini(config, "logging_show_level"),
-        show_path=get_option_ini(config, "logging_show_path"),
-        enable_link_path=get_option_ini(config, "logging_enable_link_path"),
-        highlighter=config.getoption("--logging-highlighter"),
-        markup=config.getoption("--logging-markup"),
-        rich_tracebacks=config.getoption("logging_rich_tracebacks"),
-        tracebacks_extra_lines=config.getini("tracebacks_extra_lines"),
-        tracebacks_theme=config.getoption("--tracebacks-theme"),
-        tracebacks_show_locals=config.getoption("--tracebacks-show-locals"),
-        tracebacks_max_frames=max_frames,
-        keywords=config.getoption("--logging-keywords"),
+        show_time=settings.logging.show_time,
+        omit_repeated_times=settings.logging.omit_repeated_times,
+        show_level=settings.logging.show_level,
+        show_path=settings.logging.show_path,
+        enable_link_path=settings.logging.enable_link_path,
+        highlighter=settings.highlighter,
+        markup=settings.logging.markup,
+        rich_tracebacks=settings.logging.rich_tracebacks,
+        tracebacks_extra_lines=settings.tracebacks.extra_lines,
+        tracebacks_theme=settings.tracebacks.theme,
+        tracebacks_show_locals=settings.tracebacks.show_locals,
+        tracebacks_max_frames=settings.tracebacks.max_frames,
+        keywords=settings.logging.keywords,
     )
 
     try:
@@ -259,6 +221,9 @@ def pytest_configure(config: pytest.Config) -> None:
         # -- Reset logger hierarchy, this clears the internal dict of loggers
         logging.Logger.manager.loggerDict.clear()
 
+    log_format = get_option_ini(config, "log_format")
+    log_date_format = get_option_ini(config, "log_date_format")
+
     config.add_cleanup(reset_logging)
     reset_logging()
     logging.basicConfig(
@@ -270,21 +235,14 @@ def pytest_configure(config: pytest.Config) -> None:
     logging.captureWarnings(True)
 
 
-def validate_highlighter(arg: str | None) -> Highlighter | None:
-    if arg is None:
-        return None
-    try:
-        code = (
-            f"import rich; "
-            f"instance = {arg}(); "
-            f"assert isinstance(instance, rich.highlighter.Highlighter)"
-        )
-        compile(code, "<string>", "exec")
-        exec(code, locals())
-    except (NameError, Exception, AssertionError) as e:
-        raise ArgumentTypeError(f"invalid highlighter -> {str(e)}") from e
+def pytest_unconfigure(config: pytest.Config) -> None:
+    from tests import get_console_key
 
-    return locals().get("instance")
+    console_key = get_console_key()
+    console = config.stash.get(console_key, None)
+    if console:
+        del console
+        config.stash.__delitem__(console_key)
 
 
 def log_level_for_setting(config: pytest.Config, setting_name: str) -> int | str:

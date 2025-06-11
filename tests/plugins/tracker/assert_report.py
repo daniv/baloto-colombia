@@ -26,11 +26,6 @@ from rich.table import Table
 from rich.traceback import PathHighlighter
 from rich.traceback import Stack
 
-from baloto.cleo.rich.theme import MilotoSyntaxTheme
-from baloto.cleo.rich.theme import MilotoTheme
-from plugins.tracebacks import TracebackOptions
-from plugins.tracebacks import extract
-
 if TYPE_CHECKING:
     from rich.console import Console, ConsoleOptions, RenderResult
 

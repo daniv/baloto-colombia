@@ -6,15 +6,13 @@
 from __future__ import annotations
 
 from io import StringIO
-from typing import Callable
-from typing import Generator
 from typing import TYPE_CHECKING
 
 import pytest
 
 from baloto.cleo.io.buffered_io import BufferedIO
-from baloto.cleo.io.stream_io import StreamIO
 from baloto.cleo.io.inputs.string_input import StringInput
+from baloto.cleo.io.stream_io import StreamIO
 
 if TYPE_CHECKING:
     pass
