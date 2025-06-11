@@ -6,12 +6,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, IO, Mapping, Any
-
-from glom import glom
+from typing import Any
+from typing import IO
+from typing import Mapping
+from typing import TYPE_CHECKING
 
 from baloto.miloto.config.poetry.poetry import Poetry
-from baloto.miloto.exceptions.errors import BalotoRuntimeError
 
 if TYPE_CHECKING:
     from pathlib import Path

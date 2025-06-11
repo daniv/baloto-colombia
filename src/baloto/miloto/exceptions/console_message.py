@@ -5,20 +5,14 @@
 
 from __future__ import annotations
 
-import dataclasses
-from typing import Annotated
-from typing import TYPE_CHECKING
-
-from pydantic import BaseModel
-from pydantic import StringConstraints
-
-if TYPE_CHECKING:
-    pass
 
 __all__ = ("ConsoleMessage", )
 
+import dataclasses
+
 
 # noinspection PyTypeHints
+@dataclasses.dataclass
 class ConsoleMessage:
     text: str
 
