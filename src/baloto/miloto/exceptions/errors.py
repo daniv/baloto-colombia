@@ -11,6 +11,7 @@ from rich.padding import PaddingDimensions
 from baloto.cleo.exceptions import ExitStatus
 from baloto.cleo.exceptions.errors import CleoError
 from baloto.core.utils.compat import decode
+from baloto.miloto.exceptions.console_message import ConsoleMessage
 
 if TYPE_CHECKING:
     from baloto.cleo.io.io import IO

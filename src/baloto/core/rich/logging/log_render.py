@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Callable
+from typing import Callable
+from typing import Iterable
+from typing import TYPE_CHECKING
 
 from rich._log_render import LogRender
 from rich.text import Text

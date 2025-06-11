@@ -2,29 +2,22 @@ from __future__ import annotations
 
 import logging
 from types import ModuleType
-from typing import (
-    TYPE_CHECKING,
-    Iterable,
-    Callable,
-    Annotated,
-    Any,
-)
+from typing import Any
+from typing import Callable
+from typing import Iterable
+from typing import TYPE_CHECKING
 
 import pendulum
-from annotated_types import Ge, Le
-from pydantic import (
-    BaseModel,
-    Field,
-    computed_field,
-    field_validator,
-    ConfigDict,
-)
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import computed_field
+from pydantic import field_validator
 from rich._null_file import NullFile
 from rich.logging import RichHandler
 from rich.text import Text
 
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.cleo.rich._tracebacks import RichTraceback
 
 if TYPE_CHECKING:
     from logging import LogRecord
@@ -86,8 +79,7 @@ class ConsoleHandler(RichHandler):
             keywords=keywords
         )
 
-        from baloto.cleo.rich.logger.log_render import ConsoleLogRender
-
+        from baloto.core.rich.logging.log_render import ConsoleLogRender
         self._log_render = ConsoleLogRender(show_time=False, show_level=True)
 
     def emit(self, record: LogRecord) -> None:
@@ -101,6 +93,7 @@ class ConsoleHandler(RichHandler):
             exc_type, exc_value, exc_traceback = record.exc_info
             assert exc_type is not None
             assert exc_value is not None
+            from baloto.core.rich._tracebacks import RichTraceback
             traceback = RichTraceback.from_exception(
                 exc_type,
                 exc_value,
@@ -142,7 +135,7 @@ class TracebackPolicy(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_assignment=True, arbitrary_types_allowed=True)
 
     verbosity: Verbosity
-    logging_level: Annotated[int, Ge(logging.NOTSET), Le(logging.CRITICAL)] = Field(default=logging.NOTSET)
+    logging_level: int = Field(default=logging.NOTSET, ge=logging.NOTSET, le=logging.CRITICAL)
     rich_tracebacks: bool = False
     tracebacks_show_locals: bool = False
 

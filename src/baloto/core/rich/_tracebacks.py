@@ -1,37 +1,36 @@
 from __future__ import annotations
 
-import linecache
 import os
-from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Callable
+import sys
+from types import ModuleType
+from types import TracebackType
+from typing import Iterable
+from typing import TYPE_CHECKING
+from typing import Type
 
-import pendulum
 from rich.columns import Columns
 from rich.console import group
-from rich.padding import Padding
-from rich.scope import render_scope
-from rich.text import Text
-from rich.traceback import PathHighlighter, Traceback, _iter_syntax_lines
+from rich.traceback import Traceback
+
+from baloto.core.config.settings import settings
 
 if TYPE_CHECKING:
-    from rich.console import ConsoleRenderable
-    from rich.console import RenderResult
-
-    from rich.traceback import Stack
-    from rich.traceback import Frame
+    from rich.console import ConsoleRenderable, RenderResult
+    from rich.traceback import Stack, Frame
     from rich.syntax import Syntax
-
-    FormatTimeCallable = Callable[[pendulum.DateTime], Text]
-
-
 
 INDENT = "    "
 MIN_WIDTH = 120
 
+
 class RichTraceback(Traceback):
     @group()
     def _render_stack(self, stack: Stack) -> RenderResult:
-        path_highlighter = PathHighlighter()
+        import linecache
+        from rich.scope import render_scope
+        from rich.text import Text
+
+        # path_highlighter = PathHighlighter()
         theme = self.theme
 
         def render_locals(f: Frame) -> Iterable[ConsoleRenderable]:
@@ -74,7 +73,8 @@ class RichTraceback(Traceback):
                 posix = Path(frame.filename).as_posix()
                 content = f"{frame.filename}:{frame.lineno} in {frame.name}"
                 text = Text.from_markup(
-                    f"[blue bold][link={posix}:{frame.lineno}]{content}[/link][/]", style="pygments.text"
+                    f"[blue bold][link={posix}:{frame.lineno}]{content}[/link][/]",
+                    style="pygments.text",
                 )
             else:
                 text = Text.assemble(
@@ -119,6 +119,8 @@ class RichTraceback(Traceback):
                     )
                 else:
                     if frame.last_instruction is not None:
+                        from rich.traceback import _iter_syntax_lines
+
                         start, end = frame.last_instruction
                         for line1, column1, column2 in _iter_syntax_lines(start, end):
                             try:
@@ -148,25 +150,63 @@ class RichTraceback(Traceback):
                     )
 
 
-
-def render_from_exception(
-        exc: BaseException
+def from_exception(
+    exc_value: BaseException,
+    *,
+    exc_type: Type[BaseException] | None = None,
+    tb: TracebackType | None = None,
+    width: int = settings.tracebacks.width,
+    code_width: int = settings.tracebacks.code_width,
+    extra_lines: int = settings.tracebacks.extra_lines,
+    word_wrap: bool = settings.tracebacks.word_wrap,
+    show_locals: bool = settings.tracebacks.show_locals,
+    locals_max_length: int = settings.tracebacks.locals_max_length,
+    locals_max_string: int = settings.tracebacks.locals_max_string,
+    locals_hide_dunder: bool = settings.tracebacks.hide_dunder,
+    locals_hide_sunder: bool = settings.tracebacks.hide_sunder,
+    indent_guides: bool = settings.tracebacks.indent_guides,
+    suppress: Iterable[str | ModuleType] = (),
+    max_frames: int = settings.tracebacks.max_frames,
 ) -> ConsoleRenderable:
-    from rich.traceback import Traceback
-    from pathlib import Path
-    import _pytest
-    import pluggy
-    import importlib
 
-    collector_path = Path(__file__).parent / "collector"
-    width = MIN_WIDTH - len(INDENT)
-    tb = Traceback.from_exception(
-        type(BaseException),
-        exc,
-        exc.__traceback__,
-        suppress=(_pytest, pluggy, importlib, str(collector_path)),
-        max_frames=1,
-        width=width,
-        show_locals=config.option.showlocals
+    if exc_type is None:
+        exc_type = BaseException
+    if tb is None:
+        tb = exc_value.__traceback__
+
+    trace = Traceback.extract(
+        exc_type,
+        exc_value,
+        tb,
+        show_locals=show_locals,
+        locals_max_length=locals_max_length,
+        locals_max_string=locals_max_string,
+        locals_hide_dunder=locals_hide_dunder,
+        locals_hide_sunder=locals_hide_sunder,
     )
-    return Padding(tb, (0, 0, 0, 4))
+    # width = MIN_WIDTH - len(INDENT)
+    tb = Traceback(trace=trace)
+    tb.width = width
+    tb.code_width = code_width
+    tb.extra_lines = extra_lines
+    tb.word_wrap = word_wrap
+    tb.show_locals = show_locals
+    tb.locals_max_length = show_locals
+    tb.locals_max_string = locals_max_string
+    tb.locals_hide_dunder = locals_hide_dunder
+    tb.locals_hide_sunder = locals_hide_sunder
+    tb.indent_guides = indent_guides
+    tb.max_frames = max_frames
+    tb.theme = settings.syntax_theme
+    tb.suppress = suppress
+
+    # from rich.padding import Padding
+    # return Padding(tb, (0, 0, 0, 4))
+    return tb
+
+
+def traceback() -> ConsoleRenderable:
+    exc_type, exc_value, tb = sys.exc_info()
+    if exc_type is None or exc_value is None or traceback is None:
+        raise ValueError("Value for 'trace' required if not called in except: block")
+    return from_exception(exc_value, exc_type=exc_type, tb=tb)

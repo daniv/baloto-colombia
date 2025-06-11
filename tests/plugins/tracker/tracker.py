@@ -9,6 +9,7 @@ PYTEST_DONT_REWRITE
 
 from __future__ import annotations
 
+import sys
 import threading
 import warnings
 from functools import partialmethod
@@ -21,11 +22,8 @@ from rich.console import ConsoleRenderable
 from rich.padding import Padding
 
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.utils import is_pydevd_mode
+from baloto.core.config.settings import settings
 from helpers import cleanup_factory
-from plugins.tracebacks import extract
-from plugins.tracebacks import from_exception
-from plugins.tracebacks import traceback
 from plugins.tracker.assert_report import AssertionReportException
 
 if TYPE_CHECKING:
@@ -49,7 +47,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
     tracker = TrackerPlugin(config, console)
     config.pluginmanager.register(tracker, TrackerPlugin.name)
-
     config.add_cleanup(cleanup_factory(config, tracker))
 
 
@@ -182,3 +179,23 @@ def pytest_warning_recorded(
 def pytest_fixture_setup(
     fixturedef: pytest.FixtureDef[Any], request: SubRequest
 ) -> object | None: ...
+
+
+# from pathlib import Path
+# import _pytest
+# import pluggy
+# import importlib
+#
+# collector_path = Path(__file__).parent / "collector"
+# width = MIN_WIDTH - len(INDENT)
+# tb = Traceback.from_exception(
+#     type(BaseException),
+#     exc_value,
+#     exc_value.__traceback__,
+#     suppress=(_pytest, pluggy, importlib, str(collector_path)),
+#     max_frames=1,
+#     width=width,
+#     show_locals=False
+# )
+# from rich.padding import Padding
+# return Padding(tb, (0, 0, 0, 4))

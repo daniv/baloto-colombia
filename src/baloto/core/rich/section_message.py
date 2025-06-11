@@ -3,6 +3,7 @@
 # Dir Path : src/baloto/cleo/rich
 # Created on: 2025–06–09 at 18:53:01.
 from __future__ import annotations
+
 from typing import List
 from typing import TYPE_CHECKING
 

@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from baloto.utils import is_pydevd_mode
-from helpers import cleanup_factory
+from baloto.cleo.io.outputs.output import Verbosity
+from tests.helpers import cleanup_factory
+from baloto.core.config.settings import settings
 
 if TYPE_CHECKING:
     pass
@@ -22,16 +23,11 @@ if TYPE_CHECKING:
 # pytest_plugins = ("plugins.bootstrap",)
 DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
 DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT set to True"
-MILOTO_LABEL_MARK = 'miloto_label'
+MILOTO_LABEL_MARK = "miloto_label"
+
 
 @pytest.hookimpl
 def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager) -> None:
-    from tests.plugins import tracebacks
-    from tests.plugins import logging
-
-    pluginmanager.register(tracebacks, tracebacks.PLUGIN_NAME)
-    pluginmanager.register(logging, logging.PLUGIN_NAME)
-
 
     group = parser.getgroup("miloto", description="main application testing configuration")
     # group.addoption(
@@ -61,43 +57,70 @@ def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginMa
 def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     if not "--strict-markers" in config.invocation_params.args:
         config.known_args_namespace.strict_markers = True
+        config.option.strict_markers = True
     if not "--strict-config" in config.invocation_params.args:
         config.known_args_namespace.strict_config = True
+        config.option.strict_config = True
+    config.known_args_namespace.keepduplicates = False
+
+    if settings.debugger_mode:
+        config.option.verbose = Verbosity.DEBUG
+        config.option.maxfail = 1
+        config.known_args_namespace.showlocals = True  # ?
+        config.option.shwofixtures = True
+        config.option.reportchars = "fExXs"
+        config.option.log_level = "DEBUG"
+        config.known_args_namespace.trace_config = True  # ?
+        config.known_args_namespace.no_header = False
+        config.known_args_namespace.no_summary = False
+
     return None
 
 
-@pytest.hookimpl(trylast=True)
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
-    from tests.plugins import tracebacks
-    from tests.plugins import logging
+
+    verbose = config.getoption("--verbose")
+    settings.tracebacks.show_locals = config.option.showlocals
+
+    if sys.stdout.isatty():
+        settings.console.legacy_windows = None
+    else:
+        settings.console.legacy_windows = False
+        settings.console.environ = {"COLUMNS": "180", "LINES": "25"}
+
+    if verbose == Verbosity.QUIET:
+        settings.console.quiet = True
+
+    if verbose == Verbosity.NORMAL:
+        show_locals = config.option.showlocals
+        settings.tracebacks.show_locals = show_locals
+        settings.tracebacks.max_frames = 5
+
+    if verbose > Verbosity.NORMAL:
+        settings.tracebacks.max_frames = 10
+
+    if verbose > Verbosity.VERBOSE:
+        settings.tracebacks.max_frames = 50
+
+    if verbose > Verbosity.VERY_VERBOSE:
+        settings.tracebacks.max_frames = 100
+
     from tests.plugins.tracker import tracker
 
     config.pluginmanager.register(tracker, tracker.PLUGIN_NAME)
-
-    config.add_cleanup(cleanup_factory(config, tracebacks))
-    config.add_cleanup(cleanup_factory(config, logging))
     config.add_cleanup(cleanup_factory(config, tracker))
 
-    if sys.stdout.isatty() is False and not is_pydevd_mode():
-        config.option.verbose = 0
-    if is_pydevd_mode():
-        if not config.option.showfixtures:
-            config.option.shwofixtures = True
-        if config.option.maxfail == 1:
-            config.option.maxfail = 1
-        config.option.verbose = 2
-        config.option.reportchars = "fExXs"
+    from tests.plugins import logging
+
+    config.pluginmanager.register(logging, logging.PLUGIN_NAME)
+    config.add_cleanup(cleanup_factory(config, logging))
 
     # config.addinivalue_line("markers", f"{MILOTO_LABEL_MARK}: miloto label marker")
 
 
 @pytest.hookimpl
-def pytest_unconfigure(config: pytest.Config) -> None:
-   ...
-
-
-
-
+def pytest_unconfigure(config: pytest.Config) -> None: ...
 
 
 # def pytest_collection_modifyitems(
@@ -110,7 +133,3 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 #
 #     if deselected_by_testcase or deselected_by_labels:
 #         config.hook.pytest_deselected(items=[*deselected_by_testcase, *deselected_by_labels])
-
-
-
-

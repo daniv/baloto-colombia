@@ -16,7 +16,7 @@ def get_console_key() -> pytest.StashKey[Console]:
 
 
 def create_console_key(config: pytest.Config) -> Console:
-    from baloto.cleo.rich.console_factory import ConsoleFactory
+    from baloto.core.rich.console_factory import ConsoleFactory
 
     console_key = get_console_key()
     console = config.stash.get(console_key, None)

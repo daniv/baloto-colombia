@@ -6,7 +6,6 @@ from typing import cast
 from baloto.cleo.io.inputs.string_input import StringInput
 from baloto.cleo.io.io import IO
 from baloto.cleo.io.outputs.buffered_output import BufferedOutput
-from baloto.cleo.rich.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.input import Input

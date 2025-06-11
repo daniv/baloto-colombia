@@ -75,9 +75,6 @@ class Application:
         self._terminal_size = shutil.get_terminal_size()
         self._initialized = False
 
-        from baloto.utils import is_pydevd_mode
-        self.is_pydevd_mode = is_pydevd_mode()
-
     @property
     def help(self) -> str:
         return self.long_version

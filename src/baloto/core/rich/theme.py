@@ -7,19 +7,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pygments.token import Comment, Error, Generic, Keyword, Name, Number, Operator, String, Token, Whitespace
+from pygments.token import Comment
+from pygments.token import Error
+from pygments.token import Generic
+from pygments.token import Keyword
+from pygments.token import Name
+from pygments.token import Number
+from pygments.token import Operator
+from pygments.token import String
 from pygments.token import Text as TextToken
+from pygments.token import Token
+from pygments.token import Whitespace
 from rich.color import Color
 from rich.highlighter import ReprHighlighter
 from rich.style import Style
 from rich.syntax import ANSISyntaxTheme
 from rich.theme import Theme
-from rich.traceback import PathHighlighter
 
 if TYPE_CHECKING:
     from rich.syntax import TokenType
 
-__all__ = ("MilotoHighlighter", "MilotoTheme", "MilotoSyntaxTheme")
+__all__ = ("BalotoHighlighter", "BalotoTheme", "BalotoSyntaxTheme")
 
 DARK: dict[TokenType, Style] = {
     Token: Style(),
@@ -56,19 +64,19 @@ DARK: dict[TokenType, Style] = {
 }
 
 
-class MilotoSyntaxTheme(ANSISyntaxTheme):
+class BalotoSyntaxTheme(ANSISyntaxTheme):
     def __init__(self) -> None:
         super().__init__(DARK)
 
 
-class MilotoTheme(Theme):
+class BalotoTheme(Theme):
 
-    ini_file = "static/styles/miloto.ini"
+    ini_file = "static/styles/baloto.ini"
 
     def __init__(self) -> None:
         from baloto.miloto.config.poetry.poetry import locate
 
-        syntax_theme = MilotoSyntaxTheme()
+        syntax_theme = BalotoSyntaxTheme()
 
         filename = locate(self.ini_file)
         theme_from_file = Theme.read(str(filename))
@@ -110,7 +118,7 @@ class MilotoTheme(Theme):
             write_theme.write(theme.config)
 
 
-class MilotoHighlighter(ReprHighlighter):
+class BalotoHighlighter(ReprHighlighter):
     def __init__(self):
         self.highlights.append(
             r"\b(?P<exception>AssertionError|KeyError|AttributeError|Exception|RuntimeError|IOError|SyntaxError|FileNotFoundError|FileExistsError|TypeError|NotImplementedError|ValueError|BaseException|ModuleNotFoundError|KeyboardInterrupt|IndexError)\b",

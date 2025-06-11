@@ -7,7 +7,6 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 from baloto.cleo.io.null_io import NullIO
-from baloto.cleo.io.outputs.output import Output
 from baloto.miloto.config.poetry.toml import PyProjectTOML
 from baloto.miloto.exceptions.errors import BalotoRuntimeError
 
@@ -92,7 +91,7 @@ class Poetry(BasePoetry):
         show_top_level_data = []
 
         if not self.locker.is_locked():
-            from baloto.miloto.console.console_message import ConsoleMessage
+            from baloto.core.console.console_message import ConsoleMessage
 
             message = ConsoleMessage(
                 message="Error: [c1]poetry.lock[/] file not found. Run [command]poetry lock[/] to create it."
