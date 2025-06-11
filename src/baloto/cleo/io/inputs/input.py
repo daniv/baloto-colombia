@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from baloto.cleo.io.inputs.definition import Definition
 
 
-__all__ = ("Input", )
+__all__ = ("Input",)
 
 
 class Input(ABC):

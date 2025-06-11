@@ -24,14 +24,16 @@ if TYPE_CHECKING:
 Validator = Callable[[str], Any]
 Normalizer = Callable[[str], Any]
 
-__all__ = ("Question", )
+__all__ = ("Question",)
 
 
-class QuestionDataModel(BaseModel, title="Question", validate_assignment=True, extra="ignore", strict=True):
+class QuestionDataModel(
+    BaseModel, title="Question", validate_assignment=True, extra="ignore", strict=True
+):
 
     question: str = Field("", min_length=2, alias="question", strict=True)
     default: Any | None = Field(None, alias="default")
-    max_attempts: PositiveInt | None =Field(None, alias="maxattempts")
+    max_attempts: PositiveInt | None = Field(None, alias="maxattempts")
     is_hidden: bool = Field(False, alias="hidden")
     markup: bool = Field(True, alias="markup")
 
@@ -55,7 +57,12 @@ class Question:
         self._error_message_template = 'Value "{}" is invalid'
 
         self._data_model = QuestionDataModel(
-            question=self._question, default=self._default, is_hidden=self._hidden, max_attempts=self._max_attempts, markup=self._markup)
+            question=self._question,
+            default=self._default,
+            is_hidden=self._hidden,
+            max_attempts=self._max_attempts,
+            markup=self._markup,
+        )
 
     @property
     def prompt(self) -> str:
@@ -108,7 +115,7 @@ class Question:
             f"[miloto.question]{self._question}[/miloto.question] ",
             markup=self.markup,
             password=self.is_hidden,
-            stream=stream
+            stream=stream,
         )
         if not ret:
             if len(ret) <= 0:

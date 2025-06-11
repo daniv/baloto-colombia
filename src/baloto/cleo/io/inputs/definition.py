@@ -9,7 +9,7 @@ from baloto.cleo.io.inputs.argument import Argument
 from baloto.cleo.io.inputs.option import Option
 
 
-__all__ = ("Definition", )
+__all__ = ("Definition",)
 
 # class Definition:
 #     """

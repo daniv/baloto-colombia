@@ -11,7 +11,8 @@ from baloto.cleo.io.inputs.base_model import BaseInputModel
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ("Argument", )
+__all__ = ("Argument",)
+
 
 class Argument(BaseInputModel):
     required: bool = Field(True, frozen=True)
