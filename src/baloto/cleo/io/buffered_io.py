@@ -59,4 +59,3 @@ class BufferedIO(IO):
 
         self._input.stream.write(user_input)
         self._input.stream.seek(0)
-

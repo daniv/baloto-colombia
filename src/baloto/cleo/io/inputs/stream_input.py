@@ -25,7 +25,3 @@ class StreamInput(StringInput):
     def __init__(self, bufffer: IO[str]) -> None:
         super().__init__("")
         self._buffer = bufffer
-
-
-
-

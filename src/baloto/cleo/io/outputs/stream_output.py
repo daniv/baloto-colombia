@@ -171,12 +171,12 @@ class StreamOutput(Output):
             )
 
     def prompt(
-            self,
-            prompt: TextType = "",
-            *,
-            markup: bool = True,
-            password: bool = False,
-            stream: TextIO | None = None,
+        self,
+        prompt: TextType = "",
+        *,
+        markup: bool = True,
+        password: bool = False,
+        stream: TextIO | None = None,
     ) -> str:
         if self._console.is_interactive:
             return self._console.input(prompt, markup=markup, password=password, stream=stream)
