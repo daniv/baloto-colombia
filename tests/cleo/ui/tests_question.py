@@ -6,22 +6,23 @@
 from __future__ import annotations
 
 import os
-import subprocess
-from pathlib import Path
+from typing import Callable
 from typing import IO
 from typing import TYPE_CHECKING
 
 import pytest
+from hamcrest import assert_that
+from hamcrest import contains_string
+from hamcrest import equal_to
+from hamcrest import none
 from pydantic import ValidationError
 from pytest import param
-from hamcrest import assert_that, equal_to, none, has_length, empty, contains_string
 
 from baloto.cleo.io.stream_io import StreamIO
 from baloto.cleo.ui.question import Question
 
 if TYPE_CHECKING:
     from baloto.cleo.io.buffered_io import BufferedIO
-
 
 
 def test_basic_question() -> None:
@@ -33,18 +34,9 @@ def test_basic_question() -> None:
     assert_that(question.max_attempts, none(), reason="Validate property max_attempts")
     # noinspection PyTypeChecker
     assert_that(
-        question.autocomplete_values, has_length(0), reason="Validate property autocomplete_values"
-    )
-    assert_that(
         question._error_message_template,
         equal_to('Value "{}" is invalid'),
         reason="Validate hidden property _error_message_template",
-    )
-
-    assert_that(
-        question._hidden_fallback,
-        equal_to(False),
-        reason="Validate hidden _hidden_fallback _error_message_template",
     )
 
     question = Question(prompt, "default value")
@@ -59,7 +51,6 @@ def test_basic_question() -> None:
         param(None, False, 2, id="none-default"),
         param(None, True, 2, id="hidden"),
         param(None, True, None, id="non-attempts"),
-        param(None, True, 0, id="zero-attempts"),
     ],
 )
 def test_question_constructor(
@@ -76,15 +67,28 @@ def test_question_constructor(
     assert_that(
         question.max_attempts, equal_to(max_attempts), reason="Validate property max_attempts"
     )
-    # noinspection PyTypeChecker
-    assert_that(
-        question.autocomplete_values,
-        has_length(0),
-        reason="Validate property autocomplete_values",
-    )
 
 
-def test_negative_attempts() ->None:
+def test_max_attempts_greater_than_zero() -> None:
+    question = Question("prompt")
+    with pytest.raises(ValidationError) as exc_info:
+        question.max_attempts = 0
+
+    exc = exc_info.value
+    errors = exc.errors()
+
+    from pydantic_core import ErrorDetails
+    from glom import glom
+
+    for error in errors:
+        error_details: ErrorDetails = error
+        assert_that(glom(error_details, "type"), equal_to("greater_than"))
+        assert_that(glom(error_details, "ctx.gt"), equal_to(0))
+        assert_that(glom(error_details, "msg"), contains_string("should be greater than 0"))
+        assert_that(glom(error_details, "loc.0"), equal_to("max_attempts"))
+
+
+def test_negative_max_attempts() -> None:
     prompt = "This is a question?"
     question = Question(prompt)
     with pytest.raises(ValidationError) as exc_info:
@@ -93,77 +97,133 @@ def test_negative_attempts() ->None:
     assert_that(exc_info.value.error_count(), equal_to(1), reason="Expected one error only")
     assert_that(exc_info.value.title, equal_to("Question"), reason="Expected the model title")
     error = exc_info.value.errors(include_url=False, include_context=False)[0]
-    assert_that(error['type'], equal_to("greater_than"), "expected contraint")
-    assert_that(error['loc'][0], equal_to("max_attempts"), "expected field name")
+    assert_that(error["type"], equal_to("greater_than"), "expected contraint")
+    assert_that(error["loc"][0], equal_to("max_attempts"), "expected field name")
 
     with pytest.raises(ValidationError) as exc_info:
         question.max_attempts = False
 
     error = exc_info.value.errors(include_url=False, include_context=False)[0]
-    assert_that(error['msg'], contains_string("valid integer"), "expected type error")
+    assert_that(error["msg"], contains_string("valid integer"), "expected type error")
 
 
-def test_input(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[IO[str]]) -> None:
+def test_input(
+    stream_io: StreamIO, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[IO[str]]
+) -> None:
+
     def fake_input(prompt=""):
-        io.write(prompt)
+        stream_io.output._console.file.write(prompt)
         return "\n8AM\n"
 
-    io = StreamIO()
     monkeypatch.setattr("builtins.input", fake_input)
 
     question = Question("What time is it?", "2PM")
-    user_input = question.ask(io)
+    user_input = question.ask(stream_io)
 
-    assert_that(capsys.readouterr().out, equal_to("What time is it?"), reason="stderr contains the question")
-    assert_that(user_input, equal_to("bar"), "valiate fake response")
+    assert_that(
+        capsys.readouterr().out,
+        contains_string("What time is it?"),
+        reason="stderr contains the question",
+    )
+    assert_that(user_input, equal_to("8AM"), "valiate fake response")
 
-def test_hidden_response(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[IO[str]]) -> None:
+
+def test_hidden_response(
+    stream_io: StreamIO, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[IO[str]]
+) -> None:
     def fake_input(prompt, stream=None):
-        io.output._console.file.write(prompt)
+        stream_io.output._console.file.write(prompt)
         return "bar"
 
     import rich.console
-    monkeypatch.setattr(rich.console, "getpass", fake_input)
 
-    io = StreamIO()
+    monkeypatch.setattr(rich.console, "getpass", fake_input)
     question = Question("foo:")
     question.is_hidden = True
-    user_input = question.ask(io)
+    user_input = question.ask(stream_io)
 
     out = capsys.readouterr().out
     assert_that(out, equal_to("foo: "), reason="stderr contains the question")
     assert_that(user_input, equal_to("bar"), "valiate fake response")
 
 
-def test_ask(io: BufferedIO) -> None:
-    question = Question("What time is it?", "2PM")
-    io.set_user_input("\n8AM\n")
-    response = question.ask(io)
-    assert_that(response, equal_to("2PM"), reason="Expected default value returned, buffer IO")
-    io.clear_error()
-    response = question.ask(io)
+def test_default_value(stream_io: StreamIO, monkeypatch: pytest.MonkeyPatch) -> None:
+    io = stream_io
+
+    def fake_input(prompt: str = ""):
+        io.output._console.file.write(prompt)
+        if text.find("white horse") > 0:
+            return ""
+        else:
+            return "messi"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+
+    text = "What color was the white horse of Henry IV?"
+    question = Question(text, "white")
+    user_input = question.ask(io)
     assert_that(
-        response, equal_to("8AM"), reason="question.ask(io) default value returned, buffer IO"
+        user_input, equal_to("white"), "validate the default answer if user just presses enter"
     )
-    err = io.fetch_error()
 
-    from rich.text import Text
+    text = "Best argentinian player?"
+    question = Question(text, default="maradona")
+    user_input = question.ask(io)
+    assert_that(user_input, equal_to("messi"), "validate the default answer is not applied")
+
+    text = "What color was the white horse of Henry IV?"
+    question = Question(text)
+    user_input = question.ask(io)
+    assert_that(user_input, equal_to(""), "validate thatempty answr id not default given")
+
+
+def test_no_interaction(stream_io: StreamIO) -> None:
+    io = stream_io
+
+    io.interactive(False)
+    assert_that(not io.is_interactive(), reason="was set to intercative=False")
+
+    question = Question("Do you have a job?", "not yet")
+    assert_that(
+        question.ask(io),
+        equal_to("not yet"),
+        reason="validate default value when no intercative output",
+    )
+
+
+def test_ask_question_with_special_characters(
+    stream_io: StreamIO, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[IO[str]]
+) -> None:
+
+    def fake_input(prompt=""):
+        stream_io.output._console.file.write(prompt)
+        return ""
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    question = Question("¿Dónde vives?", "Cañas Gordas ché")
+    user_input = question.ask(stream_io)
+    out = capsys.readouterr().out
 
     assert_that(
-        Text.from_ansi(err).plain, equal_to("What time is it? "), "fetch_error property value"
+        user_input,
+        equal_to("Cañas Gordas ché"),
+        reason="special characters to be displayed in answer",
+    )
+    assert_that(
+        out, equal_to("¿Dónde vives? "), reason="special characters to be displayed in question"
     )
 
 
-def test_ask_hidden_response(io: BufferedIO) -> None:
-    question = Question("What time is it?", "2PM")
-    question.hide = True
-    io.set_user_input("8AM\n")
+def test_ask_ussing_text_buffer(buffered_io: BufferedIO) -> None:
+    user_name = os.environ.get("USERNAME")
+    buffered_io.set_user_input(f"{user_name}\n")
+    question = Question("What is your name please?")
+    user_input = question.ask(buffered_io)
 
-    assert question.ask(io) == "8AM"
-    assert io.fetch_error() == "What time is it? "
+    assert_that(user_input, equal_to(user_name), reason="simulated input in answer")
 
 
-def ask_and_validate(io: BufferedIO) -> None:
+def test_ask_and_validate(buffered_io: BufferedIO) -> None:
     error = "This is not a color!"
 
     def validator(color: str) -> str:
@@ -176,47 +236,24 @@ def ask_and_validate(io: BufferedIO) -> None:
     question.set_validator(validator)
     question.max_attempts = 2
 
-    io.set_user_input("\nblack\n")
+    buffered_io.set_user_input("\n")
+    result = question.ask(buffered_io)
     assert_that(
-        question.ask(io),
+        result,
         equal_to("white"),
-        reason="question.ask(io) default value returned, buffer IO",
+        reason="question.ask(IO) default value returned, on first input line",
     )
+    buffered_io.set_user_input("black\n")
+    result = question.ask(buffered_io)
     assert_that(
-        question.ask(io),
+        result,
         equal_to("black"),
-        reason="question.ask(io) default value returned, buffer IO",
+        reason="question.ask(IO) different value on second user line",
     )
 
-    io.set_user_input("green\nyellow\norange\n")
+    buffered_io.set_user_input("green\nyellow\norange\n")
 
-    with pytest.raises(ValueError) as e:
-        question.ask(io)
+    with pytest.raises(ValueError) as exc_info:
+        question.ask(buffered_io)
 
-    assert_that(str(e.value), equal_to(error), reason="validate wrong answer with exceprion")
-
-
-def test_no_interaction(io: BufferedIO) -> None:
-    io.interactive(False)
-    assert_that(not io.is_interactive(), reason="was set to intercative=False")
-
-    question = Question("Do you have a job?", "not yet")
-    assert_that(
-        question.ask(io),
-        equal_to("not yet"),
-        reason="validate default value when no intercative output",
-    )
-
-
-def test_ask_question_with_special_characters(io: BufferedIO) -> None:
-    question = Question("What time is it, Sébastien?", "2PMë")
-    io.set_user_input("\n")
-
-    assert_that(
-        question.ask(io), equal_to("2PMë"), reason="special characters to be displayed in answer"
-    )
-    assert_that(
-        io.fetch_error(),
-        equal_to("What rime is it, Sébastien? "),
-        reason="special characters to be displayed in question",
-    )
+    assert_that(exc_info.value.args[0], equal_to(error), reason="validate wrong answer with exception")

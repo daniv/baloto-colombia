@@ -15,9 +15,8 @@ if TYPE_CHECKING:
 class BufferedIO(IO):
     def __init__(self, input: Input | None = None) -> None:
         input_ = input or StringInput("")
-        ConsoleFactory.buffered_output(file=input_)
 
-        super().__init__(input_, BufferedOutput(file=input_), BufferedOutput(file=input_))
+        super().__init__(input_, BufferedOutput(), BufferedOutput())
 
     @property
     def input(self) -> StringInput:
@@ -52,15 +51,12 @@ class BufferedIO(IO):
         return self.output.supports_utf8
 
     def clear_user_input(self) -> None:
-        self.input.stream.truncate(0)
-        self.input.stream.seek(0)
-
-        stream = self.input.stream
-        stream.truncate(0)
-        stream.seek(0)
+        self._input.stream.truncate(0)
+        self._input.stream.seek(0)
 
     def set_user_input(self, user_input: str) -> None:
         self.clear_user_input()
 
-        self.input.stream.write(user_input)
-        self.input.stream.seek(0)
+        self._input.stream.write(user_input)
+        self._input.stream.seek(0)
+

@@ -8,6 +8,7 @@ from typing import IO
 from typing import Literal
 from typing import Mapping
 from typing import TYPE_CHECKING
+from typing import TextIO
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -34,9 +35,7 @@ FALLBACK_LINES = "25"
 def _dict_not_none(**kwargs) -> Any:
     return {k: v for k, v in kwargs.items() if v is not None}
 
-class ConsoleConfig(BaseModel):
-    ConfigDict(arbitrary_types_allowed=True, strict=True, extra="forbid")
-
+class ConsoleConfig(BaseModel, arbitrary_types_allowed=True):
     color_system: ColorSystemVariant = Field(default="truecolor")
     force_terminal: bool = True
     force_interactive: bool | None = None
@@ -139,7 +138,7 @@ class ConsoleFactory:
         return cls(config)._console
 
     @classmethod
-    def buffered_output(cls, file: StringIO | None = None) -> Console:
+    def buffered_output(cls, file: TextIO[str]) -> Console:
         config = cls._console_config()
         config.force_interactive = True
         config.environ = cls._environ()
@@ -147,7 +146,8 @@ class ConsoleFactory:
         config.legacy_windows = None
         config.stderr = False
 
-        return cls(config, file=file or StringIO())._console
+        file = file or StringIO()
+        return cls(config, file=file)._console
 
 
 

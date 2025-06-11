@@ -12,6 +12,7 @@ from typing import TextIO
 from rich.text import TextType
 
 from baloto.cleo.io.inputs.input import Input
+from baloto.cleo.io.inputs.string_input import StringInput
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -19,10 +20,10 @@ if TYPE_CHECKING:
 __all__ = ("StreamInput",)
 
 
-class StreamInput(Input):
+class StreamInput(StringInput):
 
     def __init__(self, bufffer: IO[str]) -> None:
-        super().__init__()
+        super().__init__("")
         self._buffer = bufffer
 
 

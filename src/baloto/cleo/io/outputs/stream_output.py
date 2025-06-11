@@ -10,6 +10,7 @@ from functools import cached_property
 from typing import Any
 from typing import TYPE_CHECKING
 from typing import TextIO
+from typing import IO
 
 from multipledispatch import dispatch
 from rich.console import HighlighterType
@@ -38,6 +39,8 @@ class StreamOutput(Output):
     def __init__(self, verbosity: Verbosity = Verbosity.NORMAL, stderr: bool = False) -> None:
 
         super().__init__(verbosity=verbosity)
+        if type(self).__qualname__ == "BufferedOutput":
+            return
         if stderr:
             self._console = ConsoleFactory.console_error_output()
         else:
@@ -56,6 +59,10 @@ class StreamOutput(Output):
             return codecs.lookup(encoding).name == "utf-8"
         except LookupError:
             return True
+
+    @property
+    def file(self) -> IO[str]:
+        return self._console.file
 
     @property
     def is_terminal(self) -> bool:
@@ -172,7 +179,5 @@ class StreamOutput(Output):
             stream: TextIO | None = None,
     ) -> str:
         if self._console.is_interactive:
-            return self._console.input(
-                prompt, markup=markup, password=password, stream=stream
-            )
+            return self._console.input(prompt, markup=markup, password=password, stream=stream)
         return ""

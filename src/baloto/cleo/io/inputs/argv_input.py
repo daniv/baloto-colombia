@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 
 from baloto.cleo.exceptions.errors import CleoNoSuchOptionError
 from baloto.cleo.exceptions.errors import CleoRuntimeError
-from baloto.cleo.io.inputs.definition_input import DefinitionInput
+from baloto.cleo.io.inputs.input import Input
 
 if TYPE_CHECKING:
     from baloto.cleo.io.inputs.definition import Definition
 
 
-class ArgvInput(DefinitionInput):
+class ArgvInput(Input):
     """
     Represents an input coming from the command line.
     """

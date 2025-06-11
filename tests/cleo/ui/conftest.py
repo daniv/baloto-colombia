@@ -6,20 +6,27 @@
 from __future__ import annotations
 
 from io import StringIO
+from typing import Callable
+from typing import Generator
 from typing import TYPE_CHECKING
 
 import pytest
 
 from baloto.cleo.io.buffered_io import BufferedIO
+from baloto.cleo.io.stream_io import StreamIO
 from baloto.cleo.io.inputs.string_input import StringInput
 
 if TYPE_CHECKING:
     pass
 
+
 @pytest.fixture()
 def buffered_io() -> BufferedIO:
     input_ = StringInput("")
     input_.stream = StringIO()
-    bio = BufferedIO(input_)
+    return BufferedIO(input_)
 
-    return bio
+
+@pytest.fixture()
+def stream_io() -> StreamIO:
+    return StreamIO()

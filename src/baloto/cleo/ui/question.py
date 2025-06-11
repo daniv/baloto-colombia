@@ -8,6 +8,7 @@ from __future__ import annotations
 import getpass
 import os
 import subprocess
+from io import StringIO
 from pathlib import Path
 from typing import Annotated
 from typing import ClassVar
@@ -28,6 +29,7 @@ from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
 
 from baloto.cleo.exceptions.errors import CleoRuntimeError
+from baloto.cleo.io.buffered_io import BufferedIO
 from baloto.cleo.io.outputs.stream_output import StreamOutput
 
 if TYPE_CHECKING:
@@ -48,7 +50,6 @@ class QuestionDataModel(BaseModel, title="Question", validate_assignment=True, e
     max_attempts: PositiveInt | None =Field(None, alias="maxattempts")
     is_hidden: bool = Field(False, alias="hidden")
     markup: bool = Field(True, alias="markup")
-    validator: Callable[[str], Any] = Field(lambda s: s)
 
 
 class Question:
@@ -66,10 +67,11 @@ class Question:
         self._hidden = False
         self._markup = True
         self._validator: Validator = lambda s: s
+        self._normalizer: Normalizer = lambda s: s
         self._error_message_template = 'Value "{}" is invalid'
 
         self._data_model = QuestionDataModel(
-            question=self._question, default=self._default, is_hidden=self._hidden, max_attempts=self._max_attempts, markup=self._markup, validator=self._validator)
+            question=self._question, default=self._default, is_hidden=self._hidden, max_attempts=self._max_attempts, markup=self._markup)
 
     @property
     def prompt(self) -> str:
@@ -106,7 +108,6 @@ class Question:
         self._markup = value
 
     def set_validator(self, validator: Validator) -> None:
-        self._data_model.validator = validator
         self._validator = validator
 
     def ask(self, io: IO) -> Any:
@@ -116,7 +117,9 @@ class Question:
 
     def _do_ask(self, io: IO) -> str:
 
-        stream = io.input if isinstance(io.input, TextIO) else None
+        stream = None
+        if type(io) is BufferedIO:
+            stream = io.input.stream
         ret = cast(StreamOutput, io.output).prompt(
             f"[miloto.question]{self._question}[/miloto.question] ",
             markup=self.markup,
@@ -124,13 +127,10 @@ class Question:
             stream=stream
         )
         if not ret:
-            raise RuntimeError("Aborted")
-
-        ret.strip()
-        if len(ret) <= 0:
-            ret = self._default
-
-        return ret
+            if len(ret) <= 0:
+                if self.default is not None:
+                    ret = self._default
+        return self._normalizer(ret.strip())
 
     @staticmethod
     def write_error(io: IO, error: Exception) -> None:

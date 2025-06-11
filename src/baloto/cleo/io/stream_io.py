@@ -16,6 +16,7 @@ from baloto.cleo.io.outputs.stream_output import StreamOutput
 if TYPE_CHECKING:
     pass
 
+__all__ = ("StreamIO", )
 
 class StreamIO(IO):
     def __init__(self) -> None:
