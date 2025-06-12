@@ -71,7 +71,6 @@ addopts = [
     "-p no:logging", "-ra", "--assert=plain", "--tb=no", "--verbosity=0"
 ]
 verbosity_assertions = 0
-verbosity_test_cases = 0
 log_level = "WARNING"
 log_format = "%(message)s"
 log_date_format = "[%X]"
