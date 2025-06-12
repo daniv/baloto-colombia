@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from types import ModuleType
 from typing import Any
-from typing import Callable
+from collections.abc import Callable
 from typing import Iterable
 from typing import TYPE_CHECKING
 
@@ -93,7 +93,7 @@ class ConsoleHandler(RichHandler):
             exc_type, exc_value, exc_traceback = record.exc_info
             assert exc_type is not None
             assert exc_value is not None
-            from baloto.core.rich._tracebacks import RichTraceback
+            from baloto.core.rich.tracebacks import RichTraceback
             traceback = RichTraceback.from_exception(
                 exc_type,
                 exc_value,

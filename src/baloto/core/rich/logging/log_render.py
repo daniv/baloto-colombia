@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 from typing import Iterable
 from typing import TYPE_CHECKING
 
