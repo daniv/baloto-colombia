@@ -41,22 +41,6 @@ def _format_hook_info(
         return f"{prefix}[hook]hook[/]: [hookname]{name}[/]"
 
 
-def print_hook_info(
-    console: Console,
-    name: str,
-    *,
-    info: str = "",
-    prefix: str = "",
-) -> None:
-    name = name.ljust(28, " ")
-    if info:
-        info = info.replace("[", "\\[")
-        output = f"{prefix}[hook]hook[/]: [hookname]{name}[/] {info}"
-    else:
-        output = f"{prefix}[hook]hook[/]: [hookname]{name}[/]"
-    console.print(output, new_line_start=True)
-
-
 def print_separator(
     console: Console,
     title: str | Text = "",

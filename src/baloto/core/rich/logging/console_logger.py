@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Any
 from typing import TYPE_CHECKING
 
@@ -13,21 +14,21 @@ if TYPE_CHECKING:
     from rich.style import Style
     from rich.console import JustifyMethod
 
-__all__ = ("Log", )
+__all__ = ("Log", "MessagePrefixEnum")
 
 
-PREFIX_SQUARE = " ▪ "
-PREFIX_BULLET = " • "
-PREFIX_DASH = " - "
-PREFIX_BIG_SQARE = " ■ "
-PREFIX_BIG_CIRCLE = " ⬤ "
-BLACK_CIRCLE = "  ●  "
-LARGE_CIRCLE = " ○ "
-MEDIUM_SMALL_WHITE_CIRCLE = " ⚬ "
-CIRCLED_BULLET = "  ⦿  "
-CIRCLED_WHITE_BULLET = "  ⦾  "
-NARY_BULLET = "  ⨀  "
-MIDDLE_BLACK_BULLET = "  ⚫  "
+class MessagePrefixEnum(StrEnum):
+    PREFIX_SQUARE = " ▪ "
+    PREFIX_BULLET = " • "
+    PREFIX_DASH = " - "
+    PREFIX_BIG_SQARE = " ■ "
+    PREFIX_BIG_CIRCLE = " ⬤ "
+    BLACK_CIRCLE = " ● "
+    LARGE_CIRCLE = " ○ "
+    MEDIUM_SMALL_WHITE_CIRCLE = " ⚬ "
+    CIRCLED_BULLET = " ⦿ "
+    CIRCLED_WHITE_BULLET = " ⦾ "
+    NARY_BULLET = " ⨀ "
 
 
 class Log:

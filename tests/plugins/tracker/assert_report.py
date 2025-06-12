@@ -170,10 +170,10 @@ class AssertionErrorReport:
 
         fullsource = linecache.getlines(str(self._node.path))
         code = "".join(fullsource)
-        theme = config.getoption(TracebackOptions.THEME) or MilotoTheme()
+        theme = config.getoption(TracebackOptions.THEME) or BalotoTheme()
         background_color = None
-        if theme is MilotoTheme:
-            background_color = MilotoSyntaxTheme().get_background_style()
+        if theme is BalotoTheme:
+            background_color = BalotoSyntaxTheme().get_background_style()
 
         extra_lines = config.getini(TracebackOptions.EXTRA_LINES)
         syntax = Syntax(

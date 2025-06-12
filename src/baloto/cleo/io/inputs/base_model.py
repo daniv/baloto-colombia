@@ -11,7 +11,7 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import Annotated
 from typing import Any
-from typing import Callable
+from collections.abc import Callable
 from typing import LiteralString
 from typing import TYPE_CHECKING
 from typing import cast

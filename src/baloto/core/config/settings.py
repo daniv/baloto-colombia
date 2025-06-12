@@ -46,6 +46,7 @@ from baloto.core.rich.theme import BalotoSyntaxTheme
 
 from baloto.core.rich.theme import BalotoTheme
 
+
 ColorSystemVariant = Literal["auto", "standard", "256", "truecolor", "windows"]
 HighlighterType = Callable[[str | Text], Text]
 StyleType = str | Style
@@ -106,8 +107,13 @@ class ConsoleConfig(BaseModel, arbitrary_types_allowed=True):
     legacy_windows: bool | None = Field(None)
     safe_box: bool = True
     environ: Mapping[str, str] | None = Field(default_factory=dict)
-    log_time: bool = True
+    log_time: bool = False
     log_path: bool = True
+    theme: Theme | None = Field(None, description="Override pygments theme used in traceback.")
+
+    def model_post_init(self, context: Any, /) -> None:
+        self.theme = BalotoTheme()
+        self.highlighter = BalotoHighlighter()
 
 def pydevd_mode() -> bool:
     pydevd = sys.modules.get("pydevd")
@@ -129,9 +135,6 @@ class BalotoSettings(BaseSettings, case_sensitive=True):
     #auth_key: str = Field(validation_alias='my_auth_key')
     #api_key: str = Field(alias='my_api_key')
     syntax_theme: SyntaxTheme = Field(default_factory=BalotoSyntaxTheme)
-    theme: Theme = Field(default_factory=BalotoTheme, description="Override pygments theme used in traceback.")
-    highlighter: Highlighter = Field(default_factory=BalotoHighlighter,
-                                     description="Highlighter to style log messages. Defaults to BalotoHighlighter.")
 
     redis_dsn: RedisDsn = Field(
         'redis://user:pass@localhost:6379/1',
@@ -149,6 +152,10 @@ class BalotoSettings(BaseSettings, case_sensitive=True):
     # to override more_settings:
     # export my_prefix_more_settings='{"foo": "x", "apple": 1}'
     # terminal_size: int = Field(default_factory=lambda x, y: shutil.get_terminal_size(x, y))
+
+    verbosity: int = Verbosity.NORMAL
+    # console_logger_prefix : str = PREFIX_SQUARE
+
 
     pydevd: bool = Field(default_factory=pydevd_mode)
 

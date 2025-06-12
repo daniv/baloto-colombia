@@ -151,10 +151,10 @@ class RichTraceback(Traceback):
 
 
 def from_exception(
+    exc_type: Type[BaseException] | None,
     exc_value: BaseException,
-    *,
-    exc_type: Type[BaseException] | None = None,
     tb: TracebackType | None = None,
+    *,
     width: int = settings.tracebacks.width,
     code_width: int = settings.tracebacks.code_width,
     extra_lines: int = settings.tracebacks.extra_lines,
@@ -200,8 +200,6 @@ def from_exception(
     tb.theme = settings.syntax_theme
     tb.suppress = suppress
 
-    # from rich.padding import Padding
-    # return Padding(tb, (0, 0, 0, 4))
     return tb
 
 
