@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 __all__ = ("PLUGIN_NAME",)
 
 
-PLUGIN_NAME = "miloto-logging"
+PLUGIN_NAME = "baloto-logging"
 
 
 class StoreHighlighter(Action):
@@ -186,11 +186,11 @@ def pytest_configure(config: pytest.Config) -> None:
         show_level=settings.logging.show_level,
         show_path=settings.logging.show_path,
         enable_link_path=settings.logging.enable_link_path,
-        highlighter=settings.highlighter,
+        highlighter=settings.console.highlighter,
         markup=settings.logging.markup,
         rich_tracebacks=settings.logging.rich_tracebacks,
         tracebacks_extra_lines=settings.tracebacks.extra_lines,
-        tracebacks_theme=settings.tracebacks.theme,
+        tracebacks_theme=settings.console.theme,
         tracebacks_show_locals=settings.tracebacks.show_locals,
         tracebacks_max_frames=settings.tracebacks.max_frames,
         keywords=settings.logging.keywords,

@@ -3,6 +3,11 @@ PYTEST_DONT_REWRITE
 """
 
 # https://github.com/TvoroG/pytest-lazy-fixture
+# https://random-words-api.kushcreates.com/
+
+# import json
+# from urllib.request import urlopen
+# users = json.loads(urlopen("https://randomuser.me/api/?results=30").read())["results"]
 
 from __future__ import annotations
 
@@ -23,13 +28,13 @@ if TYPE_CHECKING:
 # pytest_plugins = ("plugins.bootstrap",)
 DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
 DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT set to True"
-MILOTO_LABEL_MARK = "miloto_label"
+# MILOTO_LABEL_MARK = "miloto_label"
 
 
 @pytest.hookimpl
 def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager) -> None:
 
-    group = parser.getgroup("miloto", description="main application testing configuration")
+    group = parser.getgroup("baloto", description="main application testing configuration")
     # group.addoption(
     #     "--rich-tracebacks",
     #     action="store_true",
@@ -64,7 +69,7 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
     config.known_args_namespace.keepduplicates = False
 
     if settings.debugger_mode:
-        config.option.verbose = Verbosity.DEBUG
+        settings.verbosity = Verbosity.DEBUG
         config.option.maxfail = 1
         config.known_args_namespace.showlocals = True  # ?
         config.option.shwofixtures = True
@@ -79,34 +84,33 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
-
-    verbose = config.getoption("--verbose")
+    config.option.verbose = int(settings.verbosity.value)
     settings.tracebacks.show_locals = config.option.showlocals
 
     if sys.stdout.isatty():
         settings.console.legacy_windows = None
     else:
         settings.console.legacy_windows = False
-        settings.console.environ = {"COLUMNS": "180", "LINES": "25"}
+        settings.console.environ = {"COLUMNS": "190", "LINES": "25"}
 
-    if verbose == Verbosity.QUIET:
+    if settings.verbosity == Verbosity.QUIET:
         settings.console.quiet = True
 
-    if verbose == Verbosity.NORMAL:
+    if settings.verbosity == Verbosity.NORMAL:
         show_locals = config.option.showlocals
         settings.tracebacks.show_locals = show_locals
         settings.tracebacks.max_frames = 5
 
-    if verbose > Verbosity.NORMAL:
+    if settings.verbosity > Verbosity.NORMAL:
         settings.tracebacks.max_frames = 10
 
-    if verbose > Verbosity.VERBOSE:
+    if settings.verbosity > Verbosity.VERBOSE:
         settings.tracebacks.max_frames = 50
 
-    if verbose > Verbosity.VERY_VERBOSE:
+    if settings.verbosity > Verbosity.VERY_VERBOSE:
         settings.tracebacks.max_frames = 100
 
-    from tests.plugins.tracker import tracker
+    from tests.plugins import tracker
 
     config.pluginmanager.register(tracker, tracker.PLUGIN_NAME)
     config.add_cleanup(cleanup_factory(config, tracker))

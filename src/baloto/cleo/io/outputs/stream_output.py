@@ -22,7 +22,7 @@ from rich.text import TextType
 from baloto.cleo.io.outputs.output import Output
 from baloto.cleo.io.outputs.output import OutputType
 from baloto.cleo.io.outputs.output import Verbosity
-from baloto.core.rich.logging.log import Log
+from baloto.core.rich.logging.console_logger import Log
 from baloto.core.rich.console_factory import ConsoleFactory
 
 if TYPE_CHECKING:
