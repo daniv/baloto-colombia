@@ -1,23 +1,15 @@
 from __future__ import annotations
 
-import sys
+from collections.abc import Callable
 from io import StringIO
-from typing import Any
-from typing import Callable
 from typing import IO
 from typing import Literal
-from typing import Mapping
 from typing import TYPE_CHECKING
 from typing import TextIO
 
-from pydantic import BaseModel
-from pydantic import Field
 from rich.console import Console
-from rich.emoji import EmojiVariant
 from rich.style import Style
 from rich.text import Text
-
-
 
 if TYPE_CHECKING:
    from baloto.core.config.settings import ConsoleConfig
@@ -31,40 +23,12 @@ FALLBACK_COLUMNS = "180"
 FALLBACK_LINES = "25"
 
 
-def _dict_not_none(**kwargs) -> Any:
-    return {k: v for k, v in kwargs.items() if v is not None}
-
-# class ConsoleConfig(BaseModel, arbitrary_types_allowed=True):
-#     color_system: ColorSystemVariant = Field(default="truecolor")
-#     force_terminal: bool = True
-#     force_interactive: bool | None = None
-#     soft_wrap: bool = False
-#     quiet: bool = False
-#     stderr: bool = False
-#     width: int | None = None
-#     height: int | None = None
-#     style: str | None = None
-#     no_color: bool | None = None
-#     tab_size: int = 8
-#     record: bool = False
-#     markup: bool = True
-#     emoji: bool = True
-#     emoji_variant: EmojiVariant | None = None
-#     highlight: bool = True
-#     highlighter: HighlighterType | None = Field(default_factory=MilotoHighlighter)
-#     legacy_windows: bool | None = None
-#     safe_box: bool = True
-#     environ: Mapping[str, str] | None = Field(default_factory=dict)
-#     log_time: bool = True
-#     log_path: bool = True
-
-
 class ConsoleFactory:
 
     def __init__(
         self, config: ConsoleConfig, file: IO[str] | None = None
     ) -> None:
-        self._config = config
+        self._config = config.model_dump(exclude_none=True, exclude_defaults=True)
         self._console: Console | None = None
 
         environ = config.environ
