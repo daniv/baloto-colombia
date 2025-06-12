@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 from typing import Self
 from typing import TYPE_CHECKING
@@ -15,6 +16,7 @@ from rich.table import Column
 from rich.table import Table
 
 from baloto.core.rich.logging.console_logger import MessagePrefixEnum
+import rich.repr
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -24,13 +26,15 @@ if TYPE_CHECKING:
 __all__ = ("HookMessage",)
 
 
-class KeyValue(TypedDict):
+@dataclass
+class KeyValue:
     key: str
     value: Any
     key_color: str
     value_color: str
 
 
+@rich.repr.auto
 class HookMessage:
     def __init__(
         self, hookname: str, *, prefix: MessagePrefixEnum = MessagePrefixEnum.PREFIX_SQUARE
@@ -91,8 +95,8 @@ class HookMessage:
             for item in self.key_values:
                 kv_table.add_row(
                     " - ",
-                    f"[{item['key_color']}]{item['key']}[/]: ",
-                    f"[{item['value_color']}]{item['value']}[/]",
+                    f"[{item.key_color}]{item.key}[/]: ",
+                    f"[{item.value_color}]{item.value}[/]",
                 )
 
         yield table

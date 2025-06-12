@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from rich import box
+
 from rich.padding import Padding
 from rich.panel import Panel
 from rich.pretty import Pretty
@@ -16,19 +17,17 @@ from rich.scope import render_scope
 from rich.table import Table
 from rich.text import Text
 from rich.traceback import PathHighlighter
-from uri_template import expand
 
-from baloto.cleo.io.outputs.output import Verbosity
-from baloto.core.rich.logging import console_logger
 from baloto.core.rich.testers.messages import HookMessage
 from plugins.tracker.header import PytestEnvironment
-from rich.console import ConsoleRenderable
 
 if TYPE_CHECKING:
     from rich.console import Console
+    from rich.console import ConsoleRenderable
     from pendulum import DateTime
     from rich.highlighter import Highlighter
     from plugins.tracker.header import RegisteredPluginInfo
+    import _pytest._code as pytest_code
 
 __all__ = ("Reporter",)
 
@@ -41,15 +40,6 @@ class Reporter:
     def __init__(self, config: pytest.Config, console: Console) -> None:
         self.config = config
         self.console = console
-
-    # def get_prefix(self, level: int) -> str:
-    #     match level:
-    #         case Verbosity.DEBUG:
-    #             return Text(PREFIX, style="bright_cyan dim").markup
-    #         case Verbosity.VERY_VERBOSE:
-    #             return Text(PREFIX, style="green").markup
-    #         case Verbosity.VERBOSE:
-    #             return Text(PREFIX, style="blue").markup
 
     @property
     def verbosity(self):
@@ -118,8 +108,26 @@ class Reporter:
         renderable = render_options_table(config=self.config)
         self.console.print(renderable)
 
-    def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
-        pass
+    def report_internalerror(self,             excrepr: pytest_code.code.ExceptionRepr,
+            excinfo: pytest.ExceptionInfo[BaseException]):
+        tb_style = excrepr.reprtraceback.style
+        hook_message = (
+            HookMessage("pytest_internalerror")
+            .add_key_value("tb-style", tb_style)
+            .add_key_value("exc_typename", excinfo.typename, value_color="violet")
+            .add_key_value("exc_value", excinfo.typename, value_color="violet")
+        )
+        self.console.print(hook_message)
+
+        # self._writer.print_key_value("excinfo.typename", value=excinfo.typename, value_color="error")
+        # self._writer.print_key_value("excinfo.value", value=str(excinfo.value))
+        # path = splitdrive(Path(excrepr.reprcrash.path))
+        # self._writer.print_key_value("excrepr.path", value=path, value_color="repr")
+        # self._writer.print_key_value("excrepr.lineno", value=str(excrepr.reprcrash.lineno), value_color="repr")
+        # self._writer.print_key_value("excrepr.message", value=excrepr.reprcrash.message)
+        #
+
+
 
     def _print_key(self, key: str, color: str = "white") -> None:
         self.console.print(f"[{color}]{key}[/]:")

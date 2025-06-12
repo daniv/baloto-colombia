@@ -29,16 +29,17 @@ import pytest
 from rich.console import ConsoleRenderable
 from rich.padding import Padding
 from _pytest import timing
+from rich.style import Style
+from rich.text import Text
 
-from baloto.cleo.io.outputs.output import Verbosity
 from baloto.core.config.settings import settings
 from baloto.core.rich.testers.messages import HookMessage
-from helpers import cleanup_factory
 from plugins.tracker.assert_report import AssertionReportException
 from plugins.tracker.header import PytestEnvironment
 from plugins.tracker.reporter import Reporter
 
 if TYPE_CHECKING:
+    from _pytest._code.code import ExceptionRepr
     from _pytest._code.code import ExceptionInfo
     from _pytest.fixtures import SubRequest
     from rich.console import Console
@@ -85,6 +86,7 @@ def render_from_exception(exc_value: BaseException) -> ConsoleRenderable:
     return Padding(tb, (0, 0, 0, 4))
 
 
+
 class TrackerPlugin(pytest.TerminalReporter):
     name: str = "hook-tracker"
 
@@ -98,12 +100,6 @@ class TrackerPlugin(pytest.TerminalReporter):
         self.session_end_dt: pendulum.DateTime = pendulum.now()
         self.reporter: Reporter | None = None
         self.pytest_env: PytestEnvironment | None = None
-
-    # def get_verbosity(self, value: str) -> int:
-    #     return self.config.get_verbosity(value)
-    #
-    # verbosity_assertions = partialmethod(get_verbosity, value=pytest.Config.VERBOSITY_ASSERTIONS)
-    # verbosity_test_case = partialmethod(get_verbosity, value=pytest.Config.VERBOSITY_TEST_CASES)
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_addhooks(self, pluginmanager: pytest.PytestPluginManager) -> None:
@@ -208,7 +204,61 @@ class TrackerPlugin(pytest.TerminalReporter):
     def _write_report_lines_from_hooks(self, lines: Sequence[str | Sequence[str]]) -> None:
         pass
 
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_internalerror(
+            self,
+            excrepr: ExceptionRepr,
+            excinfo: ExceptionInfo[BaseException],
+    ) -> bool | None:
+        self.console.rule(f"[red bold]INTERNAL ERROR [dim]({excinfo.typename})", style="red bold", align="center", characters="=")
 
+
+        show_locals = self.config.option.showlocals
+        tb_style = excrepr.reprtraceback.style
+        self._writer.print_hook_info("pytest_internalerror", info=f"tb-style: '{tb_style}'")
+        self._writer.print_key_value("excinfo.typename", value=excinfo.typename, value_color="error")
+        self._writer.print_key_value("excinfo.value", value=str(excinfo.value))
+        path = splitdrive(Path(excrepr.reprcrash.path))
+        self._writer.print_key_value("excrepr.path", value=path, value_color="repr")
+        self._writer.print_key_value("excrepr.lineno", value=str(excrepr.reprcrash.lineno), value_color="repr")
+        self._writer.print_key_value("excrepr.message", value=excrepr.reprcrash.message)
+        self._writer.print_key_value("config.showlocals", value=str(show_locals), value_color="repr")
+        if self.verbosity == 0:
+            for line in str(excrepr).split("\n"):
+                self._writer.print_key_value("internal error", line, key_color="bold red")
+        elif self.verbosity == 1:
+            self._writer.print_exc(excinfo.value)
+        elif self.verbosity > 1:
+            self._writer.print_exception_info(excinfo)
+
+        return True
+
+    def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
+        bold = False
+        if "bold" in markup:
+            bold = True
+
+        self.console.print(content, style=Style(color="white", bold=bold))
+
+    def write_line(self, line: str | bytes, **markup: bool) -> None:
+        self.console.print(line)
+
+    def write_sep(self, sep: str, title: str | None = None, fullwidth: int | None = None,  **markup: bool,
+    ) -> None:
+        color = "white"
+        if "green" in markup:
+            color = "green"
+        elif "red" in markup:
+            color = "red"
+        from_ansi = Text.from_ansi(title)
+        self.console.rule(title=from_ansi.markup, style=color)
+
+
+def render_exception_repr(self, excrepr: ExceptionRepr) -> None:
+    for line in str(excrepr).split("\n"):
+        print_key_value(
+            self.console, "internal error", line, prefix=INDENT, key_color="bold red"
+        )
 def pytest_warning_recorded(
     warning_message: warnings.WarningMessage,
     when: Literal["config", "collect", "runtest"],
@@ -220,23 +270,3 @@ def pytest_warning_recorded(
 def pytest_fixture_setup(
     fixturedef: pytest.FixtureDef[Any], request: SubRequest
 ) -> object | None: ...
-
-
-# from pathlib import Path
-# import _pytest
-# import pluggy
-# import importlib
-#
-# collector_path = Path(__file__).parent / "collector"
-# width = MIN_WIDTH - len(INDENT)
-# tb = Traceback.from_exception(
-#     type(BaseException),
-#     exc_value,
-#     exc_value.__traceback__,
-#     suppress=(_pytest, pluggy, importlib, str(collector_path)),
-#     max_frames=1,
-#     width=width,
-#     show_locals=False
-# )
-# from rich.padding import Padding
-# return Padding(tb, (0, 0, 0, 4))
