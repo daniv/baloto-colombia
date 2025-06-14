@@ -12,7 +12,7 @@ from rich.style import Style
 from rich.text import Text
 
 if TYPE_CHECKING:
-   from baloto.core.config.settings import ConsoleConfig
+    from baloto.core.config.settings import ConsoleConfig
 
 ColorSystemVariant = Literal["auto", "standard", "256", "truecolor", "windows"]
 HighlighterType = Callable[[str | Text], Text]
@@ -25,9 +25,7 @@ FALLBACK_LINES = "25"
 
 class ConsoleFactory:
 
-    def __init__(
-        self, config: ConsoleConfig, file: IO[str] | None = None
-    ) -> None:
+    def __init__(self, config: ConsoleConfig, file: IO[str] | None = None) -> None:
         self._config = config.model_dump(exclude_none=True, exclude_defaults=True)
         self._console: Console | None = None
 
@@ -41,6 +39,7 @@ class ConsoleFactory:
     @classmethod
     def _console_config(cls) -> ConsoleConfig:
         from baloto.core.config.settings import settings
+
         return settings.console
 
     @classmethod
@@ -87,10 +86,6 @@ class ConsoleFactory:
 
         file = file or StringIO()
         return cls(config, file=file)._console
-
-
-
-
 
         # render = getattr(self.console, "_log_render")
         # self.console._log_render = ConsoleLogRender(

@@ -19,6 +19,7 @@ from rich.text import Text
 from rich.traceback import PathHighlighter
 
 from baloto.core.rich.testers.messages import HookMessage
+from baloto.core.rich.tracebacks import from_exception
 from plugins.tracker.header import PytestEnvironment
 
 if TYPE_CHECKING:
@@ -44,6 +45,17 @@ class Reporter:
     @property
     def verbosity(self):
         return self.config.option.verbose
+
+    def report_internalerror(self,excrepr: pytest_code.code.ExceptionRepr,
+            excinfo: pytest.ExceptionInfo[BaseException]) -> bool:
+        if self.config.option.verbose == 0:
+            for line in str(excrepr).split("\n"):
+                self.console.print("[error]INTERNALERROR[/]> ", line)
+        else:
+            renderable = from_exception(excinfo.type, excinfo.value, excinfo.tb)
+            Padding(renderable, (0, 0, 0, 4))
+            self.console.print(renderable)
+        return True
 
     def report_session_start(self, session: pytest.Session, start: DateTime) -> None:
         if self.verbosity > 0:

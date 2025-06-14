@@ -46,86 +46,81 @@ class Log:
 
     def debug(
         self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False
-    ):
-        ...
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+    ): ...
 
     def info(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False
-    ):
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+    ): ...
 
     def warning(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False
-    ):
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+    ): ...
 
     def error(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False
-    ):
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+    ): ...
 
     def fatal(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False
-    ):
-        ...
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+    ): ...
 
     def _log(
-            self,
-            *objects: Any,
-            sep: str = " ",
-            end: str = "\n",
-            style: str | Style | None = None,
-            justify: JustifyMethod | None = None,
-            emoji: bool | None = None,
-            markup: bool | None = None,
-            highlight: bool | None = None,
-            log_locals: bool = False,
-            stack_offset: int = 1
+        self,
+        *objects: Any,
+        sep: str = " ",
+        end: str = "\n",
+        style: str | Style | None = None,
+        justify: JustifyMethod | None = None,
+        emoji: bool | None = None,
+        markup: bool | None = None,
+        highlight: bool | None = None,
+        log_locals: bool = False,
+        stack_offset: int = 1,
     ) -> None:
         self._console.log(
             *objects,
@@ -137,7 +132,5 @@ class Log:
             markup=markup,
             highlight=highlight,
             log_locals=log_locals,
-            _stack_offset=stack_offset
+            _stack_offset=stack_offset,
         )
-
-

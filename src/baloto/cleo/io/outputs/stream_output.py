@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from rich.console import JustifyMethod, RenderableType, ConsoleOptions
     from rich.console import OverflowMethod
     from rich.align import AlignMethod
+    from baloto.cleo.io.outputs.section_output import SectionOutput
+    from rich.console import Console
 
 
 __all__ = ("StreamOutput",)
@@ -36,16 +38,18 @@ __all__ = ("StreamOutput",)
 
 class StreamOutput(Output):
 
-    def __init__(self, verbosity: Verbosity = Verbosity.NORMAL, stderr: bool = False) -> None:
-
+    def __init__(self, console: Console | None = None, verbosity: Verbosity = Verbosity.NORMAL, stderr: bool = False) -> None:
         super().__init__(verbosity=verbosity)
+        if console is None:
+            if stderr:
+                self._console = ConsoleFactory.console_error_output()
+            else:
+                self._console = ConsoleFactory.console_output()
+        else:
+            self._console = console
+
         if type(self).__qualname__ == "BufferedOutput":
             return
-        if stderr:
-            self._console = ConsoleFactory.console_error_output()
-        else:
-            self._console = ConsoleFactory.console_output()
-
         self._log = Log(self._console)
 
     @cached_property
@@ -76,11 +80,22 @@ class StreamOutput(Output):
     def clear(self, home: bool = True) -> None:
         self._console.clear(home)
 
+    def flush(self) -> None:
+        self.file.flush()
+
+    def section(self) -> SectionOutput:
+        from baloto.cleo.io.outputs.section_output import SectionOutput
+
+        return SectionOutput(
+            self._console,
+            self._section_outputs,
+            verbosity=self.verbosity
+        )
+
     def line(self, count: int = 1, verbosity: Verbosity = Verbosity.NORMAL) -> None:
         if verbosity.value > self.verbosity:
             return
         self._console.line(count=count)
-        self._console.input()
 
     def rule(
         self,

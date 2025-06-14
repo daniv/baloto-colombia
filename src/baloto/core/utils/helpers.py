@@ -28,6 +28,7 @@ def directory(path: Path) -> Iterator[Path]:
     finally:
         os.chdir(cwd)
 
+
 @deprecated("Will move")
 def ensure_path(path: str | Path, is_directory: bool = False) -> Path:
     if isinstance(path, str):

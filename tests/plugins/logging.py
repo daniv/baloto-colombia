@@ -8,20 +8,19 @@ from __future__ import annotations
 import logging
 import sys
 from argparse import Action
-from enum import StrEnum
-from typing import TYPE_CHECKING, Literal, Any, Sequence
+from typing import Any
+from typing import Literal
+from typing import Sequence
+from typing import TYPE_CHECKING
 
 import pytest
 
-from baloto.cleo.io.outputs.output import Verbosity
-from tests.helpers import add_option_ini
 from baloto.core.config.settings import settings
+from tests.helpers import add_option_ini
 
 if TYPE_CHECKING:
     IniLiteral = Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
-    from rich.highlighter import Highlighter
-    from argparse import ArgumentParser, Namespace, ArgumentTypeError
-
+    from argparse import ArgumentParser, Namespace
 
 __all__ = ("PLUGIN_NAME",)
 
@@ -166,91 +165,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config: pytest.Config) -> None:
-    from _pytest.logging import get_option_ini
+    import tomllib
+    from baloto.core.tester.rich_testers import rich_plugin_manager
+    with open(config.inipath, "rb") as poetry_file:
+        data = tomllib.load(poetry_file)
 
-    log_level = get_option_ini(config, "log_level")
-    if log_level is None:
-        log_level = settings.logging.level
-    if isinstance(log_level, str):
-        log_level = log_level_for_setting(config, "log_level")
+    rich_plugin_manager().hook.rich_configure.call_historic(kwargs=dict(config=config, poetry=data))
 
-    if not sys.stdin.isatty():
-        settings.logging.enable_link_path = False
-
-    from baloto.core.rich.logging.console_handler import ConsoleHandler
-
-    settings.logging.markup = config.getini("logging_markup")
-    handler_options = dict(
-        show_time=settings.logging.show_time,
-        omit_repeated_times=settings.logging.omit_repeated_times,
-        show_level=settings.logging.show_level,
-        show_path=settings.logging.show_path,
-        enable_link_path=settings.logging.enable_link_path,
-        highlighter=settings.console.highlighter,
-        markup=settings.logging.markup,
-        rich_tracebacks=settings.logging.rich_tracebacks,
-        tracebacks_extra_lines=settings.tracebacks.extra_lines,
-        tracebacks_theme=settings.console.theme,
-        tracebacks_show_locals=settings.tracebacks.show_locals,
-        tracebacks_max_frames=settings.tracebacks.max_frames,
-        keywords=settings.logging.keywords,
-    )
-
-    try:
-        from tests import get_console_key, create_console_key
-
-        console_key = get_console_key()
-        console = config.stash.get(console_key, None)
-        if console is None:
-            console = create_console_key(config)
-
-        rich_handler = ConsoleHandler(log_level, console, **handler_options)
-    except ValueError as e:
-        if str(e).startswith("Unknown level"):
-            raise pytest.UsageError(
-                f"'{log_level}' is not recognized as a logging level name for "
-                f"'log_level'. Please consider passing the logging level num instead."
-            ) from e
-        raise e from e
-
-    def reset_logging() -> None:
-        # -- Remove all handlers from the root logger
-        root = logging.getLogger()
-        for h in root.handlers[:]:
-            root.removeHandler(h)
-        # -- Reset logger hierarchy, this clears the internal dict of loggers
-        logging.Logger.manager.loggerDict.clear()
-
-    log_format = get_option_ini(config, "log_format")
-    log_date_format = get_option_ini(config, "log_date_format")
-
-    config.add_cleanup(reset_logging)
-    reset_logging()
-    logging.basicConfig(
-        level=logging.NOTSET,
-        format=log_format,
-        datefmt=log_date_format,
-        handlers=[rich_handler],
-    )
-    logging.captureWarnings(True)
-
-
-def pytest_unconfigure(config: pytest.Config) -> None:
-    from tests import get_console_key
-
-    console_key = get_console_key()
-    console = config.stash.get(console_key, None)
-    if console:
-        del console
-        config.stash.__delitem__(console_key)
-
-
-def log_level_for_setting(config: pytest.Config, setting_name: str) -> int | str:
-    log_level: int | str = config.getoption(setting_name)
-    if log_level is None:
-        log_level = config.getini(setting_name)
-    if log_level is None:
-        return logging.NOTSET
-    if isinstance(log_level, str):
-        return log_level.upper()
-    return log_level

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from types import ModuleType
 from typing import Any
-from collections.abc import Callable
 from typing import Iterable
 from typing import TYPE_CHECKING
 
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     FormatTimeCallable = Callable[[pendulum.DateTime], Text]
 
 __all__ = "ConsoleHandler"
+
 
 class ConsoleHandler(RichHandler):
     def __init__(
@@ -76,10 +77,11 @@ class ConsoleHandler(RichHandler):
             tracebacks_max_frames=tracebacks_max_frames,
             locals_max_length=locals_max_length,
             locals_max_string=locals_max_string,
-            keywords=keywords
+            keywords=keywords,
         )
 
         from baloto.core.rich.logging.log_render import ConsoleLogRender
+
         self._log_render = ConsoleLogRender(show_time=False, show_level=True)
 
     def emit(self, record: LogRecord) -> None:
@@ -94,6 +96,7 @@ class ConsoleHandler(RichHandler):
             assert exc_type is not None
             assert exc_value is not None
             from baloto.core.rich.tracebacks import RichTraceback
+
             traceback = RichTraceback.from_exception(
                 exc_type,
                 exc_value,
@@ -118,7 +121,9 @@ class ConsoleHandler(RichHandler):
                 message = formatter.formatMessage(record)
 
         message_renderable = self.render_message(record, message)
-        log_renderable = self.render(record=record, traceback=traceback, message_renderable=message_renderable)
+        log_renderable = self.render(
+            record=record, traceback=traceback, message_renderable=message_renderable
+        )
         try:
             self.console.print(log_renderable)
         except Exception as e:
@@ -132,7 +137,9 @@ class ConsoleHandler(RichHandler):
 
 # noinspection PyNestedDecorators
 class TracebackPolicy(BaseModel):
-    model_config = ConfigDict(extra="ignore", validate_assignment=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        extra="ignore", validate_assignment=True, arbitrary_types_allowed=True
+    )
 
     verbosity: Verbosity
     logging_level: int = Field(default=logging.NOTSET, ge=logging.NOTSET, le=logging.CRITICAL)
@@ -150,7 +157,9 @@ class TracebackPolicy(BaseModel):
     @classmethod
     def logging_level_values(cls, value: int) -> int:
         mappings = logging.getLevelNamesMapping()
-        mappings = dict(filter(lambda key_value: key_value[0] not in ["WARN", "FATAL"], mappings.items()))
+        mappings = dict(
+            filter(lambda key_value: key_value[0] not in ["WARN", "FATAL"], mappings.items())
+        )
         values = list(mappings.values())
 
         if value not in values:

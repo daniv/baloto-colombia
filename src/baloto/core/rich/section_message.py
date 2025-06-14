@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from rich.console import ConsoleOptions, RenderResult
 
 
-__all__ = ("SectionMessages", )
+__all__ = ("SectionMessages",)
 
 
 class SectionMessages:

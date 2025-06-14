@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import locale
 import sys
-from importlib import metadata
-
 from contextlib import suppress
+from importlib import metadata
 
 WINDOWS = sys.platform == "win32"
 

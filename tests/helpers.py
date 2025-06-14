@@ -20,22 +20,6 @@ if TYPE_CHECKING:
     _PluggyPlugin = object
 
 
-def cleanup_factory(config: pytest.Config, plugin: _PluggyPlugin) -> Callable[[], Any]:
-    """Unregisters a plugin as a callback for
-    see :meth:`~pytest.Config.add_cleanup`
-
-    :param config: The pytest Config instance
-    :param plugin: The pytest plugin instance to unregister
-    :return: None
-    """
-    def clean_up() -> None:
-        pluginmanager = config.pluginmanager
-        name = pluginmanager.get_name(plugin)
-        if name:
-            pluginmanager.unregister(name=name)
-    return clean_up
-
-
 def add_option_ini(
         parser: pytest.Parser,
         group: OptionGroup,

@@ -11,7 +11,8 @@ __all__ = (
     "CleoCommandNotFoundError",
     "CleoNamespaceNotFoundError",
     "CleoKeyError",
-    "CleoMissingArgumentsError"
+    "CleoMissingArgumentsError",
+    "CleoBadNameError"
 )
 
 from typing import Any
@@ -31,10 +32,7 @@ class CleoError(Exception):
     exit_code: int | None = None
 
 
-class _Trimmable(CleoError):
-    """Cleo can trim these tracebacks even if they're raised internally."""
-
-class CleoNameError(CleoError, NameError):
+class CleoBadNameError(CleoError, NameError):
     ...
 
 
@@ -88,7 +86,7 @@ class CleoRuntimeError(CleoError, RuntimeError):
         return "Raised when wrong value was given to Cleo components."
 
 
-class CleoNoSuchOptionError(CleoErrorMixin, CleoNameError):
+class CleoNoSuchOptionError(CleoErrorMixin, CleoBadNameError):
     """
     Raised when command does not have given option.
     """
@@ -223,16 +221,6 @@ class CleoNamespaceNotFoundError(CleoUserError):
                 message += "\n\n" + suggestions
         super().__init__(message, code="namespace-not-found")
         self.add_note("Raised when called namespace has no commands.")
-
-class InvalidArgument(_Trimmable, TypeError):
-    """Used to indicate that the arguments to a Hypothesis function were in
-    some manner incorrect.""
-
-"""
-
-class InvalidDefinition(_Trimmable, TypeError):
-    """Used to indicate that a class definition was not well put together and
-    has something wrong with it."""
 
 
 class CleosWarning(CleoError, Warning):

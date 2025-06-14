@@ -13,9 +13,11 @@ from typing import TYPE_CHECKING
 
 from rich.style import Style
 
+
 if TYPE_CHECKING:
     from rich.console import JustifyMethod
     from rich.console import OverflowMethod
+    from baloto.cleo.io.outputs.section_output import SectionOutput
 
 __all__ = ("Verbosity", "OutputType", "Output")
 
@@ -39,6 +41,7 @@ class Output(ABC):
         verbosity: Verbosity = Verbosity.NORMAL,
     ) -> None:
         self._verbosity: Verbosity = verbosity
+        self._section_outputs: list[SectionOutput] = []
 
     @property
     def verbosity(self) -> Verbosity:
@@ -126,3 +129,11 @@ class Output(ABC):
         type: OutputType = OutputType.NORMAL,
     ) -> None:
         raise NotImplementedError("[c1]_write[/] is an abstract method")
+
+    @abstractmethod
+    def flush(self) -> None:
+        raise NotImplementedError("[c1]flush[/] is an abstract method")
+
+    @abstractmethod
+    def section(self) -> SectionOutput:
+        raise NotImplementedError("[c1]section[/] is an abstract method")

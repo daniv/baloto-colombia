@@ -68,7 +68,6 @@ class AssertionErrorReport:
 
         err_msg = "Could not locate the matching pytest FrameSummary"
         longrepr = getattr(report, "longrepr")
-        from ..tracebacks import TracebackOptions
 
         showlocals = getoption(TracebackOptions.SHOW_LOCALS)
         trace = extract(node.config, call.excinfo.type, call.excinfo.value, call.excinfo.tb)

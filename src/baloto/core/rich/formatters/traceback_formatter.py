@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import os
-import sys
-from types import ModuleType
-from types import TracebackType
+from pathlib import Path
 from typing import Iterable
 from typing import TYPE_CHECKING
-from typing import Type
 
 from rich.columns import Columns
 from rich.console import group
 from rich.traceback import Traceback
 
-from baloto.core.config.settings import settings
-
 if TYPE_CHECKING:
     from rich.console import ConsoleRenderable, RenderResult
     from rich.traceback import Stack, Frame
     from rich.syntax import Syntax
+
+__all__ = ("RichTraceback",)
+
 
 INDENT = "    "
 MIN_WIDTH = 120
@@ -148,63 +146,3 @@ class RichTraceback(Traceback):
                         if frame.locals
                         else syntax
                     )
-
-
-def from_exception(
-    exc_type: Type[BaseException] | None,
-    exc_value: BaseException,
-    tb: TracebackType | None = None,
-    *,
-    width: int = settings.tracebacks.width,
-    code_width: int = settings.tracebacks.code_width,
-    extra_lines: int = settings.tracebacks.extra_lines,
-    word_wrap: bool = settings.tracebacks.word_wrap,
-    show_locals: bool = settings.tracebacks.show_locals,
-    locals_max_length: int = settings.tracebacks.locals_max_length,
-    locals_max_string: int = settings.tracebacks.locals_max_string,
-    locals_hide_dunder: bool = settings.tracebacks.hide_dunder,
-    locals_hide_sunder: bool = settings.tracebacks.hide_sunder,
-    indent_guides: bool = settings.tracebacks.indent_guides,
-    suppress: Iterable[str | ModuleType] = (),
-    max_frames: int = settings.tracebacks.max_frames,
-) -> ConsoleRenderable:
-
-    if exc_type is None:
-        exc_type = BaseException
-    if tb is None:
-        tb = exc_value.__traceback__
-
-    trace = Traceback.extract(
-        exc_type,
-        exc_value,
-        tb,
-        show_locals=show_locals,
-        locals_max_length=locals_max_length,
-        locals_max_string=locals_max_string,
-        locals_hide_dunder=locals_hide_dunder,
-        locals_hide_sunder=locals_hide_sunder,
-    )
-    # width = MIN_WIDTH - len(INDENT)
-    tb = Traceback(trace=trace)
-    tb.width = width
-    tb.code_width = code_width
-    tb.extra_lines = extra_lines
-    tb.word_wrap = word_wrap
-    tb.show_locals = show_locals
-    tb.locals_max_length = show_locals
-    tb.locals_max_string = locals_max_string
-    tb.locals_hide_dunder = locals_hide_dunder
-    tb.locals_hide_sunder = locals_hide_sunder
-    tb.indent_guides = indent_guides
-    tb.max_frames = max_frames
-    tb.theme = settings.syntax_theme
-    tb.suppress = suppress
-
-    return tb
-
-
-def traceback() -> ConsoleRenderable:
-    exc_type, exc_value, tb = sys.exc_info()
-    if exc_type is None or exc_value is None or traceback is None:
-        raise ValueError("Value for 'trace' required if not called in except: block")
-    return from_exception(exc_value, exc_type=exc_type, tb=tb)

@@ -25,10 +25,9 @@ __all__ = ("BufferedOutput",)
 
 class BufferedOutput(StreamOutput):
     def __init__(self, verbosity: Verbosity = Verbosity.NORMAL) -> None:
-        super().__init__(verbosity=verbosity)
-
-        self._console = ConsoleFactory.buffered_output(StringIO())
-        self._log = Log(self._console)
+        console = ConsoleFactory.buffered_output(StringIO())
+        super().__init__(console, verbosity=verbosity)
+        self._log = None
 
     def fetch(self) -> str:
         """
@@ -46,3 +45,7 @@ class BufferedOutput(StreamOutput):
     @dispatch()
     def clear(self) -> None:
         self._console.file = StringIO()
+
+    @property
+    def log(self) -> Log:
+        raise TypeError("Buffered output does not log.")

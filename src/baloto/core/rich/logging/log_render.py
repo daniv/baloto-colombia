@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from collections.abc import Callable
 from typing import Iterable
 from typing import TYPE_CHECKING
 
@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from rich.text import TextType
 
     FormatTimeCallable = Callable[[datetime], Text]
+
+
+__all__ = ("ConsoleLogRender",)
 
 
 class ConsoleLogRender(LogRender):
@@ -68,7 +71,11 @@ class ConsoleLogRender(LogRender):
         if self.show_path and path:
             path_text = f"[link={link_path}]{path}[/link]" if link_path else path
             if line_no:
-                path_text = f"[link={link_path}:{line_no}]{path}:{line_no}[/link]" if link_path else f"{path}:{line_no}"
+                path_text = (
+                    f"[link={link_path}:{line_no}]{path}:{line_no}[/link]"
+                    if link_path
+                    else f"{path}:{line_no}"
+                )
             row.append(Text.from_markup(path_text, style="blue"))
         output.add_row(*row)
         return output
