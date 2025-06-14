@@ -13,49 +13,34 @@ from __future__ import annotations
 
 import os
 import sys
+from io import StringIO
 from typing import TYPE_CHECKING
 
 import pytest
 
+from baloto.cleo.io.inputs.string_input import StringInput
 from baloto.cleo.io.outputs.output import Verbosity
-from tests.helpers import cleanup_factory
 from baloto.core.config.settings import settings
 
 if TYPE_CHECKING:
-    pass
+    from baloto.cleo.io.buffered_io import BufferedIO
+    from baloto.cleo.io.stream_io import StreamIO
+    from baloto.cleo.io.null_io import NullIO
 
-
-# pytest_plugins = ("plugins.bootstrap",)
-DISABLE_PRINT = bool(int(os.getenv("DISABLE_PRINT", False)))
-DISABLE_MSG = "run unit-test no requires printing env.DISABLE_PRINT set to True"
-# MILOTO_LABEL_MARK = "miloto_label"
+pytest_plugins = ("tests.plugins.logging",)
 
 
 @pytest.hookimpl
 def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager) -> None:
 
     group = parser.getgroup("baloto", description="main application testing configuration")
-    # group.addoption(
-    #     "--rich-tracebacks",
-    #     action="store_true",
-    #     dest="logging_rich_tracebacks",
-    #     help="Enable rich tracebacks with syntax highlighting and formatting. Defaults to %(default)s."
-    # )
-
-    # group.addoption('--miloto-features',
-    #                                      action="store",
-    #                                      dest="allure_features",
-    #                                      metavar="FEATURES_SET",
-    #                                      default={},
-    #                                      type=label_type(LabelType.FEATURE),
-    #                                      help="""Comma-separated list of feature names.
-    #                                       Run tests that have at least one of the specified feature labels.""")
-
-    #
-    # test_mode = os.getenv("TESTMODE", 'False').lower() in ('true', '1', 't')
-    # if test_mode:
-    #     from tests.plugins import testmode_plugin
-    #     pluginmanager.register(testmode_plugin, testmode_plugin.PLUGIN_NAME)
+    group.addoption(
+        "--stream", "-S",
+        action="store_true",
+        dest="stream",
+        help="Enable streaming rich console outputs to stdout inside tests",
+    )
+    parser.addini("unregister_plugins", type="linelist", help="lits of plugin names to be unregister the plugins as soon as they were registeres")
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -67,6 +52,12 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
         config.known_args_namespace.strict_config = True
         config.option.strict_config = True
     config.known_args_namespace.keepduplicates = False
+
+    force_normal = int(os.getenv("FORCE_VERBOSITY_NORMAL", 0))
+    if force_normal:
+        settings.verbosity = Verbosity.NORMAL
+        return
+
 
     if settings.debugger_mode:
         settings.verbosity = Verbosity.DEBUG
@@ -84,6 +75,7 @@ def pytest_cmdline_main(config: pytest.Config) -> pytest.ExitCode | int | None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
+
     config.option.verbose = int(settings.verbosity.value)
     settings.tracebacks.show_locals = config.option.showlocals
 
@@ -111,20 +103,49 @@ def pytest_configure(config: pytest.Config) -> None:
         settings.tracebacks.max_frames = 100
 
     from tests.plugins import tracker
-
     config.pluginmanager.register(tracker, tracker.PLUGIN_NAME)
-    config.add_cleanup(cleanup_factory(config, tracker))
 
-    from tests.plugins import logging
-
-    config.pluginmanager.register(logging, logging.PLUGIN_NAME)
-    config.add_cleanup(cleanup_factory(config, logging))
-
-    # config.addinivalue_line("markers", f"{MILOTO_LABEL_MARK}: miloto label marker")
+    from baloto.core.tester import rich_testers
+    plugin = rich_testers.rich_plugin_manager().get_plugin("rich-logging")
+    if plugin:
+        config.add_cleanup(rich_testers.cleanup_factory(plugin))
 
 
 @pytest.hookimpl
-def pytest_unconfigure(config: pytest.Config) -> None: ...
+def pytest_unconfigure(config: pytest.Config) -> None:
+    from tests.plugins import tracker
+    if config.pluginmanager.has_plugin(tracker.PLUGIN_NAME):
+        plugin = config.pluginmanager.get_plugin(tracker.PLUGIN_NAME)
+        config.pluginmanager.unregister(plugin, tracker.PLUGIN_NAME)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def stream(pytestconfig: pytest.Config) -> None:
+    if not pytestconfig.option.stream:
+        os.environ["STREAM"] = "False"
+
+
+@pytest.fixture(scope="session")
+def buffered_io() -> BufferedIO:
+    from baloto.cleo.io.buffered_io import BufferedIO
+    input_ = StringInput("")
+    input_.stream = StringIO()
+    return BufferedIO(input_)
+
+@pytest.fixture(scope="session")
+def stream_io(pytestconfig: pytest.Config) -> StreamIO | None:
+    if pytestconfig.option.stream:
+        from baloto.cleo.io.stream_io import StreamIO
+        return StreamIO()
+    return None
+
+@pytest.fixture(scope="session")
+def null_io() -> NullIO:
+    from baloto.cleo.io.null_io import NullIO
+    return NullIO()
+
+
+
 
 
 # def pytest_collection_modifyitems(
