@@ -5,33 +5,25 @@
 
 from __future__ import annotations
 
-import logging
-import shutil
 import sys
 from collections.abc import Callable
-from datetime import datetime
-from os import isatty
-from types import ModuleType
+from pathlib import Path
 from typing import Any
 from typing import Literal
 from typing import Mapping
-from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
-from pydantic import AliasChoices
-from pydantic import AmqpDsn
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import ImportString
-from pydantic import PositiveInt
-from pydantic import PostgresDsn
-from pydantic import RedisDsn
-from pydantic import StrictBool
 from pydantic_settings import BaseSettings
+from pydantic_settings import DotEnvSettingsSource
+from pydantic_settings import PydanticBaseSettingsSource
 from pydantic_settings import SettingsConfigDict
+from pydantic_settings import TomlConfigSettingsSource
+from rich._log_render import LogRender
 from rich.emoji import EmojiVariant
 from rich.highlighter import Highlighter
-from rich.highlighter import ReprHighlighter
 from rich.style import Style
 from rich.syntax import SyntaxTheme
 from rich.text import Text
@@ -39,13 +31,7 @@ from rich.theme import Theme
 
 from baloto.cleo.io.outputs.output import Verbosity
 
-__all__ = ("BalotoSettings", "settings", "ConsoleConfig", "TracebackSettings")
-
-from baloto.core.rich.theme import BalotoHighlighter
-from baloto.core.rich.theme import BalotoSyntaxTheme
-
-from baloto.core.rich.theme import BalotoTheme
-
+__all__ = ("RichSettings", "locate")
 
 ColorSystemVariant = Literal["auto", "standard", "256", "truecolor", "windows"]
 HighlighterType = Callable[[str | Text], Text]
@@ -53,40 +39,22 @@ StyleType = str | Style
 TextType = Text | str
 
 
-def _isatty_link() -> bool:
-    if sys.stdout.isatty():
-        return True
-    return False
+def locate(filename: str, cwd: Path | None = None) -> Path:
+    rv = Path.cwd() / filename
+    cwd = Path(cwd or Path.cwd())
+    candidates = [cwd]
+    candidates.extend(cwd.parents)
 
-class TracebackSettings(BaseModel):
-    width: int | None = Field(None, description="Number of characters used to render tracebacks, or None for full width. Defaults to None.")
-    code_width: int = Field(88, description="Number of code characters used to render tracebacks. Defaults to 88.")
-    extra_lines: int = Field(3, description="Additional lines of code to render tracebacks, Defaults to 3.")
-    theme: str = Field("baloto_dark", description="Override pygments theme used in traceback.")
-    word_wrap: bool = Field(True, description="Enable word wrapping of long tracebacks lines. Defaults to True.")
-    show_locals: bool = Field(False, description="Enable display of locals in tracebacks. Defaults to False.")
-    max_frames: PositiveInt = Field(100, description="Maximum number of frames returned by traceback.")
-    max_length: PositiveInt = Field(10, description="Maximum length of containers before abbreviating, Defaults to 10.")
-    max_string: int = Field(80, description="Maximum length of string before truncating, Defaults to 80.", ge=20)
-    enable_link_path: bool = Field(True, strict=True, description="Enable terminal link of path column to file. Defaults to True.")
-    isatty_link: bool = Field(_isatty_link(), strict=True, description="Disables the link to file on issaty mode")
+    for path in candidates:
+        requested_file = path / filename
+
+        if requested_file.is_file():
+            return requested_file
+
+    return rv
 
 
-class LoggignSettings(BaseModel, arbitrary_types_allowed=True):
-    level: int | str = Field(logging.NOTSET, description="Log level. Defaults to logging.NOTSET.")
-    show_time: bool = Field(True, description="Show a column for the time. Defaults to True.")
-    show_level: bool = Field(True, description="Show a column for the level. Defaults to True.")
-    show_path: bool = Field(True, description="Show the path to the original log call. Defaults to True.")
-    omit_repeated_times: bool = Field(True, description="Omit repetition of the same time. Defaults to True.")
-    enable_link_path: StrictBool = Field(True, description="Enable terminal link of path column to file. Defaults to True.")
-    markup: bool = Field(False, description="Enable console markup in log messages. Defaults to False.")
-    rich_tracebacks: bool = Field(False, description="Enable rich tracebacks with syntax highlighting and formatting. Defaults to False.")
-    theme: str = Field("miloto_theme", description="Override pygments theme used in traceback.")
-    log_time_format: str | None = Field(False, description="If ``log_time`` is enabled, either string for strftime or callable that formats the time. Defaults to '[%X]'")
-    keywords: list[str] | None = Field([], description="List of words to highlight instead of ``RichHandler.KEYWORDS``.")
-
-
-class ConsoleConfig(BaseModel, arbitrary_types_allowed=True):
+class ConsoleOptions(BaseModel, arbitrary_types_allowed=True):
     color_system: ColorSystemVariant = Field(default="truecolor")
     force_terminal: bool = True
     force_interactive: bool | None = None
@@ -111,63 +79,138 @@ class ConsoleConfig(BaseModel, arbitrary_types_allowed=True):
     log_path: bool = True
     theme: Theme | None = Field(None, description="Override pygments theme used in traceback.")
 
-    def model_post_init(self, context: Any, /) -> None:
-        self.theme = BalotoTheme()
-        self.highlighter = BalotoHighlighter()
-
-def pydevd_mode() -> bool:
-    pydevd = sys.modules.get("pydevd")
-    return pydevd is not None
+    # def model_post_init(self, context: Any, /) -> None:
+    #     self.theme = BalotoTheme()
+    #     self.highlighter = BalotoHighlighter()
 
 
-def debugger_mode() -> bool:
-    get_trace = getattr(sys, "gettrace", None)
-    return False if get_trace is None else True
-
-
-
-
-class BalotoSettings(BaseSettings, case_sensitive=True):
-    model_config = SettingsConfigDict(validate_default=True, env_prefix='miloto_', env_file='.env', env_file_encoding='utf-8')
-    # verbose: Verbosity = Field(Verbosity.NORMAL, description="The verbosity level")
-
-    foo: str = Field('xxx', alias='FooAlias')
-    #auth_key: str = Field(validation_alias='my_auth_key')
-    #api_key: str = Field(alias='my_api_key')
-    syntax_theme: SyntaxTheme = Field(default_factory=BalotoSyntaxTheme)
-
-    redis_dsn: RedisDsn = Field(
-        'redis://user:pass@localhost:6379/1',
-        validation_alias=AliasChoices('service_redis_dsn', 'redis_url'),
+class TracebacksSettingsModel(BaseModel):
+    model_config = ConfigDict(
+        title="Tracebacks Configuration Settings",
+        validate_default=True,
+        validate_assignment=True,
+        extra="forbid",
     )
-    pg_dsn: PostgresDsn = 'postgres://user:pass@localhost:5432/foobar'
-    amqp_dsn: AmqpDsn = 'amqp://user:pass@localhost:5672/'
 
-    special_function: ImportString[Callable[[Any], Any]] = 'math.cos'
+    code_width: int = Field(
+        88, description="Number of code characters used to render tracebacks.", gt=80
+    )
+    extra_lines: int = Field(3, description="Additional lines of code to render tracebacks.", ge=0)
+    theme: str = Field(
+        "ansi_dark",
+        title="Tracebacks Theme",
+        description="Override pygments theme used in traceback.",
+        min_length=4,
+    )
+    word_wrap: bool = Field(True, description="Enable word wrapping of long tracebacks lines.")
+    show_locals: bool = Field(False, description="Enable display of locals in tracebacks.")
+    max_frames: int = Field(
+        100, title="Max Frames", description="Maximum number of frames returned by traceback.", ge=1
+    )
+    max_length: int = Field(
+        10, description="Maximum length of containers before abbreviating.", ge=1, le=20
+    )
+    max_string: int = Field(80, description="Maximum length of string before truncating.", ge=20)
+    enable_link_path: bool = Field(
+        True, strict=True, description="Enable terminal link of path column to file."
+    )
+    hide_dunder: bool = Field(True, description="Hide locals prefixed with double underscore.")
+    hide_sunder: bool = Field(False, description="Hide locals prefixed with single underscore.")
+    indent_guides: bool = Field(True, description="Enable indent guides in code and locals.")
 
-    # to override domains:
-    # export my_prefix_domains='["foo.com", "bar.com"]'
+
+class LoggingSettingsModel(TracebacksSettingsModel):
+    model_config = ConfigDict(
+        title="Tracebacks Configuration Settings",
+        validate_default=True,
+        validate_assignment=True,
+        extra="forbid",
+    )
+
+    log_level: int | str = Field(..., description="Log level. Defaults to logging.NOTSET.")
+    show_time: bool = Field(True, description="Show a column for the time. Defaults to True.")
+    show_level: bool = Field(True, description="Show a column for the level. Defaults to True.")
+    show_path: bool = Field(
+        True, description="Show the path to the original log call. Defaults to True."
+    )
+    omit_repeated_times: bool = Field(
+        True, description="Omit repetition of the same time. Defaults to True."
+    )
+    markup: bool = Field(
+        False, description="Enable console markup in log messages. Defaults to False."
+    )
+    rich_tracebacks: bool = Field(
+        False,
+        description="Enable rich tracebacks with syntax highlighting and formatting. Defaults to False.",
+    )
+    log_time_format: str | None = Field(
+        "[%X]",
+        description="If ``log_time`` is enabled, a string for strftime or callable that formats the time. Defaults to '[%X]'",
+    )
+    log_format: str | None = Field("%(message)s", description="The logging.formatter template")
+    keywords: list[str] | None = Field(
+        [], description="List of words to highlight instead of ``RichHandler.KEYWORDS``."
+    )
+
+
+class RichSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        title="Project Configuration Settings",
+        validate_default=True,
+        env_file=".env",
+        pyproject_toml_depth=2,
+        pyproject_toml_table_header=("tool", "rich-settings"),
+        env_file_encoding="utf-8",
+        extra="forbid",
+        env_ignore_empty=True,
+        validate_assignment=True,
+        validation_error_cause=True,
+    )
+    tracebacks: TracebacksSettingsModel = Field(
+        description="The rich tracebacks settings",
+    )
+    logging: LoggingSettingsModel = Field(
+        description="The rich logging settings",
+    )
+    isatty_link: bool = Field(
+        sys.stdout.isatty(),
+        strict=True,
+        description="Disables the link to file on issaty mode",
+        exclude=True,
+    )
+
+    debugging_mode = bool = Field(
+        lambda s: False if getattr(sys, "gettrace", None) is None else True
+    )
+
+    console_options: ConsoleOptions = Field(default_factory=ConsoleOptions)
+
+    syntax_theme: SyntaxTheme | None = None
+
+    theme: Theme | None = None
+
+    highlighter: Highlighter | None = None
+
+    log_render: LogRender | None = None
+
+    special_function: ImportString[Callable[[Any], Any]] = "math.cos"
+
     domains: set[str] = set()
 
-    # to override more_settings:
-    # export my_prefix_more_settings='{"foo": "x", "apple": 1}'
-    # terminal_size: int = Field(default_factory=lambda x, y: shutil.get_terminal_size(x, y))
-
     verbosity: int = Verbosity.NORMAL
-    # console_logger_prefix : str = PREFIX_SQUARE
 
-
-    pydevd: bool = Field(default_factory=pydevd_mode)
-
-    debugger_mode: bool = Field(default_factory=debugger_mode)
-
-    tracebacks: TracebackSettings = TracebackSettings()
-
-    logging: LoggignSettings = LoggignSettings()
-
-    console: ConsoleConfig = ConsoleConfig()
-
-
-
-
-settings = BalotoSettings()
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: DotEnvSettingsSource(
+            BaseSettings,
+            env_file=[locate("rich.env")],
+            env_file_encoding="utf8",
+            case_sensitive=True,
+        ),
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (TomlConfigSettingsSource(settings_cls),)
