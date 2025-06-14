@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from baloto.core.config.settings import settings
-from helpers import cleanup_factory
 from plugins.tracker.tracker import TrackerPlugin
 
 if TYPE_CHECKING:
@@ -28,7 +26,9 @@ def pytest_plugin_registered(
     plugin_name: str,
     manager: pytest.PytestPluginManager,
 ) -> None:
-    if plugin_name == "terminalreporter":
+    # TODO: unregister the plugin "terminal" cause issues with other plugins
+    # setattr config
+    if plugin_name in ["terminalreporter"]:
         if hasattr(plugin, "name"):
             if getattr(plugin, "name", None) == TrackerPlugin.name:
                 return
@@ -38,4 +38,13 @@ def pytest_plugin_registered(
         tracker_plugin = TrackerPlugin(config)
         manager.unregister(plugin=plugin)
         config.pluginmanager.register(tracker_plugin, "terminalreporter")
-        config.add_cleanup(cleanup_factory(config, tracker_plugin))
+
+
+# @pytest.hookimpl
+# def pytest_configure(config: pytest.Config) -> None:
+#     from tests import get_console_key, create_console_from_key
+#
+#     console_key = get_console_key()
+#     console = config.stash.get(console_key, None)
+#     if console is None:
+#         create_console_from_key(config)

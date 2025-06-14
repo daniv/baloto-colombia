@@ -1,7 +1,7 @@
 # Project : baloto-colombia
 # File Name : __init__.py
-# Dir Path : src/baloto/cleo/testers
-# Created on: 2025–06–10 at 22:46:16.
+# Dir Path : src/baloto/core/rich/formatters
+# Created on: 2025–06–14 at 01:02:12.
 
 from __future__ import annotations
 

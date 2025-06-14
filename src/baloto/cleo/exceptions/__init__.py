@@ -61,13 +61,7 @@ import enum
 from typing import Literal, LiteralString
 
 
-@enum.unique
-class ExitStatus(enum.IntEnum):
-    SUCCESS = 0
-    FAILURE = 1
-    INTERRUPTED = 2
-    INTERNAL_ERROR = 3
-    USAGE_ERROR = 4
+
 
 
 CleoErrorCodes = Literal[
