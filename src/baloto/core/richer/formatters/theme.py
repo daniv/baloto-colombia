@@ -25,12 +25,9 @@ from rich.style import Style
 from rich.syntax import ANSISyntaxTheme
 from rich.theme import Theme
 
-from baloto.core.config.settings import locate
 
 if TYPE_CHECKING:
     from rich.syntax import TokenType
-
-__all__ = ("BalotoSyntaxTheme", "BalotoTheme")
 
 DARK: dict[TokenType, Style] = {
     Token: Style(),
@@ -67,18 +64,19 @@ DARK: dict[TokenType, Style] = {
 }
 
 
-class BalotoSyntaxTheme(ANSISyntaxTheme):
+class RichSyntaxTheme(ANSISyntaxTheme):
     def __init__(self) -> None:
         super().__init__(DARK)
 
 
-class BalotoTheme(Theme):
+class RichTheme(Theme):
 
     ini_file = "static/styles/baloto.ini"
 
     def __init__(self) -> None:
 
-        syntax_theme = BalotoSyntaxTheme()
+        syntax_theme = RichSyntaxTheme()
+        from baloto.core.richer.settings import locate
 
         filename = locate(self.ini_file)
         theme_from_file = Theme.read(str(filename))
@@ -112,6 +110,8 @@ class BalotoTheme(Theme):
 
     @classmethod
     def save_theme(cls, theme: Theme) -> None:
+        from baloto.core.richer.settings import locate
+
         filename = locate(cls.ini_file)
         with open(filename, "wt") as write_theme:
             write_theme.write(theme.config)

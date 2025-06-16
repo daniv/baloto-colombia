@@ -19,19 +19,20 @@ from pydantic import ImportString
 from pydantic_settings import BaseSettings
 from pydantic_settings import DotEnvSettingsSource
 from pydantic_settings import PydanticBaseSettingsSource
+from pydantic_settings import PyprojectTomlConfigSettingsSource
 from pydantic_settings import SettingsConfigDict
-from pydantic_settings import TomlConfigSettingsSource
 from rich._log_render import LogRender
 from rich.emoji import EmojiVariant
-from rich.highlighter import Highlighter
 from rich.style import Style
 from rich.syntax import SyntaxTheme
 from rich.text import Text
 from rich.theme import Theme
 
 from baloto.cleo.io.outputs.output import Verbosity
-
-__all__ = ("RichSettings", "locate")
+from baloto.core.richer.stash import RichStash
+from baloto.core.richer.formatters.highlighter import RichHighlighter
+from baloto.core.richer.formatters.theme import RichSyntaxTheme
+from baloto.core.richer.formatters.theme import RichTheme
 
 ColorSystemVariant = Literal["auto", "standard", "256", "truecolor", "windows"]
 HighlighterType = Callable[[str | Text], Text]
@@ -54,8 +55,14 @@ def locate(filename: str, cwd: Path | None = None) -> Path:
     return rv
 
 
-class ConsoleOptions(BaseModel, arbitrary_types_allowed=True):
-    color_system: ColorSystemVariant = Field(default="truecolor")
+class ConsoleSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        title="Tracebacks Configuration Settings",
+        validate_default=True,
+        validate_assignment=True,
+        extra="allow",
+    )
+    color_system: ColorSystemVariant = Field(default="auto")
     force_terminal: bool = True
     force_interactive: bool | None = None
     soft_wrap: bool = False
@@ -71,17 +78,30 @@ class ConsoleOptions(BaseModel, arbitrary_types_allowed=True):
     stderr: bool = False
     emoji_variant: EmojiVariant | None = None
     highlight: bool = True
-    highlighter: HighlighterType | None = None
     legacy_windows: bool | None = Field(None)
     safe_box: bool = True
     environ: Mapping[str, str] | None = Field(default_factory=dict)
     log_time: bool = False
     log_path: bool = True
-    theme: Theme | None = Field(None, description="Override pygments theme used in traceback.")
 
     # def model_post_init(self, context: Any, /) -> None:
     #     self.theme = BalotoTheme()
     #     self.highlighter = BalotoHighlighter()
+
+
+class PyprojectInfo(BaseModel):
+    path: Path | None = None
+    data: dict[str, Any] = Field(default_factory=dict)
+
+    def model_post_init(self, context: Any, /) -> None:
+        from pydantic_settings import BaseSettings, SettingsConfigDict, TomlConfigSettingsSource
+
+        class Settings(BaseSettings):
+            model_config = SettingsConfigDict(toml_file=locate("pyproject.toml"))
+
+        toml = TomlConfigSettingsSource(Settings)
+        self.data = toml.toml_data
+        self.path = Path(toml.toml_file_path).resolve()
 
 
 class TracebacksSettingsModel(BaseModel):
@@ -153,25 +173,33 @@ class LoggingSettingsModel(TracebacksSettingsModel):
     )
 
 
+def is_get_trace() -> bool:
+    return False if getattr(sys, "gettrace", None) is None else True
+
+
 class RichSettings(BaseSettings):
     model_config = SettingsConfigDict(
         title="Project Configuration Settings",
         validate_default=True,
         env_file=".env",
-        pyproject_toml_depth=2,
+        pyproject_toml_depth=10,
         pyproject_toml_table_header=("tool", "rich-settings"),
         env_file_encoding="utf-8",
         extra="forbid",
         env_ignore_empty=True,
         validate_assignment=True,
         validation_error_cause=True,
+        case_sensitive=False,
+        use_enum_values=False,
     )
+
     tracebacks: TracebacksSettingsModel = Field(
         description="The rich tracebacks settings",
     )
     logging: LoggingSettingsModel = Field(
         description="The rich logging settings",
     )
+
     isatty_link: bool = Field(
         sys.stdout.isatty(),
         strict=True,
@@ -179,17 +207,23 @@ class RichSettings(BaseSettings):
         exclude=True,
     )
 
-    debugging_mode = bool = Field(
-        lambda s: False if getattr(sys, "gettrace", None) is None else True
+    debugging_mode: bool = Field(is_get_trace())
+
+    console_settings: ConsoleSettings = Field(default_factory=ConsoleSettings)
+
+    syntax_theme: SyntaxTheme | None = Field(
+        default_factory=RichSyntaxTheme, description="A base class for synax theme"
     )
 
-    console_options: ConsoleOptions = Field(default_factory=ConsoleOptions)
+    theme: Theme | None = Field(
+        default_factory=RichTheme,
+        title="Rich Theme",
+        description="Override pygments theme used in traceback.",
+    )
 
-    syntax_theme: SyntaxTheme | None = None
-
-    theme: Theme | None = None
-
-    highlighter: Highlighter | None = None
+    highlighter: HighlighterType | None = Field(
+        default_factory=RichHighlighter, description="An instance of a rich Highlighter"
+    )
 
     log_render: LogRender | None = None
 
@@ -197,7 +231,13 @@ class RichSettings(BaseSettings):
 
     domains: set[str] = set()
 
-    verbosity: int = Verbosity.NORMAL
+    verbosity: Verbosity = Field(Verbosity.NORMAL)
+
+    stash: RichStash = Field(RichStash(), description="The rich stash")
+
+    pyproject: PyprojectInfo = Field(default_factory=PyprojectInfo)
+
+    # force_verbosity_normal: bool
 
     @classmethod
     def settings_customise_sources(
@@ -209,8 +249,20 @@ class RichSettings(BaseSettings):
             BaseSettings,
             env_file=[locate("rich.env")],
             env_file_encoding="utf8",
-            case_sensitive=True,
+            case_sensitive=False,
         ),
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return (TomlConfigSettingsSource(settings_cls),)
+        return (PyprojectTomlConfigSettingsSource(settings_cls),)
+
+
+_RICH_SETTINGS: RichSettings | None = None
+
+
+def get_rich_settings() -> RichSettings:
+    global _RICH_SETTINGS
+    if _RICH_SETTINGS is not None:
+        return _RICH_SETTINGS
+
+    _RICH_SETTINGS = RichSettings()
+    return _RICH_SETTINGS

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
+from types import TracebackType
+from typing import Any
+from typing import Generic
 from typing import Iterable
 from typing import TYPE_CHECKING
+from typing import Type
+from typing import TypeVar
 
 from rich.columns import Columns
 from rich.console import group
@@ -14,11 +20,17 @@ if TYPE_CHECKING:
     from rich.traceback import Stack, Frame
     from rich.syntax import Syntax
 
-__all__ = ("RichTraceback",)
-
 
 INDENT = "    "
 MIN_WIDTH = 120
+E = TypeVar("E", bound=BaseException, covariant=True)
+
+
+@dataclass
+class SysExceptionInfo(Generic[E]):
+    exc_type: Type[Any]
+    exc_value: BaseException
+    traceback: TracebackType | None
 
 
 class RichTraceback(Traceback):

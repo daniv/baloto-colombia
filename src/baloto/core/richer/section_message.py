@@ -14,9 +14,6 @@ if TYPE_CHECKING:
     from rich.console import ConsoleOptions, RenderResult
 
 
-__all__ = ("SectionMessages",)
-
-
 class SectionMessages:
 
     def __init__(self, title: str, indent_size: int = 2, use_enum: bool = False) -> None:

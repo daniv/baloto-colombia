@@ -26,8 +26,6 @@ if TYPE_CHECKING:
 
     FormatTimeCallable = Callable[[pendulum.DateTime], Text]
 
-__all__ = "ConsoleHandler"
-
 
 class ConsoleHandler(RichHandler):
     def __init__(
@@ -80,7 +78,7 @@ class ConsoleHandler(RichHandler):
             keywords=keywords,
         )
 
-        from baloto.core.rich.logging.log_render import ConsoleLogRender
+        from baloto.core.richer.logging.log_render import ConsoleLogRender
 
         self._log_render = ConsoleLogRender(show_time=False, show_level=True)
 
@@ -95,7 +93,7 @@ class ConsoleHandler(RichHandler):
             exc_type, exc_value, exc_traceback = record.exc_info
             assert exc_type is not None
             assert exc_value is not None
-            from baloto.core.rich.tracebacks import RichTraceback
+            from baloto.core.richer import RichTraceback
 
             traceback = RichTraceback.from_exception(
                 exc_type,

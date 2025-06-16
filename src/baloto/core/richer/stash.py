@@ -14,7 +14,7 @@ from typing import cast
 if TYPE_CHECKING:
     pass
 
-__all__ = ("RichStash",)
+__all__ = ("RichStash", "RichStashKey")
 
 
 T = TypeVar("T")

@@ -16,7 +16,7 @@ from rich.table import Column
 from rich.table import Table
 from rich.text import Text
 
-from baloto.core.rich.logging.console_logger import MessagePrefixEnum
+from baloto.core.richer import MessagePrefixEnum
 
 if TYPE_CHECKING:
     from rich.console import Console

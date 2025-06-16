@@ -5,17 +5,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from rich.highlighter import ReprHighlighter
 
-if TYPE_CHECKING:
-    pass
 
-__all__ = ("BalotoHighlighter",)
-
-
-class BalotoHighlighter(ReprHighlighter):
+class RichHighlighter(ReprHighlighter):
     def __init__(self):
         self.highlights.append(
             r"\b(?P<exception>AssertionError|KeyError|AttributeError|Exception|RuntimeError|IOError|SyntaxError|FileNotFoundError|FileExistsError|TypeError|NotImplementedError|ValueError|BaseException|ModuleNotFoundError|KeyboardInterrupt|IndexError)\b",

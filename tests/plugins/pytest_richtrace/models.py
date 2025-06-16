@@ -6,30 +6,26 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated
+from typing import Self
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
 from pendulum import Interval
 from pydantic import BaseModel
-from pydantic import BeforeValidator
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import computed_field
 from pydantic import field_validator
 from pydantic import model_validator
+from pydantic_core.core_schema import ValidationInfo
 from pydantic_extra_types.pendulum_dt import DateTime
 from rich.repr import auto
 
 if TYPE_CHECKING:
     pass
 
-__all__ = ()
-
-
 Marker = str
 PerfTime = float
-
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
@@ -38,6 +34,7 @@ class TestStage(StrEnum):
     Setup = "setup"
     Call = "call"
     Teardown = "teardown"
+
 
 class TestResult(StrEnum):
     Error = "error"
@@ -56,41 +53,46 @@ class Timings(BaseModel):
         validate_assignment=True,
         validate_default=True,
         validation_error_cause=True,
-        extra="forbid"
+        extra="forbid",
     )
     start: DateTime | None = None
     finish: DateTime | None = None
     precise_start: PerfTime = 0.0
     precise_finish: PerfTime = 0.0
 
+    # @model_validator(mode='after')
+    # def check_passwords_match(self) -> Self:
+    #     if self.start is None:
+    #         raise ValueError('Passwords do not match')
+    #     return self
+    #
+    # @field_validator('start', 'finish', mode='after')
+    # @classmethod
+    # def passwords_match(cls, s: DateTime, validation_info: ValidationInfo):
+    #     a = 0
+    #     # if field_values.finish is None or start is None:
+    #     #     raise ValueError(
+    #     #         f"Precise finish time {finish} is before start time {start}"
+    #     #     )
+    #     # if finish < start:
+    #     #     raise ValueError("finish time is before start time")
+    #     # return value
 
-    @model_validator(mode="after")
-    def validate(self, field_values):
-        finish = self.finish
-        start = self.start
-        if finish is None or start is None:
-            raise ValueError(
-                f"Precise finish time {finish} is before start time {start}"
-            )
-        if finish < start:
-            raise ValueError("finish time is before start time")
-        return value
-
-    @computed_field(alias='timezone name', repr=False)
+    @computed_field(alias="timezone name", repr=False)
     @property
     def timezone_name(self) -> str:
         if self.start is None:
             return "Unknown"
         return self.start.timezone_name
 
-    @computed_field(alias='datetime interval', repr=False)
+    @computed_field(alias="datetime interval", repr=False)
     @property
     def interval_dt(self) -> Interval | None:
         if self.start is None or self.finish is None:
             return None
         return Interval(self.start, self.end)
 
-    @computed_field(alias='precise interval', repr=False)
+    @computed_field(alias="precise interval", repr=False)
     def interval_precise(self) -> float:
         if self.precise_finish is None:
             return 0.0
@@ -148,8 +150,12 @@ class Timings(BaseModel):
 @auto
 class TestCollectionRecord(Timings):
     pass
-
+    # fruits: list[InstanceOf[Fruit]]
 
 
 class TestRunResults(Timings):
     collect: TestCollectionRecord = Field(default_factory=TestCollectionRecord)
+
+
+def i():
+    TestRunResults.model_dump()
