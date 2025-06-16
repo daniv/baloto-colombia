@@ -21,13 +21,9 @@ from hamcrest import assert_that
 from hamcrest import equal_to
 from hamcrest import has_length
 
-from baloto.core.rich.logging.console_logger import MessagePrefixEnum
-from baloto.core.rich.testers.messages import HookMessage
-
 if TYPE_CHECKING:
     from baloto.cleo.io.buffered_io import BufferedIO
     from baloto.cleo.io.stream_io import StreamIO
-    from baloto.core.rich.testers.messages import RenderType
     from _pytest.fixtures import SubRequest
 
 parameterize = pytest.mark.parametrize

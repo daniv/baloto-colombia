@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from baloto.core.config.settings import settings
 from tests.helpers import add_option_ini
 
 if TYPE_CHECKING:
@@ -46,16 +45,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "logging", "Additional configuration for displaying rich-logging", after="tracebacks"
     )
 
-    add_option_ini(
-        parser,
-        group,
-        opts=["--logging-show-time", "--showtime"],
-        dest="logging_show_time",
-        action="store_false",
-        default=True,
-        ini_type="bool",
-        help="Show a column for the time. Defaults to True.",
-    )
+    # add_option_ini(
+    #     parser,
+    #     group,
+    #     opts=["--logging-show-time", "--showtime"],
+    #     dest="logging_show_time",
+    #     action="store_false",
+    #     default=True,
+    #     ini_type="bool",
+    #     help="Show a column for the time. Defaults to True.",
+    # )
 
     group.addoption(
         "--no-showtime",
@@ -64,16 +63,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Hide column for the time. (negate --showtime passed through addopts)",
     )
 
-    add_option_ini(
-        parser,
-        group,
-        opts=["--logging-omit-repeated-times", "--omit-repeated"],
-        dest="logging_omit_repeated_times",
-        action="store_false",
-        ini_type="bool",
-        default=True,
-        help="Omit repetition of the same time. Defaults to True.",
-    )
+    # add_option_ini(
+    #     parser,
+    #     group,
+    #     opts=["--logging-omit-repeated-times", "--omit-repeated"],
+    #     dest="logging_omit_repeated_times",
+    #     action="store_false",
+    #     ini_type="bool",
+    #     default=True,
+    #     help="Omit repetition of the same time. Defaults to True.",
+    # )
 
     group.addoption(
         "--no-omit-repeated",
@@ -82,16 +81,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Repeats column for the time. (negate --omit-repeated passed through addopts)",
     )
 
-    add_option_ini(
-        parser,
-        group,
-        opts=["--logging-show-level", "--showlevel"],
-        dest="logging_show_level",
-        action="store_false",
-        default=True,
-        ini_type="bool",
-        help="Show a column for the level. Defaults to True.",
-    )
+    # add_option_ini(
+    #     parser,
+    #     group,
+    #     opts=["--logging-show-level", "--showlevel"],
+    #     dest="logging_show_level",
+    #     action="store_false",
+    #     default=True,
+    #     ini_type="bool",
+    #     help="Show a column for the level. Defaults to True.",
+    # )
     group.addoption(
         "--no-showlevel",
         action="store_true",
@@ -99,16 +98,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Removes the logging level. (negate --showlevel passed through addopts)",
     )
 
-    add_option_ini(
-        parser,
-        group,
-        opts=["--logging-show-path", "--show-path"],
-        dest="logging_show_path",
-        action="store_false",
-        default=True,
-        ini_type="bool",
-        help="Show the path to the original log call. Defaults to True.",
-    )
+    # add_option_ini(
+    #     parser,
+    #     group,
+    #     opts=["--logging-show-path", "--show-path"],
+    #     dest="logging_show_path",
+    #     action="store_false",
+    #     default=True,
+    #     ini_type="bool",
+    #     help="Show the path to the original log call. Defaults to True.",
+    # )
 
     group.addoption(
         "--no-showpath",
@@ -134,23 +133,23 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Removes links for the path. (negate --linkpath passed through addopts)",
     )
 
-    parser.addini(
-        "logging_markup",
-        type="bool",
-        default=settings.logging.markup,
+    group.addoption(
+        "--markup",
+        action="store_true",
+        dest="logging_markup",
         help="Enable console markup in log messages. Defaults to False.",
     )
 
-    add_option_ini(
-        parser,
-        group,
-        opts=["--logging-rich-tracebacks", "-R"],
-        dest="logging_rich_tracebacks",
-        action="store_false",
-        default=True,
-        ini_type="bool",
-        help="Enable rich tracebacks with syntax highlighting and formatting. Defaults to False.",
-    )
+    # add_option_ini(
+    #     parser,
+    #     group,
+    #     opts=["--logging-rich-tracebacks", "-R"],
+    #     dest="logging_rich_tracebacks",
+    #     action="store_false",
+    #     default=True,
+    #     ini_type="bool",
+    #     help="Enable rich tracebacks with syntax highlighting and formatting. Defaults to False.",
+    # )
 
     group.addoption(
         "--logging-keywords",
@@ -163,12 +162,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-@pytest.hookimpl(trylast=True)
-def pytest_configure(config: pytest.Config) -> None:
-    import tomllib
-    from baloto.core.tester.rich_testers import rich_plugin_manager
-    with open(config.inipath, "rb") as poetry_file:
-        data = tomllib.load(poetry_file)
-
-    rich_plugin_manager().hook.rich_configure.call_historic(kwargs=dict(config=config, poetry=data))
-
+# @pytest.hookimpl(trylast=True)
+# def pytest_configure(config: pytest.Config) -> None:
+#     import tomllib
+#     from baloto.core.tester.rich_testers import rich_plugin_manager
+#     with open(config.inipath, "rb") as poetry_file:
+#         data = tomllib.load(poetry_file)
+#
+#     rich_plugin_manager().hook.rich_configure.call_historic(kwargs=dict(config=config, poetry=data))

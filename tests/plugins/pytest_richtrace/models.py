@@ -26,6 +26,9 @@ if TYPE_CHECKING:
 
 Marker = str
 PerfTime = float
+NodeId = str
+ModuleId = str
+ItemId = NodeId | ModuleId
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
@@ -149,8 +152,12 @@ class Timings(BaseModel):
 
 @auto
 class TestCollectionRecord(Timings):
-    pass
-    # fruits: list[InstanceOf[Fruit]]
+    count: int = 0
+    error: dict[ModuleId, BaseException] = Field(default_factory=dict)
+
+    @property
+    def errors_count(self) -> int:
+        return len(self.error)
 
 
 class TestRunResults(Timings):

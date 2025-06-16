@@ -4,5 +4,4 @@
 # - Dir Path  : tests/plugins
 # - Created on: 2025-06-03 at 18:44:54
 
-from pluggy import PluginManager
-
+__version__ = "2.6"

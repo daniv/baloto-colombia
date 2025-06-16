@@ -65,11 +65,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 minversion = "8.3"
-testpaths = ["tests/cleo_tests"]
+testpaths = ["tests/framework_tests"]
 python_files = ["tests_*.py"]
 python_functions = ["test_*"]
+collect_ignore = [
+    "tests/plugins"
+]
 norecursedirs = [
-    ".idea", ".pytest_cache", "src", "tests/plugins", "output", "static"
+    ".idea", ".pytest_cache", "src", "output", "static",
+    "examples", "templates", ".git"
 ]
 enable_assertion_pass_hook = true
 console_output_style = "count"

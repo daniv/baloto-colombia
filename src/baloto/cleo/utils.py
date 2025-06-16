@@ -16,9 +16,6 @@ if TYPE_CHECKING:
     from baloto.utils.types import PathStr
 
 
-__all__ = ("find_similar_names", "escape_trailing_backslash", "escape", "shell_quote", "safe_str", "markup_path", "markup_loation")
-
-
 def find_similar_names(name: str, names: list[str]) -> list[str]:
     """
     Finds names matching to a given command name.
@@ -82,6 +79,3 @@ def safe_str(_object: Any) -> str:
     except Exception:
         return "<exception str() failed>"
 
-def markup_loation(filename: PathStr, lineno: int, *, relative_to: PathStr = None) -> str:
-    markup = markup_path(filename, relative_to=relative_to)
-    return f"{markup}:{lineno}"

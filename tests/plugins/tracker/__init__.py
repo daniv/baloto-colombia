@@ -9,15 +9,22 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from plugins.tracker.tracker import TrackerPlugin
+from plugins.tracker.tracker_plugin import TrackerPlugin
 
 if TYPE_CHECKING:
     pass
 
 __all__ = ()
 
-PLUGIN_NAME = "baloto-tracker"
 _PluggyPlugin = object
+
+
+def pytest_addhooks(pluginmanager: pytest.PytestPluginManager) -> None:
+    from baloto.core import richer
+    from tests.plugins.tracker import hooks
+
+    pluginmanager = richer.RichPluginManager.get_plugin_manager()
+    pluginmanager.add_hookspecs(hooks)
 
 
 @pytest.hookimpl

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 from io import StringIO
-from typing import IO
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -14,8 +13,8 @@ from multipledispatch import dispatch
 
 from baloto.cleo.io.outputs.output import Verbosity
 from baloto.cleo.io.outputs.stream_output import StreamOutput
-from baloto.core.rich.console_factory import ConsoleFactory
-from baloto.core.rich.logging.console_logger import Log
+from baloto.core.richer.console_factory import ConsoleFactory
+from baloto.core.richer.logging.console_logger import Log
 
 if TYPE_CHECKING:
     pass

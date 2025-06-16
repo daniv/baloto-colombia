@@ -133,4 +133,3 @@ class HookMessage:
         yield table
         if kv_table:
             yield kv_table
-            yield ""

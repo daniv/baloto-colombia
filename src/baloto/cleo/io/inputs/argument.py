@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from pydantic import Field
 
-from baloto.cleo.exceptions.errors import CleoLogicError
 from baloto.cleo.io.inputs.base_model import BaseInputModel
 
 if TYPE_CHECKING:

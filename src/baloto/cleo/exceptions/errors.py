@@ -3,7 +3,6 @@ from __future__ import annotations
 
 __all__ = (
     "CleoError",
-    "CleoLogicError",
     "CleoRuntimeError",
     "CleoValueError",
     "CleoNoSuchOptionError",
@@ -15,13 +14,24 @@ __all__ = (
     "CleoBadNameError"
 )
 
+import enum
 from typing import Any
 
 from pydantic import validate_call
 
-from baloto.cleo.exceptions import CleoErrorMixin, ExitStatus
+from baloto.cleo.exceptions import CleoErrorMixin
+
 from baloto.cleo.io.inputs.base_model import CALL_CONFIG
 from baloto.cleo.utils import find_similar_names
+
+
+@enum.unique
+class ExitCode(enum.IntEnum):
+    SUCCESS = 0
+    FAILURE = 1
+    INTERRUPTED = 2
+    INTERNAL_ERROR = 3
+    USAGE_ERROR = 4
 
 
 class CleoError(Exception):
@@ -36,39 +46,40 @@ class CleoBadNameError(CleoError, NameError):
     ...
 
 
-class CleoLogicError(CleoErrorMixin, CleoError):
-    """
-    Raised when there is error in command arguments and/or options configuration logic.
-
-    Usage:
-    >>> raise CleoLogicError("An Error message", code='validator-argument-default-value')
-    """
-
-    exit_code: int | None = ExitStatus.USAGE_ERROR
-
-    @validate_call(config=CALL_CONFIG)
-    def __init__(self, msg: str, *, code: str | None) -> None:
-        """
-        :param msg: The message to prive to the exception
-        :param code: the code from baloto.cleo.exceptions.CleoErrorCodes
-        """
-        super().__init__(msg, code=code)
-        self.add_note(self._note)
-
-    @property
-    def _note(self) -> str:
-        """
-        :return: a string representing the causes of this exception
-        """
-        return "Raised when there is error in command arguments and/or options configuration logic."
-
+# class CleoLogicError(CleoErrorMixin, CleoError):
+#     """
+#     Raised when there is error in command arguments and/or options configuration logic.
+#
+#     Usage:
+#     >>> raise CleoLogicError("An Error message", code='validator-argument-default-value')
+#     """
+#
+#     exit_code: int | None = ExitCode.USAGE_ERROR
+#
+#     @validate_call(config=CALL_CONFIG)
+#     def __init__(self, msg: str, *, code: str | None) -> None:
+#         """
+#         :param msg: The message to prive to the exception
+#         :param code: the code from baloto.cleo.exceptions.CleoErrorCodes
+#         """
+#         super().__init__(msg, code=code)
+#         self.add_note(self._note)
+#
+#     @property
+#     def _note(self) -> str:
+#         """
+#         :return: a string representing the causes of this exception
+#         """
+#         return "Raised when there is error in command arguments and/or options configuration logic."
+class CleoLogicError(Exception):
+    pass
 
 class CleoRuntimeError(CleoError, RuntimeError):
     """
     Raised when wrong value was given to Cleo components.
     """
 
-    exit_code: int | None = ExitStatus.INTERNAL_ERROR
+    exit_code: int | None = ExitCode.INTERNAL_ERROR
 
     def __init__(self, msg: str) -> None:
         """
@@ -91,7 +102,7 @@ class CleoNoSuchOptionError(CleoErrorMixin, CleoBadNameError):
     Raised when command does not have given option.
     """
 
-    exit_code: int | None = ExitStatus.USAGE_ERROR
+    exit_code: int | None = ExitCode.USAGE_ERROR
 
     def __init__(self, msg: str) -> None:
         """
@@ -114,7 +125,7 @@ class CleoKeyError(CleoError, KeyError):
     Raised when wrong key is fetching non-existing keys
     """
 
-    exit_code: int | None = ExitStatus.USAGE_ERROR
+    exit_code: int | None = ExitCode.USAGE_ERROR
 
     def __init__(self, msg: str) -> None:
         super().__init__(msg)
@@ -127,7 +138,7 @@ class CleoValueError(CleoError, ValueError):
     Raised when wrong value was given to Cleo components.
     """
 
-    exit_code: int | None = ExitStatus.USAGE_ERROR
+    exit_code: int | None = ExitCode.USAGE_ERROR
 
     def __init__(self, msg: str) -> None:
         super().__init__(msg)

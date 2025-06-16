@@ -18,22 +18,15 @@ from rich.table import Table
 from rich.text import Text
 from rich.traceback import PathHighlighter
 
-from baloto.core import richer
-from baloto.core.richer import RichConfig
-from plugins.tracker.header import PytestEnvironment
-
 if TYPE_CHECKING:
     from rich.console import Console
     from rich.console import ConsoleRenderable
     from pendulum import DateTime
     from rich.highlighter import Highlighter
-    from plugins.tracker.header import RegisteredPluginInfo
     import _pytest._code as pytest_code
 
 
-
 INDENT = "    -"
-
 
 
 class Reporterito:
@@ -41,9 +34,9 @@ class Reporterito:
     def __init__(self, config: pytest.Config, console: Console) -> None:
         self.config = config
 
-
-    def report_internalerror(self,excrepr: pytest_code.code.ExceptionRepr,
-            excinfo: pytest.ExceptionInfo[BaseException]) -> bool:
+    def report_internalerror(
+        self, excrepr: pytest_code.code.ExceptionRepr, excinfo: pytest.ExceptionInfo[BaseException]
+    ) -> bool:
         if self.config.option.verbose == 0:
             for line in str(excrepr).split("\n"):
                 self.console.print("[error]INTERNALERROR[/]> ", line)
@@ -116,8 +109,9 @@ class Reporterito:
         renderable = render_options_table(config=self.config)
         self.console.print(renderable)
 
-    def report_internalerror(self,             excrepr: pytest_code.code.ExceptionRepr,
-            excinfo: pytest.ExceptionInfo[BaseException]):
+    def report_internalerror(
+        self, excrepr: pytest_code.code.ExceptionRepr, excinfo: pytest.ExceptionInfo[BaseException]
+    ):
         tb_style = excrepr.reprtraceback.style
         hook_message = (
             HookMessage("pytest_internalerror")
@@ -134,8 +128,6 @@ class Reporterito:
         # self._writer.print_key_value("excrepr.lineno", value=str(excrepr.reprcrash.lineno), value_color="repr")
         # self._writer.print_key_value("excrepr.message", value=excrepr.reprcrash.message)
         #
-
-
 
     def _print_key(self, key: str, color: str = "white") -> None:
         self.console.print(f"[{color}]{key}[/]:")
@@ -201,5 +193,4 @@ def add_active_plugins(main_table: Table, env: PytestEnvironment, highlighter: H
     main_table.add_row(title, table_plugins, end_section=True)
 
 
-def session_start():
-    ...
+def session_start(): ...

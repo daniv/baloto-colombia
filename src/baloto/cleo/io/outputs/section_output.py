@@ -17,7 +17,7 @@ from baloto.cleo.io.outputs.stream_output import StreamOutput
 
 if TYPE_CHECKING:
     from rich.console import Console
-    from baloto.core.rich.logging.console_logger import Log
+    from baloto.core.richer.logging.console_logger import Log
     from rich.console import JustifyMethod
     from rich.console import OverflowMethod
     from rich.style import Style

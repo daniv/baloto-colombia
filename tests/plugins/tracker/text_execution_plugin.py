@@ -12,7 +12,7 @@ import pytest
 if TYPE_CHECKING:
     pass
 
-__all__ = ("TestExecutionObserver", )
+__all__ = ("TestExecutionObserver",)
 
 
 class TestExecutionObserver:
