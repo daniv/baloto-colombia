@@ -18,8 +18,8 @@ from rich.table import Table
 from rich.text import Text
 from rich.traceback import PathHighlighter
 
-from baloto.core.rich.testers.messages import HookMessage
-from baloto.core.rich.tracebacks import from_exception
+from baloto.core import richer
+from baloto.core.richer import RichConfig
 from plugins.tracker.header import PytestEnvironment
 
 if TYPE_CHECKING:
@@ -30,21 +30,17 @@ if TYPE_CHECKING:
     from plugins.tracker.header import RegisteredPluginInfo
     import _pytest._code as pytest_code
 
-__all__ = ("Reporter",)
 
 
 INDENT = "    -"
 
 
-class Reporter:
+
+class Reporterito:
 
     def __init__(self, config: pytest.Config, console: Console) -> None:
         self.config = config
-        self.console = console
 
-    @property
-    def verbosity(self):
-        return self.config.option.verbose
 
     def report_internalerror(self,excrepr: pytest_code.code.ExceptionRepr,
             excinfo: pytest.ExceptionInfo[BaseException]) -> bool:
@@ -203,3 +199,7 @@ def add_active_plugins(main_table: Table, env: PytestEnvironment, highlighter: H
             highlighter(plugin.location) if plugin.location else "",
         )
     main_table.add_row(title, table_plugins, end_section=True)
+
+
+def session_start():
+    ...

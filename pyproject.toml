@@ -21,8 +21,8 @@ dependencies = [
     "multipledispatch (>=1.0.0,<2.0.0)",
     "pydantic-settings (>=2.9.1,<3.0.0)",
     "circuits (>=3.2.3,<4.0.0)",
-    "pytest (>=8.4.0,<9.0.0)",
     "pluggy (>=1.6.0,<2.0.0)",
+    "semver (>=3.0.4,<4.0.0)",
 ]
 
 [project.urls]
@@ -52,6 +52,7 @@ pytest-cov = "^6.1.1"
 pyhamcrest = "^2.1.0"
 # faker = "^37.3.0"
 pytest-mypy = "^1.0.1"
+pytest = "^8.4.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
@@ -64,10 +65,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 minversion = "8.3"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_functions = ["*_test", "test_*"]
-norecursedirs = [".idea", ".pytest_cache", "src"]
+testpaths = ["tests/cleo_tests"]
+python_files = ["tests_*.py"]
+python_functions = ["test_*"]
+norecursedirs = [
+    ".idea", ".pytest_cache", "src", "tests/plugins", "output", "static"
+]
 enable_assertion_pass_hook = true
 console_output_style = "count"
 addopts = [
@@ -77,18 +80,6 @@ verbosity_assertions = 0
 log_level = "WARNING"
 log_format = "%(message)s"
 log_date_format = "[%X]"
-logging_show_time = false
-# required_plugins = "pytest-mock"
-
-# pytest --showlocals # show local variables in tracebacks
-# pytest -l           # show local variables (shortcut)
-#pytest --tb=auto    # (default) 'long' tracebacks for the first and last
-#                     # entry, but 'short' style for the other entries
-#pytest --tb=long    # exhaustive, informative traceback formatting
-#pytest --tb=short   # shorter traceback format
-#pytest --tb=line    # only one line per failure
-#pytest --tb=native  -> Python standard library formatting
-#pytest --tb=no      -> no traceback at all
 
 [tool.black]
 line-length = 100
